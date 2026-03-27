@@ -310,6 +310,51 @@ def vendor_detail(supplier: str) -> VendorDetail:
 
 
 # ---------------------------------------------------------------------------
+# GET /api/contracts/state
+# ---------------------------------------------------------------------------
+
+@router.get("/state")
+def list_state_contracts():
+    """List Virginia state contracts from eVA."""
+    rows = query("SELECT * FROM state_contracts ORDER BY value DESC")
+    total_value = query("SELECT SUM(value) FROM state_contracts")
+    tv = 0
+    if total_value and total_value[0]:
+        vals = list(total_value[0].values())
+        tv = vals[0] if vals else 0
+    return {
+        "contracts": rows,
+        "total": len(rows),
+        "total_value": tv,
+        "source": "eVA (Virginia)"
+    }
+
+
+# ---------------------------------------------------------------------------
+# GET /api/contracts/multi-source-stats
+# ---------------------------------------------------------------------------
+
+@router.get("/multi-source-stats")
+def multi_source_stats():
+    """Stats across all contract sources."""
+    city = query("SELECT 'City of Richmond' AS source, COUNT(*) AS count, SUM(value) AS total_value FROM city_contracts")
+
+    # Try federal and state tables (may not exist yet)
+    federal = []
+    state = []
+    try:
+        federal = query("SELECT 'SAM.gov (Federal)' AS source, COUNT(*) AS count, SUM(value) AS total_value FROM federal_contracts WHERE value IS NOT NULL")
+    except Exception:
+        pass
+    try:
+        state = query("SELECT 'eVA (Virginia)' AS source, COUNT(*) AS count, SUM(value) AS total_value FROM state_contracts")
+    except Exception:
+        pass
+
+    return {"sources": (city or []) + (federal or []) + (state or [])}
+
+
+# ---------------------------------------------------------------------------
 # GET /api/contracts/{contract_number}
 # ---------------------------------------------------------------------------
 
@@ -386,6 +431,45 @@ def concentration_risk():
         "concentrated_departments": concentrated_depts,
         "methodology": "Vendor concentration measured as percentage of department spending. HHI (Herfindahl-Hirschman Index) measures overall market concentration. Higher values indicate greater concentration.",
     }
+
+
+# ---------------------------------------------------------------------------
+# GET /api/contracts/federal
+# ---------------------------------------------------------------------------
+
+@router.get("/federal")
+def list_federal_contracts():
+    """List federal contracts from SAM.gov."""
+    rows = query("""
+        SELECT * FROM federal_contracts
+        ORDER BY value DESC NULLS LAST
+    """)
+    total_value_rows = query("SELECT SUM(value) AS sum_value FROM federal_contracts WHERE value IS NOT NULL")
+    total_value = total_value_rows[0].get("sum_value") if total_value_rows else 0
+    return {
+        "contracts": rows,
+        "total": len(rows),
+        "total_value": total_value or 0,
+        "source": "SAM.gov (Federal)"
+    }
+
+
+# ---------------------------------------------------------------------------
+# GET /api/contracts/multi-source-stats
+# ---------------------------------------------------------------------------
+
+@router.get("/multi-source-stats")
+def multi_source_stats():
+    """Aggregated stats across City and Federal contract sources."""
+    city = query("""
+        SELECT 'City of Richmond' AS source, COUNT(*) AS count, SUM(value) AS total_value
+        FROM city_contracts
+    """)
+    federal = query("""
+        SELECT 'SAM.gov (Federal)' AS source, COUNT(*) AS count, SUM(value) AS total_value
+        FROM federal_contracts WHERE value IS NOT NULL
+    """)
+    return {"sources": (city or []) + (federal or [])}
 
 
 # ---------------------------------------------------------------------------

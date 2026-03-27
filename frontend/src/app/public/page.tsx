@@ -14,6 +14,8 @@ import {
   ProcurementTypeChart,
   ContractSizeChart,
 } from "@/components/analytics-charts";
+import { MultiSourceExplorer } from "@/components/multi-source-explorer";
+import { StateContracts } from "@/components/state-contracts";
 import { fetchAPI } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 
@@ -232,6 +234,21 @@ export default function PublicTransparencyPage() {
               <ProcurementTypeChart />
               <ContractSizeChart />
             </div>
+          </section>
+
+          {/* Federal Contracts Multi-Source Explorer */}
+          <section aria-labelledby="federal-contracts-heading" className="space-y-4">
+            <h2
+              id="federal-contracts-heading"
+              className="text-2xl font-bold text-[#1E293B]"
+            >
+              Federal Contracts in Richmond
+            </h2>
+            <p className="text-base text-[#475569]">
+              Beyond City contracts, federal agencies award billions to Richmond-area vendors.
+              Explore contracts across City and federal sources side-by-side.
+            </p>
+            <MultiSourceExplorer />
           </section>
 
           {/* Top vendors grid */}
