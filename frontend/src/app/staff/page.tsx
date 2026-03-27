@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Disclaimer } from "@/components/disclaimer";
 import { RiskAlerts } from "@/components/risk-alerts";
+import { NLQueryBar } from "@/components/nl-query-bar";
 import { ContractsTable } from "@/components/contracts-table";
 import { ContractDetail } from "@/components/contract-detail";
 import { useContracts, useContractStats, useDepartments, type Contract } from "@/hooks/use-contracts";
@@ -105,6 +106,9 @@ export default function StaffDashboard() {
             expiring90={(stats.expiring_90 as number) ?? 0}
           />
         ) : null}
+
+        {/* Natural Language Query */}
+        <NLQueryBar />
 
         {/* Filter Bar */}
         <section aria-label="Contract filters">
