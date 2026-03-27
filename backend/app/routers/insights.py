@@ -90,63 +90,71 @@ Return ONLY a JSON array of 5 strings. No markdown, no code fences. Example:
 
 @router.get("/risk-narrative")
 def risk_narrative():
-    """Generate a risk-focused narrative for staff."""
+    """Generate rich risk alerts with contract details and AI recommendations."""
 
     critical = db_query("""
-        SELECT supplier, department, value, days_to_expiry, description
+        SELECT contract_number, supplier, department, value, days_to_expiry,
+            description, procurement_type, solicitation_type,
+            CAST(start_date AS VARCHAR) AS start_date,
+            CAST(end_date AS VARCHAR) AS end_date, risk_level
         FROM city_contracts
         WHERE days_to_expiry BETWEEN 0 AND 30
-        ORDER BY value DESC LIMIT 10
+        ORDER BY value DESC LIMIT 8
     """)
 
+    # Build rich alerts with AI recommendation per contract
+    alerts = []
+    for c in critical:
+        contract_context = json.dumps(c, default=str)
+
+        try:
+            rec_prompt = """You are a procurement advisor. Given this expiring city contract, write a JSON object with:
+{
+  "action": "review" or "renew" or "escalate" or "rebid",
+  "urgency": "critical" or "high" or "medium",
+  "summary": "One sentence plain-English summary of the contract (under 20 words)",
+  "recommendation": "2-3 sentence specific recommendation for what the procurement officer should do next",
+  "risks": ["1-2 short risk factors if no action is taken"]
+}
+Do NOT make legal or compliance determinations. Return ONLY raw JSON, no markdown."""
+
+            raw = chat(rec_prompt, f"Contract:\n{contract_context}")
+            cleaned = raw.strip()
+            if cleaned.startswith("```"):
+                cleaned = cleaned.split("\n", 1)[1]
+            if cleaned.endswith("```"):
+                cleaned = cleaned.rsplit("```", 1)[0]
+            ai_rec = json.loads(cleaned.strip())
+        except Exception:
+            ai_rec = {
+                "action": "review",
+                "urgency": "high",
+                "summary": f"{c.get('department', 'Unknown')} contract with {c.get('supplier', 'Unknown')}",
+                "recommendation": f"This ${c.get('value', 0):,.0f} contract expires in {c.get('days_to_expiry', '?')} days. Review renewal options and contact the vendor to discuss terms.",
+                "risks": ["Missed renewal deadline", "Service disruption"],
+            }
+
+        alerts.append({
+            "contract": c,
+            "ai_recommendation": ai_rec,
+        })
+
+    # Also get department-level risk summary
     dept_risk = db_query("""
-        SELECT department,
-            COUNT(*) AS total,
+        SELECT department, COUNT(*) AS total,
             SUM(CASE WHEN days_to_expiry BETWEEN 0 AND 30 THEN 1 ELSE 0 END) AS critical,
-            SUM(CASE WHEN days_to_expiry BETWEEN 0 AND 60 THEN 1 ELSE 0 END) AS at_risk,
             SUM(value) AS total_value
         FROM city_contracts
         WHERE days_to_expiry BETWEEN 0 AND 90
         GROUP BY department
+        HAVING SUM(CASE WHEN days_to_expiry BETWEEN 0 AND 30 THEN 1 ELSE 0 END) > 0
         ORDER BY critical DESC
         LIMIT 5
     """)
 
-    data_context = json.dumps({
-        "critical_contracts": critical,
-        "department_risk": dept_risk,
-    }, default=str)
-
-    system_prompt = """You are a procurement risk analyst writing a brief risk summary for city staff.
-Write exactly 4 actionable bullet points about contracts needing immediate attention.
-Each bullet must:
-- Start with a department name or vendor name
-- Include a specific dollar amount or timeline
-- Suggest a concrete next step (review, renew, escalate)
-- Be one sentence, under 30 words
-
-Return ONLY a JSON array of 4 strings. No markdown, no code fences."""
-
-    raw = chat(system_prompt, f"Risk data:\n{data_context}")
-
-    try:
-        cleaned = raw.strip()
-        if cleaned.startswith("```"):
-            cleaned = cleaned.split("\n", 1)[1]
-        if cleaned.endswith("```"):
-            cleaned = cleaned.rsplit("```", 1)[0]
-        narratives = json.loads(cleaned.strip())
-        if not isinstance(narratives, list):
-            narratives = [str(narratives)]
-    except (json.JSONDecodeError, IndexError):
-        narratives = [
-            f"{len(critical)} high-value contracts expire within 30 days — review renewal options immediately.",
-            f"{dept_risk[0]['department'] if dept_risk else 'Multiple departments'} has the most contracts at risk.",
-            "Prioritize contracts by value to maximize renewal impact.",
-            "Contact vendors with expiring contracts to begin renewal discussions.",
-        ]
-
     return {
-        "narratives": narratives,
+        "alerts": alerts,
+        "department_risk": dept_risk,
+        "total_critical": len(critical),
         "disclaimer": "AI-generated risk summary. All procurement decisions require human review.",
     }
