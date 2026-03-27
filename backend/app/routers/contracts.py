@@ -49,7 +49,7 @@ def list_contracts(
         params.append(min_value)
 
     if max_days is not None:
-        where_clauses.append("days_to_expiry <= ?")
+        where_clauses.append("days_to_expiry BETWEEN 0 AND ?")
         params.append(max_days)
 
     if search is not None:
@@ -80,7 +80,9 @@ def list_contracts(
             risk_level
         FROM city_contracts
         {where_sql}
-        ORDER BY days_to_expiry ASC NULLS LAST
+        ORDER BY
+            CASE WHEN days_to_expiry >= 0 THEN 0 ELSE 1 END,
+            days_to_expiry ASC NULLS LAST
         LIMIT ? OFFSET ?
     """
     data_params = (params or []) + [limit, offset]
@@ -203,7 +205,9 @@ def vendor_detail(supplier: str) -> VendorDetail:
             risk_level
         FROM city_contracts
         WHERE supplier = ?
-        ORDER BY days_to_expiry ASC NULLS LAST
+        ORDER BY
+            CASE WHEN days_to_expiry >= 0 THEN 0 ELSE 1 END,
+            days_to_expiry ASC NULLS LAST
         """,
         [supplier],
     )
