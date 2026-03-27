@@ -100,12 +100,32 @@ Return ONLY the markdown text, no JSON wrapping."""
             except Exception:
                 analysis = ""
 
+        # Generate follow-up questions
+        followups = []
+        if results and len(results) > 0:
+            try:
+                followup_prompt = """Given the user's question and the results, suggest exactly 3 follow-up questions they might want to ask next.
+Each question should be a natural language query about Richmond city contracts.
+Return ONLY a JSON array of 3 strings. No markdown, no code fences. Example: ["question 1", "question 2", "question 3"]"""
+                followup_raw = chat(followup_prompt, f"Question: {req.question}\nResults: {len(results)} rows returned")
+                cleaned_f = followup_raw.strip()
+                if cleaned_f.startswith("```"):
+                    cleaned_f = cleaned_f.split("\n", 1)[1]
+                if cleaned_f.endswith("```"):
+                    cleaned_f = cleaned_f.rsplit("```", 1)[0]
+                followups = json.loads(cleaned_f.strip())
+                if not isinstance(followups, list):
+                    followups = []
+            except Exception:
+                followups = []
+
         result = {
             "sql": sql,
             "explanation": explanation,
             "results": results[:100],
             "total": len(results),
             "analysis": analysis,
+            "followups": followups[:3],
         }
 
         # Cache successful results (no "error" key)

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   MessageSquare, X, Send, Loader2, ChevronDown, ChevronUp,
-  Sparkles, Trash2,
+  Sparkles, Trash2, ArrowRight,
 } from "lucide-react";
 import { postAPI } from "@/lib/api";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ interface QueryResult {
   sql?: string;
   explanation?: string;
   analysis?: string;
+  followups?: string[];
   results?: Record<string, unknown>[];
   total?: number;
   error?: string;
@@ -86,7 +87,7 @@ function ResultCards({ results }: { results: Record<string, unknown>[] }) {
   );
 }
 
-function ChatBubble({ msg }: { msg: ChatMessage }) {
+function ChatBubble({ msg, onFollowUp }: { msg: ChatMessage; onFollowUp?: (q: string) => void }) {
   const [showSql, setShowSql] = useState(false);
 
   if (msg.type === "user") {
@@ -122,10 +123,27 @@ function ChatBubble({ msg }: { msg: ChatMessage }) {
               <Sparkles className="h-3 w-3 text-blue-600" aria-hidden="true" />
               <span className="font-semibold text-blue-700 dark:text-blue-400">Analysis</span>
             </div>
-            <p>{r.analysis}</p>
+            <p>
+              {r.analysis.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
+                part.startsWith("**") && part.endsWith("**")
+                  ? <strong key={i}>{part.slice(2, -2)}</strong>
+                  : part
+              )}
+            </p>
           </div>
         )}
         {r.results && r.results.length > 0 && <ResultCards results={r.results} />}
+        {r.followups && r.followups.length > 0 && (
+          <div className="flex flex-col gap-1.5 pt-1">
+            <span className="text-xs text-slate-400">Follow up:</span>
+            {r.followups.map((fq, i) => (
+              <button key={i} onClick={() => onFollowUp?.(fq)} className="text-left text-xs px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                <ArrowRight className="h-3 w-3 text-blue-500 flex-shrink-0" aria-hidden="true" />
+                {fq}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <span className="text-xs text-slate-400">{r.total} result{r.total !== 1 ? "s" : ""}</span>
           {r.sql && (
@@ -262,7 +280,7 @@ export function AskRichmondPanel() {
           </div>
         )}
         {messages.map(msg => (
-          <ChatBubble key={msg.id} msg={msg} />
+          <ChatBubble key={msg.id} msg={msg} onFollowUp={handleQuery} />
         ))}
         {loading && (
           <div className="flex justify-start">

@@ -87,6 +87,7 @@ interface QueryResult {
   sql?: string;
   explanation?: string;
   analysis?: string;
+  followups?: string[];
   results?: Record<string, unknown>[];
   total?: number;
   error?: string;
@@ -239,6 +240,26 @@ export function NLQueryBar() {
 
           {result.results.length > 50 && (
             <p className="text-xs text-gray-400">Showing first 50 of {result.total} results</p>
+          )}
+
+          {/* Follow-up questions */}
+          {result.followups && result.followups.length > 0 && (
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-700 space-y-2">
+              <p className="text-xs text-slate-400 flex items-center gap-1">
+                <Sparkles className="h-3 w-3" aria-hidden="true" /> Follow-up questions:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {result.followups.map((fq, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleQuery(fq)}
+                    className="text-sm px-4 py-2 rounded-full border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {fq}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
         </Card>
       )}
