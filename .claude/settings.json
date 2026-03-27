@@ -1,0 +1,5 @@
+{
+  "enabledPlugins": {
+    "parallel@parallel-agent-skills": true
+  }
+}

@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+.env
+backend/data/*.duckdb
+backend/data/*.csv
+node_modules
+.next
+.vercel
+*.egg-info
+dist
+build

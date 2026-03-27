@@ -194,6 +194,21 @@ These are pattern references, not direct imports. New code in a new repo.
 - No VITA integration (web-only portal, no API)
 - No mobile-optimized layout (desktop-first for staff use)
 
+## 12. Accessibility & Inclusivity Requirements
+
+**Target users include elderly residents, people with disabilities, and first-time internet users.**
+
+- **WCAG 2.1 AA compliant** — minimum contrast ratios, keyboard navigable, screen reader friendly
+- **ADA compliant** — all interactive elements accessible, ARIA labels on all controls
+- **Large touch targets** — minimum 44x44px for all clickable elements
+- **Clear typography** — minimum 16px body text, high-contrast color scheme
+- **Plain language** — no jargon, no acronyms without explanation, reading level grade 8 or below
+- **No cognitive overload** — progressive disclosure, one action per screen where possible
+- **Visible focus indicators** — all keyboard-focusable elements show clear focus rings
+- **Error prevention** — clear labels, helper text, forgiving input parsing
+- **No motion dependency** — respect prefers-reduced-motion, no auto-playing animations
+- **Color not sole indicator** — risk levels use icons + text + color, never color alone
+
 ---
 
 ## 8. Demo Script (3–5 minutes)
