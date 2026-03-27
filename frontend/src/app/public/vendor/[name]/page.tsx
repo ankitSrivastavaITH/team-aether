@@ -15,13 +15,11 @@ import { ArrowLeft, Building2, DollarSign, FileText, Calendar, ShieldCheck, Shie
 interface VendorData {
   supplier: string;
   contracts: Array<Record<string, unknown>>;
-  stats: {
-    count: number;
-    total_value: number;
-    first_contract: string | null;
-    last_expiry: string | null;
-    departments_served: number | string | unknown[];
-  };
+  count: number;
+  total_value: number;
+  first_contract: string | null;
+  last_expiry: string | null;
+  departments_served: number | string | unknown[];
 }
 
 export default function VendorDetailPage() {
@@ -36,7 +34,7 @@ export default function VendorDetailPage() {
   if (isLoading) return <div className="py-12 text-center text-lg text-gray-500">Loading vendor details...</div>;
   if (error || !data) return <div className="py-12 text-center text-lg text-red-600">Could not load vendor details.</div>;
 
-  const s = data.stats;
+  const s = data;
 
   return (
     <div className="space-y-8">
