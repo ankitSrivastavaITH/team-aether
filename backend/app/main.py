@@ -7,7 +7,7 @@ from datetime import datetime
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import contracts, extract, nl_query, insights, analytics, services, mbe
+from app.routers import contracts, extract, nl_query, insights, analytics, services, mbe, parser
 
 app = FastAPI(
     title="RVA Contract Lens API",
@@ -31,6 +31,7 @@ app.include_router(insights.router)
 app.include_router(analytics.router)
 app.include_router(services.router)
 app.include_router(mbe.router)
+app.include_router(parser.router)
 
 
 @app.get("/api/health")
