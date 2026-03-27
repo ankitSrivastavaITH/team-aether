@@ -278,6 +278,13 @@ export function LandingContent() {
               <BarChart3 className="h-4 w-4" aria-hidden="true" />
               Public spending view
             </Link>
+            <Link
+              href="/about"
+              className="inline-flex items-center gap-1.5 hover:text-slate-700 dark:hover:text-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 rounded-md"
+            >
+              <Info className="h-4 w-4" aria-hidden="true" />
+              About
+            </Link>
           </div>
           <p className="text-xs text-slate-400 dark:text-slate-500 text-center sm:text-right max-w-xs">
             Data from City of Richmond Open Data, USASpending.gov, VA eVA, and VITA. Not official
