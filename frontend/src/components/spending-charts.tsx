@@ -13,6 +13,7 @@ import {
   Legend,
   LabelList,
 } from "recharts";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 function currencyTick(value: unknown) {
@@ -111,6 +112,8 @@ function useReducedMotion(): boolean {
 
 export function DepartmentSpendingChart({ data }: DepartmentSpendingChartProps) {
   const reducedMotion = useReducedMotion();
+  const router = useRouter();
+
   // Top 10 departments, sorted ascending for horizontal bar (recharts renders bottom-to-top)
   const sorted = [...data]
     .sort((a, b) => a.total_value - b.total_value)
@@ -120,7 +123,13 @@ export function DepartmentSpendingChart({ data }: DepartmentSpendingChartProps) 
     ? [...data].sort((a, b) => b.total_value - a.total_value)[0]?.department
     : "the largest department";
 
-  const ariaLabel = `Bar chart showing spending by department. ${topDeptName} has the highest spending.`;
+  const ariaLabel = `Bar chart showing spending by department. ${topDeptName} has the highest spending. Click a bar to drill into that department.`;
+
+  function handleBarClick(barData: { department?: string } | null) {
+    if (barData?.department) {
+      router.push(`/public/department/${encodeURIComponent(barData.department)}`);
+    }
+  }
 
   return (
     <Card>
@@ -132,6 +141,7 @@ export function DepartmentSpendingChart({ data }: DepartmentSpendingChartProps) 
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <p className="text-xs text-[#475569] mb-2">Click a bar to explore department details.</p>
         <div
           role="img"
           aria-label={ariaLabel}
@@ -143,6 +153,13 @@ export function DepartmentSpendingChart({ data }: DepartmentSpendingChartProps) 
               layout="vertical"
               margin={{ top: 8, right: 40, bottom: 8, left: 180 }}
               aria-hidden="true"
+              style={{ cursor: "pointer" }}
+              onClick={(chartData: unknown) => {
+                const d = chartData as { activePayload?: Array<{ payload?: { department?: string } }> } | null;
+                if (d?.activePayload && d.activePayload.length > 0) {
+                  handleBarClick(d.activePayload[0].payload ?? null);
+                }
+              }}
             >
               <XAxis
                 type="number"
@@ -175,6 +192,7 @@ export function DepartmentSpendingChart({ data }: DepartmentSpendingChartProps) 
                   <Cell
                     key={`cell-${index}`}
                     fill={`rgba(37, 99, 235, ${0.45 + (index / (sorted.length - 1 || 1)) * 0.55})`}
+                    aria-label={`${entry.department}: ${currencyTick(entry.total_value)}. Click to view details.`}
                   />
                 ))}
                 <LabelList

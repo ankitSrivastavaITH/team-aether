@@ -183,6 +183,65 @@ def list_departments() -> List[Optional[str]]:
 
 
 # ---------------------------------------------------------------------------
+# GET /api/contracts/departments/{department}
+# ---------------------------------------------------------------------------
+
+@router.get("/departments/{department}")
+def department_detail(department: str):
+    """Get department analytics: contracts, top vendors, risk breakdown, spending over time."""
+    contracts = query(
+        """SELECT department, contract_number, value, supplier, procurement_type, description,
+           solicitation_type, CAST(start_date AS VARCHAR) AS start_date,
+           CAST(end_date AS VARCHAR) AS end_date, days_to_expiry, risk_level
+        FROM city_contracts WHERE department = ?
+        ORDER BY
+            CASE WHEN days_to_expiry >= 0 THEN 0 ELSE 1 END,
+            days_to_expiry ASC NULLS LAST""",
+        [department],
+    )
+
+    stats = query(
+        """SELECT COUNT(*) AS total_contracts, SUM(value) AS total_value,
+           SUM(CASE WHEN days_to_expiry BETWEEN 0 AND 30 THEN 1 ELSE 0 END) AS expiring_30,
+           SUM(CASE WHEN days_to_expiry BETWEEN 0 AND 60 THEN 1 ELSE 0 END) AS expiring_60,
+           SUM(CASE WHEN risk_level = 'expired' THEN 1 ELSE 0 END) AS expired_count
+        FROM city_contracts WHERE department = ?""",
+        [department],
+    )
+
+    top_vendors = query(
+        """SELECT supplier, COUNT(*) AS count, SUM(value) AS total_value
+        FROM city_contracts WHERE department = ?
+        GROUP BY supplier ORDER BY total_value DESC LIMIT 10""",
+        [department],
+    )
+
+    risk_breakdown = query(
+        """SELECT risk_level, COUNT(*) AS count
+        FROM city_contracts WHERE department = ?
+        GROUP BY risk_level ORDER BY count DESC""",
+        [department],
+    )
+
+    # Spending by year (based on start_date year)
+    yearly_spending = query(
+        """SELECT EXTRACT(YEAR FROM start_date) AS year, COUNT(*) AS count, SUM(value) AS total_value
+        FROM city_contracts WHERE department = ? AND start_date IS NOT NULL
+        GROUP BY year ORDER BY year""",
+        [department],
+    )
+
+    return {
+        "department": department,
+        "contracts": contracts,
+        "stats": stats[0] if stats else {},
+        "top_vendors": top_vendors,
+        "risk_breakdown": risk_breakdown,
+        "yearly_spending": yearly_spending,
+    }
+
+
+# ---------------------------------------------------------------------------
 # GET /api/contracts/vendor/{supplier}
 # ---------------------------------------------------------------------------
 
@@ -249,6 +308,81 @@ def vendor_detail(supplier: str) -> VendorDetail:
 # ---------------------------------------------------------------------------
 # GET /api/contracts/{contract_number}
 # ---------------------------------------------------------------------------
+
+@router.get("/concentration-risk")
+def concentration_risk():
+    """Identify departments where a single vendor dominates spending."""
+
+    # Per-department vendor concentration
+    dept_vendor = query("""
+        WITH dept_totals AS (
+            SELECT department, SUM(value) AS dept_total
+            FROM city_contracts WHERE value > 0
+            GROUP BY department
+        ),
+        vendor_shares AS (
+            SELECT
+                c.department,
+                c.supplier,
+                SUM(c.value) AS vendor_total,
+                dt.dept_total,
+                ROUND(SUM(c.value) / dt.dept_total * 100, 1) AS share_pct
+            FROM city_contracts c
+            JOIN dept_totals dt ON c.department = dt.department
+            WHERE c.value > 0
+            GROUP BY c.department, c.supplier, dt.dept_total
+        )
+        SELECT department, supplier, vendor_total, dept_total, share_pct
+        FROM vendor_shares
+        WHERE share_pct >= 25
+        ORDER BY share_pct DESC
+    """)
+
+    # Overall top vendor concentration (HHI-style)
+    overall_hhi = query("""
+        WITH vendor_totals AS (
+            SELECT supplier, SUM(value) AS total
+            FROM city_contracts WHERE value > 0
+            GROUP BY supplier
+        ),
+        grand_total AS (
+            SELECT SUM(total) AS gt FROM vendor_totals
+        )
+        SELECT
+            SUM(POWER(vt.total / gt.gt * 100, 2))::INTEGER AS hhi_index,
+            COUNT(DISTINCT vt.supplier) AS unique_vendors
+        FROM vendor_totals vt, grand_total gt
+    """)
+
+    # Departments with highest concentration
+    concentrated_depts = query("""
+        WITH dept_vendor_shares AS (
+            SELECT
+                department,
+                supplier,
+                SUM(value) AS vendor_total,
+                SUM(SUM(value)) OVER (PARTITION BY department) AS dept_total
+            FROM city_contracts WHERE value > 0
+            GROUP BY department, supplier
+        )
+        SELECT
+            department,
+            MAX(vendor_total / dept_total * 100)::DOUBLE AS max_vendor_share,
+            FIRST(supplier ORDER BY vendor_total DESC) AS top_vendor,
+            COUNT(DISTINCT supplier) AS vendor_count
+        FROM dept_vendor_shares
+        GROUP BY department
+        HAVING MAX(vendor_total / dept_total * 100) >= 30
+        ORDER BY max_vendor_share DESC
+    """)
+
+    return {
+        "high_concentration_vendors": dept_vendor,
+        "overall_hhi": overall_hhi[0] if overall_hhi else {"hhi_index": 0, "unique_vendors": 0},
+        "concentrated_departments": concentrated_depts,
+        "methodology": "Vendor concentration measured as percentage of department spending. HHI (Herfindahl-Hirschman Index) measures overall market concentration. Higher values indicate greater concentration.",
+    }
+
 
 @router.get("/{contract_number}", response_model=Contract)
 def get_contract(contract_number: str) -> Contract:

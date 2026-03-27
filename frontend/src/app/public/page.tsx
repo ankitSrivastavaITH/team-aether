@@ -7,6 +7,7 @@ import { DataBadge } from "@/components/data-badge";
 import { Disclaimer } from "@/components/disclaimer";
 import { DepartmentSpendingChart, VendorPieChart } from "@/components/spending-charts";
 import { VendorCard } from "@/components/vendor-card";
+import { SpendingInsights } from "@/components/ai-insights";
 import { fetchAPI } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 
@@ -195,6 +196,9 @@ export default function PublicTransparencyPage() {
               />
             </div>
           </section>
+
+          {/* AI Spending Insights */}
+          <SpendingInsights />
 
           {/* Charts */}
           <section aria-label="Spending charts" className="space-y-4">
