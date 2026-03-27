@@ -86,3 +86,39 @@ def contract_size_distribution():
         ORDER BY sort_order
     """)
     return {"data": rows}
+
+
+@router.get("/monthly-activity")
+def monthly_activity():
+    """Contract starts and expirations by month for heatmap."""
+    starts = query("""
+        SELECT DATE_TRUNC('month', start_date)::VARCHAR AS month, COUNT(*) AS starts
+        FROM city_contracts WHERE start_date IS NOT NULL
+        GROUP BY DATE_TRUNC('month', start_date) ORDER BY month
+    """)
+    ends = query("""
+        SELECT DATE_TRUNC('month', end_date)::VARCHAR AS month, COUNT(*) AS expirations
+        FROM city_contracts WHERE end_date IS NOT NULL
+        GROUP BY DATE_TRUNC('month', end_date) ORDER BY month
+    """)
+    return {"starts": starts, "expirations": ends}
+
+
+@router.get("/department-scorecards")
+def department_scorecards():
+    """Per-department summary scorecards."""
+    return {"scorecards": query("""
+        SELECT
+            department,
+            COUNT(*) AS total_contracts,
+            SUM(value) AS total_value,
+            SUM(CASE WHEN days_to_expiry BETWEEN 0 AND 30 THEN 1 ELSE 0 END) AS expiring_30,
+            SUM(CASE WHEN days_to_expiry BETWEEN 0 AND 90 THEN 1 ELSE 0 END) AS expiring_90,
+            COUNT(DISTINCT supplier) AS unique_vendors,
+            ROUND(AVG(value), 0) AS avg_contract_value,
+            MAX(value) AS largest_contract
+        FROM city_contracts
+        WHERE department IS NOT NULL
+        GROUP BY department
+        ORDER BY total_value DESC
+    """)}
