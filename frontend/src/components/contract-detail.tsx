@@ -126,6 +126,15 @@ export function ContractDetail({ contract, open, onClose }: ContractDetailProps)
           <p className="text-sm text-slate-400">
             Source: City of Richmond Open Data (Socrata)
           </p>
+
+          {/* RFP Matching Advisory */}
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3 mt-4">
+            <p className="text-xs text-amber-800 dark:text-amber-300">
+              <strong>RFP Compliance Note:</strong> Before renewing or modifying this contract, verify that current terms match the original RFP/solicitation.
+              Contract terms that have been amended may no longer align with the original procurement.
+              Check the <a href="https://www.rva.gov/procurement-services" target="_blank" rel="noopener noreferrer" className="underline">OpenGov Procurement Portal</a> for the original solicitation.
+            </p>
+          </div>
         </div>
       </SheetContent>
     </Sheet>

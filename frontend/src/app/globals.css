@@ -99,3 +99,42 @@
     font-family: var(--font-sans), Inter, system-ui, sans-serif;
   }
 }
+
+@media print {
+  /* Hide navigation, sidebars, and floating elements */
+  nav, aside, [role="complementary"], .ask-richmond-panel,
+  button[aria-label="Open Ask Richmond chat"],
+  [role="dialog"] {
+    display: none !important;
+  }
+
+  /* Full width content */
+  main {
+    margin: 0 !important;
+    padding: 20px !important;
+    max-width: 100% !important;
+  }
+
+  /* Clean backgrounds */
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Show links */
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  /* Page breaks */
+  .page-break-before { page-break-before: always; }
+  h1, h2, h3 { page-break-after: avoid; }
+
+  /* Cards print flat */
+  [class*="card"], [class*="Card"] {
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+  }
+}

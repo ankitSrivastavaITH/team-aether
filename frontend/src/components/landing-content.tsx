@@ -13,6 +13,7 @@ import {
   FileText,
   TrendingUp,
   ArrowRight,
+  Info,
 } from "lucide-react";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { WelcomeModal } from "@/components/welcome-modal";

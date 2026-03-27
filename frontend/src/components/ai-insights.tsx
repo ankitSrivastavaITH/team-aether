@@ -9,6 +9,7 @@ import {
   Clock,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { FeedbackButton } from "@/components/feedback-button";
 
 // ─── Spending Insights (Public View) ────────────────────────────
 
@@ -53,6 +54,9 @@ export function SpendingInsights() {
         ))}
       </ul>
       <p className="text-xs text-slate-400 mt-4">{data.disclaimer}</p>
+      <div className="mt-3">
+        <FeedbackButton context="spending-insights" />
+      </div>
     </Card>
   );
 }
@@ -209,6 +213,10 @@ export function RiskNarrative() {
           {showAll ? "Show less" : `Show all ${data.alerts.length} alerts`}
         </button>
       )}
+
+      <div className="px-4 py-2 border-t border-red-100 flex justify-end">
+        <FeedbackButton context="risk-narrative" />
+      </div>
     </Card>
   );
 }
