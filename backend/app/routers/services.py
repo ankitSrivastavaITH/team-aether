@@ -40,13 +40,13 @@ CITY_SERVICES = [
     {"category": "Abandoned Vehicle", "department": "Police", "311_type": "Abandoned Vehicle", "description": "Report a vehicle that appears abandoned on a public street", "next_step": "Submit via RVA311 with vehicle description and location", "url": "https://www.rva311.com"},
     {"category": "Noise Complaint", "department": "Police", "311_type": "Noise Complaint", "description": "Report excessive noise from construction, parties, or businesses", "next_step": "Non-emergency: call (804) 646-5100. Emergency: call 911", "url": "https://www.rva.gov/police"},
     {"category": "Building Permit", "department": "Planning & Development Review", "311_type": "Permit Application", "description": "Apply for building, electrical, plumbing, or mechanical permits", "next_step": "Visit rva.gov/planning-development-review or call (804) 646-6340", "url": "https://www.rva.gov/planning-development-review"},
-    {"category": "Business License", "department": "Finance", "311_type": "Business License", "description": "Apply for, renew, or update a City of Richmond business license", "next_step": "Visit rva.gov/finance or the Department of Finance at City Hall", "url": "https://www.rva.gov/finance"},
-    {"category": "Property Tax", "department": "Finance", "311_type": "Property Tax Inquiry", "description": "Questions about property tax assessments, payments, or exemptions", "next_step": "Visit rva.gov/finance or call (804) 646-7000", "url": "https://www.rva.gov/finance"},
+    {"category": "Business License", "department": "Finance", "311_type": "Business License", "description": "Apply for, renew, or update a City of Richmond business license. BPOL (Business Professional Occupational License) required for all businesses operating in the City.", "next_step": "Apply online at rva.gov/finance/business-tax or visit the Department of Finance at City Hall, Room 102. Call (804) 646-7000 for questions.", "url": "https://www.rva.gov/finance/business-tax", "links": {"Apply Online": "https://www.rva.gov/finance/business-tax", "Tax Rates": "https://www.rva.gov/finance/tax-rates", "City Hall Location": "https://www.rva.gov/finance"}},
+    {"category": "Property Tax", "department": "Finance", "311_type": "Property Tax Inquiry", "description": "Questions about real estate property tax assessments, payments, exemptions, or appeals. Richmond's real estate tax rate is $1.20 per $100 of assessed value. Personal property tax also applies to vehicles.", "next_step": "Pay online at rva.gov/finance/real-estate-tax. For assessment questions call (804) 646-7000. For tax relief programs (elderly/disabled), visit rva.gov/finance/tax-relief.", "url": "https://www.rva.gov/finance/real-estate-tax", "links": {"Pay Property Tax": "https://www.rva.gov/finance/real-estate-tax", "Tax Relief Programs": "https://www.rva.gov/finance/tax-relief", "Assessment Lookup": "https://www.rva.gov/assessor", "Personal Property Tax": "https://www.rva.gov/finance/personal-property-tax", "City Budget": "https://www.rva.gov/budget-and-strategic-planning/adopted-budget"}},
     {"category": "Parks / Recreation", "department": "Parks, Recreation and Community Facilities", "311_type": "Park Maintenance", "description": "Report park maintenance issues, damaged playground equipment, or request facility information", "next_step": "Submit via RVA311 or call (804) 646-5733", "url": "https://www.rva.gov/parks-recreation-and-community-facilities"},
     {"category": "Tree Removal / Trimming", "department": "Public Works - Urban Forestry", "311_type": "Tree - Removal/Trimming", "description": "Request tree trimming or removal on city property, report fallen trees blocking roads", "next_step": "Submit via RVA311. Emergencies blocking roads: call 3-1-1", "url": "https://www.rva311.com"},
     {"category": "Animal Control", "department": "Richmond Animal Care & Control", "311_type": "Animal Control", "description": "Report stray animals, animal abuse, or wildlife issues. Dog licensing", "next_step": "Emergencies: call (804) 646-5573. Non-emergency: submit via RVA311", "url": "https://www.rva.gov/richmond-animal-care-and-control"},
     {"category": "Code Violation", "department": "Planning & Development Review", "311_type": "Code Enforcement", "description": "Report property maintenance violations, zoning violations, or unsafe structures", "next_step": "Submit via RVA311 with address and description", "url": "https://www.rva311.com"},
-    {"category": "FOIA Request", "department": "City Attorney", "311_type": "FOIA", "description": "Submit a Freedom of Information Act request for public records", "next_step": "Email foia@rva.gov or submit online at rva.gov", "url": "https://www.rva.gov/city-attorney"},
+    {"category": "FOIA Request", "department": "City Attorney", "311_type": "FOIA", "description": "Submit a Freedom of Information Act (FOIA) request for public records. Virginia law requires a response within 5 business days.", "next_step": "Email foia@rva.gov with your request. Include specific records, date ranges, and departments. Response required within 5 business days by Virginia Code § 2.2-3704.", "url": "https://www.rva.gov/city-attorney/freedom-information-requests", "links": {"Submit FOIA": "https://www.rva.gov/city-attorney/freedom-information-requests", "Virginia FOIA Law": "https://law.lis.virginia.gov/vacode/title2.2/chapter37/"}},
     {"category": "Voter Registration", "department": "General Registrar", "311_type": "Voter Services", "description": "Register to vote, update registration, find polling location, request absentee ballot", "next_step": "Visit vote.elections.virginia.gov or call (804) 646-7950", "url": "https://vote.elections.virginia.gov"},
     {"category": "General Question", "department": "RVA311", "311_type": "General Information", "description": "General questions about City services, hours, locations, or who to contact", "next_step": "Call 3-1-1 or visit rva311.com", "url": "https://www.rva311.com"},
 ]
@@ -121,9 +121,10 @@ Given the resident's description, respond with a JSON object:
   "matched_category": "the best matching category name from the list",
   "department": "the responsible department",
   "confidence": "high" or "medium" or "low",
-  "next_step": "specific actionable next step for the resident",
-  "explanation": "1-2 sentence plain-language explanation of why this is the right service",
-  "url": "the URL to visit",
+  "next_step": "specific actionable next step for the resident — include phone numbers and specific page names",
+  "explanation": "2-3 sentence plain-language explanation. Be specific — include dollar amounts, timelines, or requirements when known from the service data. Use the description and links fields from the matched service.",
+  "url": "the most specific URL to visit (not generic rva.gov — use the specific page URL from the service data)",
+  "helpful_links": {{"Link Label": "https://url", "Another Link": "https://url"}},
   "alternative_categories": ["list of 1-2 other categories that might also apply"],
   "overlapping_services": [{{"category": "...", "department": "...", "why": "..."}}],
   "important_note": "any safety warnings or process issues the resident should know about",
@@ -137,10 +138,13 @@ When the issue involves road surfaces, ALWAYS mention: Pothole, Sinkhole, Road D
 If there's an important_note field for a service, include it in your explanation.
 
 Rules:
+- If the question is NOT about a Richmond city service (personal questions, jokes, off-topic), respond with: matched_category "General Question", confidence "low", explanation "I can only help with Richmond city services. Try describing a specific issue like 'pothole on my street' or 'how do I pay my water bill'."
 - If you're not confident, set confidence to "low" and add: "If this doesn't seem right, call 3-1-1 and a representative will help you."
 - Never make up services or departments that aren't in the list
 - Use plain language — the resident may not know government terminology
 - If the issue could be multiple categories (like pothole vs sinkhole), mention all of them in overlapping_services
+- When a service has a "links" field, include those links in your helpful_links response
+- Use the MOST SPECIFIC URL available — never just rva.gov/finance when a more specific page exists
 - Always provide a concrete next step, not just "contact the city"
 
 Return ONLY raw JSON, no markdown fences."""

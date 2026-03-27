@@ -24,6 +24,7 @@ interface NavigationResult {
   next_step: string;
   explanation: string;
   url: string;
+  helpful_links?: Record<string, string>;
   alternative_categories: string[];
   overlapping_services?: OverlappingService[];
   important_note?: string;
@@ -204,6 +205,27 @@ export default function ServiceNavigatorPage() {
               )}
             </div>
           </Card>
+
+          {/* Helpful links */}
+          {result.helpful_links && Object.keys(result.helpful_links).length > 0 && (
+            <Card className="p-4 dark:bg-slate-800 space-y-2">
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Helpful Links:</p>
+              <div className="flex flex-col gap-1.5">
+                {Object.entries(result.helpful_links).map(([label, url]) => (
+                  <a
+                    key={label}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline py-1"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
+                    {label}
+                  </a>
+                ))}
+              </div>
+            </Card>
+          )}
 
           {/* Alternative categories */}
           {result.alternative_categories && result.alternative_categories.length > 0 && (
