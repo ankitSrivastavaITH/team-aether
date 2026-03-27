@@ -1,8 +1,242 @@
-export default function PublicTransparency() {
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { AlertCircle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { DataBadge } from "@/components/data-badge";
+import { Disclaimer } from "@/components/disclaimer";
+import { DepartmentSpendingChart, VendorPieChart } from "@/components/spending-charts";
+import { VendorCard } from "@/components/vendor-card";
+import { fetchAPI } from "@/lib/api";
+import { formatCurrency } from "@/lib/utils";
+
+interface DepartmentStat {
+  department: string;
+  count: number;
+  total_value: number;
+}
+
+interface VendorStat {
+  supplier: string;
+  count: number;
+  total_value: number;
+}
+
+interface PublicStats {
+  total_contracts: number;
+  total_value: number;
+  expiring_30: number;
+  expiring_60: number;
+  expiring_90: number;
+  departments: DepartmentStat[];
+  top_vendors: VendorStat[];
+}
+
+function usePublicStats() {
+  return useQuery<PublicStats>({
+    queryKey: ["public-stats"],
+    queryFn: () => fetchAPI<PublicStats>("/api/contracts/stats"),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+function StatCard({
+  label,
+  value,
+  icon,
+  bgClass,
+  textClass,
+  subtext,
+}: {
+  label: string;
+  value: string;
+  icon?: React.ReactNode;
+  bgClass: string;
+  textClass: string;
+  subtext?: string;
+}) {
   return (
-    <div>
-      <h1 className="text-3xl font-bold">Public Transparency</h1>
-      <p className="text-[#475569] mt-2">Spending explorer — coming next.</p>
+    <Card className={`${bgClass} border-0 shadow-sm`}>
+      <CardContent className="pt-6 pb-6 flex flex-col items-center text-center gap-2">
+        {icon && (
+          <div className={`${textClass} mb-1`} aria-hidden="true">
+            {icon}
+          </div>
+        )}
+        <p className="text-base font-medium text-[#1E293B] leading-snug">{label}</p>
+        <p className={`text-4xl font-bold leading-none tracking-tight ${textClass}`}>
+          {value}
+        </p>
+        {subtext && (
+          <p className="text-sm text-[#475569] mt-1">{subtext}</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading spending data" className="space-y-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="h-36 rounded-xl bg-[#E2E8F0] animate-pulse"
+          />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="h-[400px] rounded-xl bg-[#E2E8F0] animate-pulse" />
+        <div className="h-[400px] rounded-xl bg-[#E2E8F0] animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+function ErrorMessage({ message }: { message: string }) {
+  return (
+    <div
+      role="alert"
+      className="bg-red-50 border border-red-200 rounded-xl p-6 text-center text-red-800"
+    >
+      <p className="font-semibold text-lg mb-2">Unable to load spending data</p>
+      <p className="text-base">{message}</p>
+      <p className="text-sm mt-3 text-red-600">
+        Please try refreshing the page. If the problem continues, the data service may be temporarily unavailable.
+      </p>
+    </div>
+  );
+}
+
+export default function PublicTransparencyPage() {
+  const { data, isLoading, isError, error } = usePublicStats();
+
+  const totalFormatted = data ? formatCurrency(data.total_value) : "—";
+  const totalContracts = data?.total_contracts ?? 0;
+  const expiring30 = data?.expiring_30 ?? 0;
+
+  // Top 20 vendors for vendor grid
+  const topVendors = data?.top_vendors
+    ? [...data.top_vendors]
+        .sort((a, b) => b.total_value - a.total_value)
+        .slice(0, 20)
+    : [];
+
+  return (
+    <div className="space-y-10">
+      {/* Hero header */}
+      <section aria-labelledby="hero-heading" className="text-center space-y-4 py-4">
+        <h1
+          id="hero-heading"
+          className="text-4xl sm:text-5xl font-extrabold text-[#1E293B] leading-tight"
+        >
+          Where Do Your Tax Dollars Go?
+        </h1>
+        <p className="text-lg sm:text-xl text-[#475569] max-w-2xl mx-auto leading-relaxed">
+          {isLoading ? (
+            "Loading contract data…"
+          ) : data ? (
+            <>
+              Explore{" "}
+              <strong className="text-[#1E293B]">
+                {totalContracts.toLocaleString()}
+              </strong>{" "}
+              City of Richmond contracts worth{" "}
+              <strong className="text-[#1E293B]">{totalFormatted}</strong>.
+            </>
+          ) : (
+            "Explore City of Richmond contracts."
+          )}
+        </p>
+        <div className="flex flex-wrap justify-center gap-3 pt-2">
+          <DataBadge source="City of Richmond Open Data" />
+        </div>
+      </section>
+
+      {/* Disclaimer */}
+      <Disclaimer />
+
+      {/* Main content */}
+      {isLoading && <LoadingSkeleton />}
+
+      {isError && (
+        <ErrorMessage
+          message={error instanceof Error ? error.message : "An unexpected error occurred."}
+        />
+      )}
+
+      {data && (
+        <>
+          {/* Hero stat cards */}
+          <section aria-label="Key spending figures">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <StatCard
+                label="Total Contract Value"
+                value={formatCurrency(data.total_value)}
+                bgClass="bg-blue-50"
+                textClass="text-[#2563EB]"
+                subtext="All active and historical contracts"
+              />
+              <StatCard
+                label="Active Contracts"
+                value={totalContracts.toLocaleString()}
+                bgClass="bg-purple-50"
+                textClass="text-[#7c3aed]"
+                subtext="Total contracts on record"
+              />
+              <StatCard
+                label="Expiring in 30 Days"
+                value={expiring30.toLocaleString()}
+                bgClass="bg-red-50"
+                textClass="text-[#dc2626]"
+                icon={<AlertCircle className="h-6 w-6" />}
+                subtext="Contracts needing renewal attention"
+              />
+            </div>
+          </section>
+
+          {/* Charts */}
+          <section aria-label="Spending charts" className="space-y-4">
+            <h2 className="sr-only">Spending Breakdown</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <DepartmentSpendingChart data={data.departments ?? []} />
+              <VendorPieChart data={data.top_vendors ?? []} />
+            </div>
+          </section>
+
+          {/* Top vendors grid */}
+          <section aria-labelledby="vendors-heading" className="space-y-4">
+            <h2
+              id="vendors-heading"
+              className="text-2xl font-bold text-[#1E293B]"
+            >
+              Top 20 Vendors
+            </h2>
+            <p className="text-base text-[#475569]">
+              Click any vendor to explore their contracts in detail.
+            </p>
+            {topVendors.length > 0 ? (
+              <ul
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 list-none p-0"
+                aria-label="Top vendors by contract value"
+              >
+                {topVendors.map((vendor) => (
+                  <li key={vendor.supplier}>
+                    <VendorCard
+                      name={vendor.supplier}
+                      contractCount={vendor.count}
+                      totalValue={vendor.total_value}
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[#475569] text-base">No vendor data available.</p>
+            )}
+          </section>
+        </>
+      )}
     </div>
   );
 }
