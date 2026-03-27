@@ -1,4 +1,5 @@
 import { PublicSidebar } from "@/components/public-sidebar";
+import { AskRichmondPanel } from "@/components/ask-richmond-panel";
 
 export const metadata = {
   title: "Public Transparency — RVA Contract Lens",
@@ -6,5 +7,10 @@ export const metadata = {
 };
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
-  return <PublicSidebar>{children}</PublicSidebar>;
+  return (
+    <>
+      <PublicSidebar>{children}</PublicSidebar>
+      <AskRichmondPanel />
+    </>
+  );
 }

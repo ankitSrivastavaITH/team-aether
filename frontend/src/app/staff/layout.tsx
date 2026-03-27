@@ -1,5 +1,6 @@
 import { StaffGate } from "@/components/staff-gate";
 import { StaffSidebar } from "@/components/staff-sidebar";
+import { AskRichmondPanel } from "@/components/ask-richmond-panel";
 
 export const metadata = {
   title: "Staff Dashboard — RVA Contract Lens",
@@ -10,6 +11,7 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
   return (
     <StaffGate>
       <StaffSidebar>{children}</StaffSidebar>
+      <AskRichmondPanel />
     </StaffGate>
   );
 }

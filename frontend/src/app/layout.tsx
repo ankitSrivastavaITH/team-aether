@@ -5,7 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { QueryProvider } from "@/components/query-provider";
 import { SkipLink } from "@/components/skip-link";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { AskRichmondPanel } from "@/components/ask-richmond-panel";
+// AskRichmondPanel moved to staff/public layouts — not shown on landing/about/compare
 import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -49,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ErrorBoundary>
               {children}
             </ErrorBoundary>
-            <AskRichmondPanel />
+            {/* AskRichmondPanel moved to staff/public layouts only — not on landing/about/compare */}
             <Toaster position="bottom-right" richColors closeButton />
           </QueryProvider>
         </ThemeProvider>
