@@ -48,6 +48,7 @@ class StatsResponse(BaseModel):
 
 
 class VendorDetail(BaseModel):
+    supplier: Optional[str] = None
     contracts: List[Contract]
     count: int
     total_value: Optional[float] = None

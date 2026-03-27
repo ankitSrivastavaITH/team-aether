@@ -300,6 +300,7 @@ def vendor_detail(supplier: str) -> VendorDetail:
     departments_served = [r["department"] for r in dept_rows]
 
     return VendorDetail(
+        supplier=supplier,
         contracts=contracts,
         count=agg_row.get("count", len(contracts)),
         total_value=agg_row.get("total_value"),

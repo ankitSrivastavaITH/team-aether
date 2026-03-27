@@ -56,28 +56,40 @@ function ResultCards({ results }: { results: Record<string, unknown>[] }) {
 
   return (
     <div className="space-y-1.5">
-      {visible.map((row, i) => (
-        <div key={i} className="bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-xs border border-slate-100 dark:border-slate-700">
-          <div className="flex items-start justify-between gap-2">
-            <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm leading-tight">
-              {String(row[nameKey] ?? `Row ${i + 1}`)}
-            </span>
-            {valueKey && row[valueKey] != null && (
-              <span className="font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap text-sm">
-                {formatVal(String(valueKey), row[valueKey])}
+      {visible.map((row, i) => {
+        const supplier = (row.supplier as string) || "";
+        const dept = (row.department as string) || "";
+        let href = "";
+        if (supplier) href = `/public/vendor/${encodeURIComponent(supplier)}`;
+        else if (dept) href = `/public/department/${encodeURIComponent(dept)}`;
+
+        return (
+          <button
+            key={i}
+            onClick={() => href && window.open(href, "_blank")}
+            className="w-full text-left bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-xs border border-slate-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-sm transition-all cursor-pointer group"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm leading-tight group-hover:text-blue-600">
+                {String(row[nameKey] ?? `Row ${i + 1}`)}
               </span>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-slate-500 dark:text-slate-400 mt-1">
-            {keys.filter(k => k !== nameKey && k !== valueKey && row[k] != null && String(row[k]).trim()).slice(0, 3).map(k => (
-              <span key={k}>
-                <span className="text-slate-400">{k.replace(/_/g, " ")}:</span>{" "}
-                <span className="text-slate-600 dark:text-slate-300">{formatVal(k, row[k])}</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      ))}
+              {valueKey && row[valueKey] != null && (
+                <span className="font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap text-sm">
+                  {formatVal(String(valueKey), row[valueKey])}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-slate-500 dark:text-slate-400 mt-1">
+              {keys.filter(k => k !== nameKey && k !== valueKey && row[k] != null && String(row[k]).trim()).slice(0, 3).map(k => (
+                <span key={k}>
+                  <span className="text-slate-400">{k.replace(/_/g, " ")}:</span>{" "}
+                  <span className="text-slate-600 dark:text-slate-300">{formatVal(k, row[k])}</span>
+                </span>
+              ))}
+            </div>
+          </button>
+        );
+      })}
       {results.length > 5 && (
         <button onClick={() => setExpanded(!expanded)} className="w-full text-center text-xs text-blue-600 py-1">
           {expanded ? "Show less" : `Show all ${results.length}`}
