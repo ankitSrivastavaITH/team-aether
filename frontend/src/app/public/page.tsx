@@ -8,6 +8,12 @@ import { Disclaimer } from "@/components/disclaimer";
 import { DepartmentSpendingChart, VendorPieChart } from "@/components/spending-charts";
 import { VendorCard } from "@/components/vendor-card";
 import { SpendingInsights } from "@/components/ai-insights";
+import {
+  YearlySpendingChart,
+  ExpiryTimelineChart,
+  ProcurementTypeChart,
+  ContractSizeChart,
+} from "@/components/analytics-charts";
 import { fetchAPI } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 
@@ -206,6 +212,25 @@ export default function PublicTransparencyPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <DepartmentSpendingChart data={data.departments ?? []} />
               <VendorPieChart data={data.top_vendors ?? []} />
+            </div>
+          </section>
+
+          {/* Deeper Analysis */}
+          <section aria-labelledby="deeper-analysis-heading" className="space-y-4">
+            <h2
+              id="deeper-analysis-heading"
+              className="text-2xl font-bold text-[#1E293B]"
+            >
+              Deeper Analysis
+            </h2>
+            <p className="text-base text-[#475569]">
+              Trends over time, upcoming expirations, procurement methods, and contract sizes.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <YearlySpendingChart />
+              <ExpiryTimelineChart />
+              <ProcurementTypeChart />
+              <ContractSizeChart />
             </div>
           </section>
 

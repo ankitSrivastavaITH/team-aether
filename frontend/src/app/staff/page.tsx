@@ -15,9 +15,11 @@ import {
 import { Disclaimer } from "@/components/disclaimer";
 import { RiskAlerts } from "@/components/risk-alerts";
 import { RiskNarrative } from "@/components/ai-insights";
+import { ExpiryTimelineChart } from "@/components/analytics-charts";
 import { NLQueryBar } from "@/components/nl-query-bar";
 import { ContractsTable } from "@/components/contracts-table";
 import { ContractDetail } from "@/components/contract-detail";
+import { ConcentrationRisk } from "@/components/concentration-risk";
 import { useContracts, useContractStats, useDepartments, type Contract } from "@/hooks/use-contracts";
 
 export default function StaffDashboard() {
@@ -110,6 +112,14 @@ export default function StaffDashboard() {
 
         {/* AI Risk Narrative */}
         <RiskNarrative />
+
+        {/* Expiry Timeline */}
+        <section aria-labelledby="expiry-timeline-heading">
+          <h2 id="expiry-timeline-heading" className="text-xl font-semibold text-slate-800 mb-4">
+            Upcoming Expirations
+          </h2>
+          <ExpiryTimelineChart />
+        </section>
 
         {/* Natural Language Query */}
         <NLQueryBar />
@@ -221,6 +231,14 @@ export default function StaffDashboard() {
         ) : (
           <ContractsTable contracts={contracts} onRowClick={handleRowClick} />
         )}
+
+        {/* Risk Analysis */}
+        <section aria-labelledby="risk-analysis-heading">
+          <h2 id="risk-analysis-heading" className="text-xl font-semibold text-slate-800 mb-4">
+            Risk Analysis
+          </h2>
+          <ConcentrationRisk />
+        </section>
       </div>
 
       {/* Contract Detail Drawer */}
