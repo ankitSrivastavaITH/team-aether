@@ -211,7 +211,7 @@ export default function StaffDashboard() {
         ) : contractsError ? (
           <div className="rounded-xl ring-1 ring-red-200 bg-red-50 p-8 text-center" role="alert">
             <p className="text-base text-red-700">
-              Failed to load contracts. Please check that the API is running at localhost:8000.
+              Unable to load contract data right now. This usually resolves in a few minutes. If the problem persists, please contact your administrator.
             </p>
           </div>
         ) : (
