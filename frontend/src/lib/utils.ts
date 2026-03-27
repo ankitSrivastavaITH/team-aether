@@ -6,13 +6,18 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(value: number | null): string {
-  if (value === null || value === undefined) return "N/A";
+  if (value === null || value === undefined) return "—";
+  if (value === 0) return "$0";
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
 }
 
 export function formatDate(d: string | null): string {
-  if (!d) return "N/A";
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  if (!d) return "—";
+  try {
+    return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  } catch {
+    return "—";
+  }
 }
 
 export function riskColor(level: string): string {
