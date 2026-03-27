@@ -175,15 +175,16 @@ export function ConcentrationRisk() {
 
   // Prepare chart data — top 10 concentrated departments
   const chartData = concentrated_departments
+    .filter((d) => d.department != null)
     .slice(0, 10)
     .map((d) => ({
       department:
-        d.department.length > 24
-          ? d.department.slice(0, 23) + "…"
-          : d.department,
-      fullDepartment: d.department,
-      share: parseFloat(d.max_vendor_share.toFixed(1)),
-      top_vendor: d.top_vendor,
+        (d.department || "Unknown").length > 24
+          ? (d.department || "Unknown").slice(0, 23) + "…"
+          : (d.department || "Unknown"),
+      fullDepartment: d.department || "Unknown",
+      share: parseFloat((d.max_vendor_share ?? 0).toFixed(1)),
+      top_vendor: d.top_vendor || "Unknown",
     }))
     .sort((a, b) => a.share - b.share); // ascending for horizontal bar (recharts renders bottom-to-top)
 
