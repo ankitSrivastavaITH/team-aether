@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Lightbulb, AlertTriangle, Loader2, ChevronDown, ChevronUp,
-  Clock, Building2, FileText,
+  Clock,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -105,145 +105,10 @@ const ACTION_STYLES: Record<string, { bg: string; text: string; label: string }>
   rebid: { bg: "bg-purple-100", text: "text-purple-800", label: "Rebid" },
 };
 
-const URGENCY_STYLES: Record<string, { bg: string; text: string }> = {
-  critical: { bg: "bg-red-100", text: "text-red-700" },
-  high: { bg: "bg-orange-100", text: "text-orange-700" },
-  medium: { bg: "bg-yellow-100", text: "text-yellow-700" },
-};
-
-function RiskAlertCard({ alert }: { alert: RiskAlert }) {
-  const [expanded, setExpanded] = useState(false);
-  const { contract: c, ai_recommendation: rec } = alert;
-  const actionStyle = ACTION_STYLES[rec.action] || ACTION_STYLES.review;
-  const urgencyStyle = URGENCY_STYLES[rec.urgency] || URGENCY_STYLES.high;
-
-  return (
-    <Card
-      className={`border-l-4 transition-all ${
-        rec.urgency === "critical"
-          ? "border-l-red-500"
-          : rec.urgency === "high"
-          ? "border-l-orange-500"
-          : "border-l-yellow-500"
-      }`}
-    >
-      {/* Clickable header */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full text-left p-4 hover:bg-slate-50/50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset rounded-lg"
-        aria-expanded={expanded}
-        aria-label={`${rec.action} ${c.supplier} ${formatCurrency(c.value)} contract. Click to expand details.`}
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <Badge className={`${actionStyle.bg} ${actionStyle.text} border-0 font-semibold`}>
-                {actionStyle.label}
-              </Badge>
-              <Badge className={`${urgencyStyle.bg} ${urgencyStyle.text} border-0`}>
-                {rec.urgency}
-              </Badge>
-              <span className="text-sm text-slate-500 flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                {c.days_to_expiry === 0 ? "Expires today" : `${c.days_to_expiry} days left`}
-              </span>
-            </div>
-            <p className="font-semibold text-base">{c.supplier}</p>
-            <p className="text-sm text-slate-600 mt-0.5">
-              {c.department} · {formatCurrency(c.value)}
-            </p>
-          </div>
-          <div className="flex-shrink-0 mt-1">
-            {expanded ? (
-              <ChevronUp className="h-5 w-5 text-slate-400" aria-hidden="true" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-slate-400" aria-hidden="true" />
-            )}
-          </div>
-        </div>
-      </button>
-
-      {/* Expandable detail */}
-      {expanded && (
-        <div className="px-4 pb-4 space-y-4 border-t border-slate-100 pt-4">
-          {/* AI Recommendation */}
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Lightbulb className="h-4 w-4 text-blue-600" aria-hidden="true" />
-              <span className="font-semibold text-sm text-blue-800">AI Recommendation</span>
-            </div>
-            <p className="text-sm text-blue-900 leading-relaxed">{rec.recommendation}</p>
-            {rec.risks && rec.risks.length > 0 && (
-              <div className="mt-3">
-                <span className="text-xs font-medium text-blue-700">Risks if no action:</span>
-                <ul className="mt-1 space-y-1">
-                  {rec.risks.map((risk, i) => (
-                    <li key={i} className="text-xs text-blue-800 flex items-start gap-1.5">
-                      <AlertTriangle className="h-3 w-3 mt-0.5 flex-shrink-0 text-blue-500" aria-hidden="true" />
-                      {risk}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* Contract Details */}
-          <div>
-            <h4 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
-              <FileText className="h-4 w-4" aria-hidden="true" />
-              Contract Details
-            </h4>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              <div>
-                <dt className="text-slate-500">Contract #</dt>
-                <dd className="font-mono text-xs mt-0.5">{c.contract_number}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Value</dt>
-                <dd className="font-semibold mt-0.5">{formatCurrency(c.value)}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Department</dt>
-                <dd className="mt-0.5">{c.department}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Vendor</dt>
-                <dd className="mt-0.5">{c.supplier}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Start Date</dt>
-                <dd className="mt-0.5">{formatDate(c.start_date)}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Expiry Date</dt>
-                <dd className="mt-0.5 font-semibold text-red-700">{formatDate(c.end_date)}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Procurement Type</dt>
-                <dd className="mt-0.5">{c.procurement_type}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Solicitation</dt>
-                <dd className="mt-0.5">{c.solicitation_type}</dd>
-              </div>
-            </dl>
-          </div>
-
-          {/* Description */}
-          {c.description && (
-            <div>
-              <h4 className="text-sm font-semibold text-slate-700 mb-1">Description</h4>
-              <p className="text-sm text-slate-600 leading-relaxed">{c.description}</p>
-            </div>
-          )}
-        </div>
-      )}
-    </Card>
-  );
-}
 
 export function RiskNarrative() {
+  const [showAll, setShowAll] = useState(false);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const { data, isLoading } = useQuery({
     queryKey: ["risk-narrative"],
     queryFn: () => fetchAPI<RiskData>("/api/insights/risk-narrative"),
@@ -252,7 +117,7 @@ export function RiskNarrative() {
 
   if (isLoading)
     return (
-      <Card className="p-6 border-red-200 bg-red-50/30">
+      <Card className="p-4 border-red-200 bg-red-50/30">
         <div className="flex items-center gap-2 text-slate-500">
           <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
           <span>Analyzing contract risk...</span>
@@ -262,41 +127,88 @@ export function RiskNarrative() {
 
   if (!data?.alerts?.length) return null;
 
+  const visibleAlerts = showAll ? data.alerts : data.alerts.slice(0, 3);
+
   return (
-    <div role="region" aria-label="AI-generated risk alerts" className="space-y-4">
-      <div className="flex items-center justify-between">
+    <Card className="border-red-200 bg-red-50/20 overflow-hidden" role="region" aria-label="AI-generated risk alerts">
+      {/* Compact header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-red-100">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-red-600" aria-hidden="true" />
-          <h2 className="text-lg font-semibold text-red-800">
-            Risk Alerts — {data.total_critical} Contracts Need Action
+          <AlertTriangle className="h-4 w-4 text-red-600" aria-hidden="true" />
+          <h2 className="text-sm font-semibold text-red-800">
+            {data.total_critical} Contracts Need Action
           </h2>
         </div>
-      </div>
-
-      {/* Department risk summary */}
-      {data.department_risk && data.department_risk.length > 0 && (
-        <div className="flex gap-2 flex-wrap">
-          {data.department_risk.map((d, i) => (
-            <Badge
-              key={i}
-              variant="outline"
-              className="text-sm px-3 py-1 gap-1.5 border-red-200 text-red-700"
-            >
-              <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
-              {d.department}: {d.critical} critical
+        <div className="flex gap-1.5 flex-wrap">
+          {(data.department_risk || []).slice(0, 3).map((d, i) => (
+            <Badge key={i} variant="outline" className="text-xs px-2 py-0.5 border-red-200 text-red-600">
+              {d.department.length > 15 ? d.department.slice(0, 14) + "…" : d.department}: {d.critical}
             </Badge>
           ))}
         </div>
-      )}
-
-      {/* Individual alerts */}
-      <div className="space-y-3">
-        {data.alerts.map((alert, i) => (
-          <RiskAlertCard key={i} alert={alert} />
-        ))}
       </div>
 
-      <p className="text-xs text-red-400">{data.disclaimer}</p>
-    </div>
+      {/* Compact alert rows */}
+      <div className="divide-y divide-red-100">
+        {visibleAlerts.map((alert, i) => {
+          const { contract: c, ai_recommendation: rec } = alert;
+          const actionStyle = ACTION_STYLES[rec.action] || ACTION_STYLES.review;
+          const isExpanded = expandedId === i;
+
+          return (
+            <div key={i}>
+              <button
+                onClick={() => setExpandedId(isExpanded ? null : i)}
+                className="w-full text-left px-4 py-2.5 hover:bg-red-50/50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-inset flex items-center gap-3"
+                aria-expanded={isExpanded}
+                style={{ minHeight: 44 }}
+              >
+                <Badge className={`${actionStyle.bg} ${actionStyle.text} border-0 text-xs px-2 py-0.5 flex-shrink-0`}>
+                  {actionStyle.label}
+                </Badge>
+                <span className="font-medium text-sm text-slate-800 truncate flex-1">{c.supplier}</span>
+                <span className="text-sm font-semibold text-slate-700 flex-shrink-0">{formatCurrency(c.value)}</span>
+                <span className="text-xs text-slate-400 flex-shrink-0 flex items-center gap-1 w-20 justify-end">
+                  <Clock className="h-3 w-3" aria-hidden="true" />
+                  {c.days_to_expiry === 0 ? "Today" : `${c.days_to_expiry}d`}
+                </span>
+                {isExpanded
+                  ? <ChevronUp className="h-4 w-4 text-slate-300 flex-shrink-0" aria-hidden="true" />
+                  : <ChevronDown className="h-4 w-4 text-slate-300 flex-shrink-0" aria-hidden="true" />
+                }
+              </button>
+
+              {isExpanded && (
+                <div className="px-4 pb-3 space-y-3 bg-white border-t border-red-100">
+                  <div className="bg-blue-50 rounded-lg p-3 mt-2">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Lightbulb className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
+                      <span className="font-semibold text-xs text-blue-800">AI Recommendation</span>
+                    </div>
+                    <p className="text-sm text-blue-900">{rec.recommendation}</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div><span className="text-slate-400">Department</span><br/><span className="text-slate-700">{c.department}</span></div>
+                    <div><span className="text-slate-400">Expires</span><br/><span className="text-slate-700 font-medium">{formatDate(c.end_date)}</span></div>
+                    <div><span className="text-slate-400">Type</span><br/><span className="text-slate-700">{c.procurement_type}</span></div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Show more/less */}
+      {data.alerts.length > 3 && (
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className="w-full px-4 py-2 text-center text-xs text-red-600 hover:text-red-800 hover:bg-red-50 transition-colors border-t border-red-100 font-medium"
+          style={{ minHeight: 36 }}
+        >
+          {showAll ? "Show less" : `Show all ${data.alerts.length} alerts`}
+        </button>
+      )}
+    </Card>
   );
 }
