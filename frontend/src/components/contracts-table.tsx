@@ -73,7 +73,7 @@ export function ContractsTable({ contracts, onRowClick }: ContractsTableProps) {
         cell: ({ row, getValue }) => {
           const level = (getValue() as string) ?? "unknown";
           const colorClass = riskColor(level);
-          const daysLeft = row.original.days_until_expiry as number | undefined;
+          const daysLeft = row.original.days_to_expiry as number | undefined;
           const daysLabel = typeof daysLeft === "number" ? (daysLeft < 0 ? "Exp" : `${daysLeft}d`) : "";
           return (
             <span
@@ -94,7 +94,7 @@ export function ContractsTable({ contracts, onRowClick }: ContractsTableProps) {
       },
       {
         id: "vendor_name",
-        accessorFn: (row) => (row.vendor_name as string) ?? (row.contractor_name as string) ?? "",
+        accessorFn: (row) => (row.supplier as string) ?? (row.vendor_name as string) ?? "",
         header: "Vendor",
         cell: ({ getValue }) => {
           const value = getValue() as string;
@@ -126,7 +126,7 @@ export function ContractsTable({ contracts, onRowClick }: ContractsTableProps) {
       },
       {
         id: "description",
-        accessorFn: (row) => (row.description as string) ?? (row.contract_description as string) ?? "",
+        accessorFn: (row) => (row.description as string) ?? "",
         header: "Description",
         cell: ({ getValue }) => {
           const value = (getValue() as string) ?? "";
@@ -144,7 +144,7 @@ export function ContractsTable({ contracts, onRowClick }: ContractsTableProps) {
       },
       {
         id: "amount",
-        accessorFn: (row) => (row.amount as number) ?? (row.contract_amount as number) ?? null,
+        accessorFn: (row) => (row.value as number) ?? (row.amount as number) ?? null,
         header: "Value",
         cell: ({ getValue }) => (
           <span className="text-base text-slate-800 whitespace-nowrap">
@@ -176,13 +176,13 @@ export function ContractsTable({ contracts, onRowClick }: ContractsTableProps) {
         },
       },
       {
-        id: "days_until_expiry",
-        accessorKey: "days_until_expiry",
+        id: "days_to_expiry",
+        accessorKey: "days_to_expiry",
         header: "Days Left",
         cell: ({ getValue }) => <DaysLeftDisplay daysLeft={getValue() as number | null} />,
         sortingFn: (rowA, rowB) => {
-          const a = (rowA.getValue("days_until_expiry") as number) ?? Infinity;
-          const b = (rowB.getValue("days_until_expiry") as number) ?? Infinity;
+          const a = (rowA.getValue("days_to_expiry") as number) ?? Infinity;
+          const b = (rowB.getValue("days_to_expiry") as number) ?? Infinity;
           return a - b;
         },
       },
@@ -267,7 +267,7 @@ export function ContractsTable({ contracts, onRowClick }: ContractsTableProps) {
                 }}
                 tabIndex={0}
                 role="button"
-                aria-label={`View details for ${(row.original.vendor_name as string) ?? "contract"}`}
+                aria-label={`View details for ${(row.original.supplier as string) ?? "contract"}`}
                 className={`border-b border-slate-100 cursor-pointer transition-all hover:bg-blue-50/70 hover:border-l-[3px] hover:border-l-blue-500 focus:outline-none focus:ring-3 focus:ring-inset focus:ring-blue-500 ${
                   rowIndex % 2 === 0 ? "bg-white" : "bg-slate-50/40"
                 }`}
