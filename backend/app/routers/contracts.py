@@ -560,3 +560,42 @@ def get_contract(contract_number: str) -> Contract:
             status_code=404, detail=f"Contract '{contract_number}' not found"
         )
     return Contract(**rows[0])
+
+
+@router.get("/debarment-check/{supplier}")
+def check_debarment(supplier: str):
+    """Check if a vendor appears in SAM.gov exclusions (debarment) list.
+    Uses the SAM.gov Entity API with DEMO_KEY for basic access."""
+    import httpx
+    
+    result = {
+        "supplier": supplier,
+        "checked": True,
+        "debarred": False,
+        "source": "SAM.gov Exclusions",
+        "disclaimer": "This is an automated lookup — verify with official SAM.gov records before making procurement decisions.",
+    }
+    
+    try:
+        resp = httpx.get(
+            "https://api.sam.gov/entity-information/v3/exclusions",
+            params={"api_key": "DEMO_KEY", "q": supplier, "limit": 5},
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            total = data.get("totalRecords", 0)
+            if total > 0:
+                result["debarred"] = True
+                result["matches"] = total
+                result["details"] = "This vendor has exclusion records in SAM.gov. Review before awarding contracts."
+            else:
+                result["details"] = "No exclusion records found in SAM.gov for this vendor."
+        else:
+            result["checked"] = False
+            result["details"] = "Could not reach SAM.gov exclusions API. Check manually at sam.gov."
+    except Exception:
+        result["checked"] = False
+        result["details"] = "Could not reach SAM.gov exclusions API. Check manually at sam.gov."
+    
+    return result
