@@ -6,6 +6,60 @@ import { Card } from "@/components/ui/card";
 import { Search, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { postAPI } from "@/lib/api";
 
+function formatResultValue(key: string, val: unknown): string {
+  if (val === null || val === undefined) return "—";
+  const s = String(val);
+  if ((key === "value" || key === "total_value" || key.includes("value")) && !isNaN(Number(val)) && Number(val) > 0) {
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(val));
+  }
+  if (key.includes("date") && s.match(/^\d{4}-\d{2}-\d{2}/)) {
+    return new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+  return s;
+}
+
+function ResultCards({ results }: { results: Record<string, unknown>[] }) {
+  const [showAll, setShowAll] = useState(false);
+  if (!results.length) return null;
+
+  const keys = Object.keys(results[0]);
+  const nameKey = keys.find(k => k === "supplier" || k === "department" || k === "title" || k === "name") || keys[0];
+  const valueKey = keys.find(k => k === "value" || k === "total_value" || k.includes("value"));
+  const otherKeys = keys.filter(k => k !== nameKey);
+  const visible = showAll ? results.slice(0, 100) : results.slice(0, 8);
+
+  return (
+    <div className="space-y-2">
+      {visible.map((row, i) => (
+        <div key={i} className="bg-slate-50 dark:bg-slate-800 rounded-lg px-4 py-3 text-sm space-y-1 border border-slate-100 dark:border-slate-700">
+          <div className="flex items-start justify-between gap-3">
+            <span className="font-semibold text-slate-800 dark:text-slate-200">{String(row[nameKey] ?? `Row ${i + 1}`)}</span>
+            {valueKey && row[valueKey] != null && (
+              <span className="font-bold text-blue-700 dark:text-blue-400 whitespace-nowrap">{formatResultValue(String(valueKey), row[valueKey])}</span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-500 dark:text-slate-400 text-xs">
+            {otherKeys.filter(k => k !== valueKey && row[k] != null && String(row[k]).trim() !== "").slice(0, 5).map(k => (
+              <span key={k}>
+                <span className="text-slate-400 dark:text-slate-500">{k.replace(/_/g, " ")}:</span>{" "}
+                <span className="text-slate-600 dark:text-slate-300">{formatResultValue(k, row[k])}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+      {results.length > 8 && (
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className="w-full text-center text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 py-2 font-medium"
+        >
+          {showAll ? "Show less" : `Show all ${results.length} results`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 const EXAMPLE_QUERIES = [
   "Show me all contracts expiring in the next 30 days",
   "Which department has the highest total contract value?",
@@ -149,32 +203,9 @@ export function NLQueryBar() {
           {/* Result count */}
           <p className="text-sm text-gray-500">{result.total} result{result.total !== 1 ? "s" : ""} found</p>
 
-          {/* Results table */}
+          {/* Results — formatted cards */}
           {result.results.length > 0 && (
-            <div className="overflow-auto max-h-[500px] border rounded-lg">
-              <table className="w-full text-sm" role="table" aria-label="Query results">
-                <thead className="bg-gray-50 sticky top-0">
-                  <tr>
-                    {Object.keys(result.results[0]).map((key) => (
-                      <th key={key} scope="col" className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">
-                        {key.replace(/_/g, " ")}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.results.slice(0, 50).map((row, i) => (
-                    <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
-                      {Object.values(row).map((val, j) => (
-                        <td key={j} className="px-4 py-3 max-w-[250px] truncate" title={String(val ?? "")}>
-                          {String(val ?? "")}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ResultCards results={result.results} />
           )}
 
           {result.results.length > 50 && (

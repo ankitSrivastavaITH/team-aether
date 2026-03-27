@@ -28,6 +28,14 @@ The database has one table: city_contracts with these columns:
 
 Today's date is 2026-03-27. There are 1,365 total contracts worth approximately $6.1 billion.
 
+COMMON QUERY PATTERNS:
+- "contracts expiring in X days": SELECT * FROM city_contracts WHERE days_to_expiry BETWEEN 0 AND X ORDER BY days_to_expiry ASC LIMIT 100
+- "top vendors": SELECT supplier, COUNT(*) AS num_contracts, SUM(value) AS total_value FROM city_contracts GROUP BY supplier ORDER BY total_value DESC LIMIT N
+- "department spending": SELECT department, COUNT(*) AS contracts, SUM(value) AS total_value FROM city_contracts GROUP BY department ORDER BY total_value DESC
+- "contracts with [vendor]": SELECT * FROM city_contracts WHERE supplier ILIKE '%vendor%' ORDER BY value DESC
+- "contracts over $X": SELECT * FROM city_contracts WHERE value > X ORDER BY value DESC LIMIT 100
+- "show me all [department] contracts": SELECT * FROM city_contracts WHERE department ILIKE '%dept%' ORDER BY days_to_expiry ASC LIMIT 100
+
 RULES:
 - Return ONLY a JSON object: {"sql": "SELECT ...", "explanation": "plain English explanation of what this query does"}
 - Only SELECT queries allowed — no INSERT, UPDATE, DELETE, DROP, ALTER
@@ -35,6 +43,9 @@ RULES:
 - Limit results to 100 rows unless the user asks for more
 - Format currency values with value column (DOUBLE type)
 - For "expiring soon" queries, use days_to_expiry BETWEEN 0 AND N
+- For active/future contracts only, add: WHERE days_to_expiry >= 0
+- Always include ORDER BY for useful result ordering
+- Use SUM(value), COUNT(*), AVG(value) for aggregate questions
 - Do NOT wrap response in markdown code fences
 - Return raw JSON only"""
 
