@@ -336,12 +336,12 @@ def list_state_contracts():
 
 @router.get("/multi-source-stats")
 def multi_source_stats():
-    """Stats across all contract sources."""
+    """Stats across all contract sources — City, Federal, State, VITA."""
     city = query("SELECT 'City of Richmond' AS source, COUNT(*) AS count, SUM(value) AS total_value FROM city_contracts")
 
-    # Try federal and state tables (may not exist yet)
     federal = []
     state = []
+    vita = []
     try:
         federal = query("SELECT 'SAM.gov (Federal)' AS source, COUNT(*) AS count, SUM(value) AS total_value FROM federal_contracts WHERE value IS NOT NULL")
     except Exception:
@@ -350,8 +350,12 @@ def multi_source_stats():
         state = query("SELECT 'eVA (Virginia)' AS source, COUNT(*) AS count, SUM(value) AS total_value FROM state_contracts")
     except Exception:
         pass
+    try:
+        vita = query("SELECT 'VITA (State IT)' AS source, COUNT(*) AS count, SUM(value) AS total_value FROM vita_contracts WHERE value IS NOT NULL")
+    except Exception:
+        pass
 
-    return {"sources": (city or []) + (federal or []) + (state or [])}
+    return {"sources": (city or []) + (federal or []) + (state or []) + (vita or [])}
 
 
 # ---------------------------------------------------------------------------
@@ -452,24 +456,6 @@ def list_federal_contracts():
         "total_value": total_value or 0,
         "source": "SAM.gov (Federal)"
     }
-
-
-# ---------------------------------------------------------------------------
-# GET /api/contracts/multi-source-stats
-# ---------------------------------------------------------------------------
-
-@router.get("/multi-source-stats")
-def multi_source_stats():
-    """Aggregated stats across City and Federal contract sources."""
-    city = query("""
-        SELECT 'City of Richmond' AS source, COUNT(*) AS count, SUM(value) AS total_value
-        FROM city_contracts
-    """)
-    federal = query("""
-        SELECT 'SAM.gov (Federal)' AS source, COUNT(*) AS count, SUM(value) AS total_value
-        FROM federal_contracts WHERE value IS NOT NULL
-    """)
-    return {"sources": (city or []) + (federal or [])}
 
 
 # ---------------------------------------------------------------------------
@@ -599,3 +585,22 @@ def check_debarment(supplier: str):
         result["details"] = "Could not reach SAM.gov exclusions API. Check manually at sam.gov."
     
     return result
+
+
+@router.get("/vita")
+def list_vita_contracts():
+    """List VITA statewide IT contracts."""
+    rows = query("SELECT * FROM vita_contracts ORDER BY value DESC NULLS LAST")
+    tv = 0
+    try:
+        result = query("SELECT SUM(value) AS tv FROM vita_contracts WHERE value IS NOT NULL")
+        if result:
+            tv = result[0].get("tv", 0) or 0
+    except Exception:
+        pass
+    return {
+        "contracts": rows,
+        "total": len(rows),
+        "total_value": tv,
+        "source": "VITA (Virginia IT Agency)",
+    }
