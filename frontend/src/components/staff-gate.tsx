@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Shield, Lock } from "lucide-react";
+import { toast } from "sonner";
 
 const STAFF_CODE = "rva2026"; // Simple access code for demo
 
@@ -22,8 +23,10 @@ export function StaffGate({ children }: { children: React.ReactNode }) {
     if (code.toLowerCase() === STAFF_CODE) {
       setAuthenticated(true);
       sessionStorage.setItem("staff_auth", "true");
+      toast.success("Welcome to the Staff Dashboard");
     } else {
       setError(true);
+      toast.error("Invalid access code");
     }
   }
 

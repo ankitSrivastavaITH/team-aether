@@ -8,6 +8,7 @@ import {
   Sparkles, Minimize2, Maximize2,
 } from "lucide-react";
 import { postAPI } from "@/lib/api";
+import { toast } from "sonner";
 
 interface QueryResult {
   sql?: string;
@@ -217,6 +218,7 @@ export function AskRichmondPanel() {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMsg]);
+      toast.error("Query failed", { description: "Could not connect to the server." });
     } finally {
       setLoading(false);
     }

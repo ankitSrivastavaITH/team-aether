@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LanguageToggle } from "@/components/language-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const COLLAPSE_KEY = "staff-sidebar-collapsed";
 
@@ -61,8 +62,8 @@ function NavItem({
         collapsed ? "justify-center px-2" : "px-3"
       } ${
         active
-          ? "bg-blue-50 text-blue-700 font-medium"
-          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          ? "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-medium"
+          : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100"
       }`}
       style={{ minHeight: 44 }}
       title={collapsed ? label : undefined}
@@ -95,7 +96,7 @@ function SidebarContent({
     <div className="flex flex-col h-full">
       {/* Logo / Title */}
       <div
-        className={`flex items-center border-b border-slate-200 shrink-0 ${
+        className={`flex items-center border-b border-slate-200 dark:border-slate-700 shrink-0 ${
           collapsed ? "justify-center px-2 h-16" : "px-4 h-16 gap-3"
         }`}
       >
@@ -104,7 +105,7 @@ function SidebarContent({
             href="/staff"
             className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-1"
           >
-            <span className="font-bold text-lg text-slate-900 whitespace-nowrap">
+            <span className="font-bold text-lg text-slate-900 dark:text-slate-100 whitespace-nowrap">
               RVA Contract Lens
             </span>
             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700 uppercase tracking-wide">
@@ -142,11 +143,11 @@ function SidebarContent({
       </nav>
 
       {/* Bottom section */}
-      <div className="border-t border-slate-200 px-2 py-3 space-y-1 shrink-0">
+      <div className="border-t border-slate-200 dark:border-slate-700 px-2 py-3 space-y-1 shrink-0">
         {/* Public view link */}
         <Link
           href="/public"
-          className={`flex items-center gap-3 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+          className={`flex items-center gap-3 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
             collapsed ? "justify-center px-2" : "px-3"
           }`}
           style={{ minHeight: 44 }}
@@ -156,15 +157,16 @@ function SidebarContent({
           {!collapsed && <span className="text-sm">Public View</span>}
         </Link>
 
-        {/* Language toggle */}
-        <div className={collapsed ? "flex justify-center" : "px-1"}>
+        {/* Language toggle + Theme toggle */}
+        <div className={`flex items-center gap-1 ${collapsed ? "justify-center" : "px-1"}`}>
           <LanguageToggle />
+          <ThemeToggle />
         </div>
 
         {/* Logout */}
         <button
           onClick={handleLogout}
-          className={`flex items-center gap-3 rounded-lg text-slate-500 hover:text-red-700 hover:bg-red-50 transition-colors w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+          className={`flex items-center gap-3 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
             collapsed ? "justify-center px-2" : "px-3"
           }`}
           style={{ minHeight: 44 }}
@@ -178,7 +180,7 @@ function SidebarContent({
         {onToggle && (
           <button
             onClick={onToggle}
-            className={`flex items-center gap-3 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+            className={`flex items-center gap-3 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
               collapsed ? "justify-center px-2" : "px-3"
             }`}
             style={{ minHeight: 44 }}
@@ -225,22 +227,22 @@ export function StaffSidebar({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen overflow-hidden">
       {/* Desktop sidebar */}
       <aside
-        className="hidden md:flex flex-col bg-white border-r border-slate-200 shrink-0 transition-[width] duration-200 ease-out overflow-hidden"
+        className="hidden md:flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 shrink-0 transition-[width] duration-200 ease-out overflow-hidden"
         style={{ width: collapsed ? 64 : 240 }}
       >
         <SidebarContent collapsed={collapsed} onToggle={handleToggle} />
       </aside>
 
       {/* Mobile hamburger + Sheet */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center h-14 px-4 bg-white border-b border-slate-200">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center h-14 px-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger
-            className="inline-flex h-11 w-11 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
             aria-label="Open navigation menu"
           >
             <Menu className="h-6 w-6" aria-hidden="true" />
           </SheetTrigger>
-          <SheetContent side="left" className="w-[280px] p-0" showCloseButton={false}>
+          <SheetContent side="left" className="w-[280px] p-0 bg-white dark:bg-slate-900" showCloseButton={false}>
             <SidebarContent
               collapsed={false}
               onNavClick={() => setMobileOpen(false)}
@@ -249,7 +251,7 @@ export function StaffSidebar({ children }: { children: React.ReactNode }) {
         </Sheet>
         <Link
           href="/staff"
-          className="ml-3 font-bold text-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-1"
+          className="ml-3 font-bold text-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-1"
         >
           RVA Contract Lens
         </Link>
@@ -259,7 +261,7 @@ export function StaffSidebar({ children }: { children: React.ReactNode }) {
       <main
         id="main-content"
         role="main"
-        className="flex-1 overflow-y-auto bg-[#F8FAFC]"
+        className="flex-1 overflow-y-auto bg-[#F8FAFC] dark:bg-slate-950"
       >
         {/* Top padding for mobile header */}
         <div className="md:hidden h-14" />

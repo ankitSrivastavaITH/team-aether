@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Upload, FileText, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { API_BASE } from "@/lib/api";
+import { toast } from "sonner";
 
 interface ExtractionResult {
   filename: string;
@@ -40,9 +41,11 @@ export function PdfUpload() {
       if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
       const data = await res.json();
       setResult(data);
+      toast.success("PDF analyzed successfully", { description: `${data.chunks_stored} sections indexed for search.` });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Upload failed. Please try again.";
       setError(msg);
+      toast.error("Upload failed", { description: msg });
     } finally {
       setLoading(false);
     }

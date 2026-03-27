@@ -15,9 +15,11 @@ import {
 import { ContractsTable } from "@/components/contracts-table";
 import { ContractDetail } from "@/components/contract-detail";
 import { SmartFilter } from "@/components/smart-filter";
+import { TableSkeleton } from "@/components/skeletons";
 import { useContracts, useDepartments, type Contract } from "@/hooks/use-contracts";
 import { formatCurrency } from "@/lib/utils";
 import { API_BASE } from "@/lib/api";
+import { toast } from "sonner";
 
 const PAGE_SIZE = 50;
 
@@ -84,6 +86,7 @@ function ContractsPageContent() {
     if (department && department !== "all") params.set("department", department);
     if (search) params.set("search", search);
     window.open(`${API_BASE}/api/contracts/export?${params.toString()}`, "_blank");
+    toast.success("CSV export started", { description: "Your download should begin shortly." });
   }
 
   const hasActiveFilters = search.trim() !== "" || maxDays !== "all" || department !== "all";
@@ -252,9 +255,7 @@ function ContractsPageContent() {
 
         {/* Contracts Table */}
         {contractsLoading ? (
-          <div className="rounded-xl ring-1 ring-slate-200 bg-white p-8 text-center" aria-busy="true">
-            <p className="text-base text-slate-500">Loading contracts…</p>
-          </div>
+          <TableSkeleton rows={8} />
         ) : contractsError ? (
           <div className="rounded-xl ring-1 ring-red-200 bg-red-50 p-8 text-center" role="alert">
             <p className="text-base text-red-700">
