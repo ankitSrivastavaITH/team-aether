@@ -6,6 +6,7 @@ from typing import Dict
 from pypdf import PdfReader
 from app.services.groq_client import chat
 from app.services.vector_store import ingest_pdf_text
+from app.services.extracted_store import store_extraction
 
 EXTRACTION_PROMPT = """You are a government contract analysis assistant. Extract the following fields from the contract text.
 Return ONLY valid JSON with these fields:
@@ -62,6 +63,12 @@ def extract_contract_terms(pdf_bytes: bytes, filename: str = "uploaded.pdf") -> 
         extraction = json.loads(cleaned.strip())
     except (json.JSONDecodeError, IndexError):
         extraction = {"error": "Failed to parse AI extraction", "raw_response": raw[:500]}
+
+    # Store in DuckDB if extraction succeeded (no error key)
+    record_id = None
+    if "error" not in extraction:
+        record_id = store_extraction(filename, extraction)
+        extraction["record_id"] = record_id
 
     return {
         "text_length": len(text),

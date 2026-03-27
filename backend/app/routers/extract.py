@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, UploadFile, File, Query
 from app.services.pdf_extractor import extract_contract_terms
 from app.services.vector_store import search_contracts, list_ingested_files
+from app.services.extracted_store import list_extractions
 
 router = APIRouter(prefix="/api/extract", tags=["extract"])
 
@@ -42,3 +43,9 @@ def search_pdfs(
 def get_ingested_files():
     """List all PDF files that have been ingested into the vector store."""
     return {"files": list_ingested_files()}
+
+
+@router.get("/extracted")
+def get_extracted_contracts():
+    """List all AI-extracted contract records."""
+    return {"contracts": list_extractions()}

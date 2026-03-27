@@ -125,7 +125,14 @@ export function YearlySpendingChart() {
         {!isLoading && !isError && (
           <div
             role="img"
-            aria-label="Area chart showing total contract spending by year. Each bar also shows the number of contracts awarded that year."
+            aria-label={
+              rows.length > 0
+                ? (() => {
+                    const peak = rows.reduce((a, b) => (b.total_value > a.total_value ? b : a), rows[0]);
+                    return `Area chart: contract spending peaked at ${currencyTick(peak.total_value)} in ${peak.year}. ${rows.length} years of data shown.`;
+                  })()
+                : "Area chart showing total contract spending by year."
+            }
           >
             <ResponsiveContainer width="100%" height={320}>
               <ComposedChart
@@ -272,7 +279,15 @@ export function ExpiryTimelineChart() {
         {!isLoading && !isError && (
           <div
             role="img"
-            aria-label="Bar chart showing contracts expiring each month for the next 12 months. Red bars indicate the current month, yellow the next month."
+            aria-label={
+              rows.length > 0
+                ? (() => {
+                    const peak = rows.reduce((a, b) => (b.count > a.count ? b : a), rows[0]);
+                    const total = rows.reduce((sum, r) => sum + r.count, 0);
+                    return `Bar chart: ${total} contracts expire in the next 12 months. ${peak.label} has the most expirations with ${peak.count} contracts. Red bars indicate the current month, yellow the next month.`;
+                  })()
+                : "Bar chart showing contracts expiring each month for the next 12 months."
+            }
           >
             <ResponsiveContainer width="100%" height={320}>
               <BarChart
@@ -383,7 +398,13 @@ export function ProcurementTypeChart() {
         {!isLoading && !isError && (
           <div
             role="img"
-            aria-label={`Horizontal bar chart showing spending by procurement type. ${topType} has the highest spending.`}
+            aria-label={(() => {
+              const sortedByValue = [...(data?.data ?? [])].sort((a, b) => b.total_value - a.total_value);
+              const top = sortedByValue[0];
+              return top
+                ? `Bar chart: ${top.procurement_type} leads procurement spending at ${currencyTick(top.total_value)}, followed by ${sortedByValue[1]?.procurement_type || "others"}.`
+                : "Horizontal bar chart showing spending by procurement type.";
+            })()}
           >
             <ResponsiveContainer width="100%" height={320}>
               <BarChart
@@ -486,7 +507,12 @@ export function ContractSizeChart() {
         {!isLoading && !isError && (
           <div
             role="img"
-            aria-label="Bar chart showing the number of contracts by value bucket, ranging from under $50K to over $10M."
+            aria-label={(() => {
+              const topBucket = [...rows].sort((a, b) => b.count - a.count)[0];
+              return topBucket
+                ? `Bar chart: the ${topBucket.bucket} contract size bucket has the most contracts at ${topBucket.count.toLocaleString()}. Showing distribution from under $50K to over $10M.`
+                : "Bar chart showing the number of contracts by value bucket, ranging from under $50K to over $10M.";
+            })()}
           >
             <ResponsiveContainer width="100%" height={320}>
               <BarChart

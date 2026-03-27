@@ -160,6 +160,9 @@ function StaffDashboardContent() {
         {/* Natural Language Query */}
         <NLQueryBar />
 
+        {/* Extracted PDF Contracts */}
+        <ExtractedContracts />
+
         {/* Filter Bar */}
         <section aria-label="Contract filters">
           <h2 className="text-xl font-semibold text-slate-800 mb-4">Contracts</h2>

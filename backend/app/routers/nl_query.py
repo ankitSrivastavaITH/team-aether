@@ -1,10 +1,13 @@
 """Natural language to SQL query endpoint."""
 
 import json
+import hashlib
 from fastapi import APIRouter
 from pydantic import BaseModel
 from app.services.groq_client import chat
 from app.db import query
+
+_query_cache: dict = {}
 
 router = APIRouter(prefix="/api/nl-query", tags=["nl-query"])
 
@@ -43,6 +46,11 @@ class NLQueryRequest(BaseModel):
 @router.post("")
 def nl_query(req: NLQueryRequest):
     """Convert natural language question to SQL, execute, and return results."""
+    # Check cache
+    cache_key = hashlib.md5(req.question.lower().strip().encode()).hexdigest()
+    if cache_key in _query_cache:
+        return _query_cache[cache_key]
+
     raw = chat(NL_TO_SQL_PROMPT, req.question)
 
     try:
@@ -68,12 +76,21 @@ def nl_query(req: NLQueryRequest):
                 return {"error": f"Query contains forbidden keyword: {forbidden}"}
 
         results = query(sql)
-        return {
+        result = {
             "sql": sql,
             "explanation": explanation,
             "results": results[:100],
             "total": len(results),
         }
+
+        # Cache successful results (no "error" key)
+        _query_cache[cache_key] = result
+        # Limit cache size to 100 entries (evict oldest)
+        if len(_query_cache) > 100:
+            oldest = next(iter(_query_cache))
+            del _query_cache[oldest]
+
+        return result
     except json.JSONDecodeError:
         return {"error": "Could not understand that question. Try rephrasing.", "raw": raw[:300]}
     except Exception as e:
