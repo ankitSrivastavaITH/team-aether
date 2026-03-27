@@ -6,10 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Search, Loader2, MapPin, Phone, ExternalLink, CheckCircle,
-  AlertTriangle, HelpCircle, ArrowRight, Building2
+  AlertTriangle, HelpCircle, ArrowRight, Building2, Shield
 } from "lucide-react";
 import { postAPI } from "@/lib/api";
 import { Disclaimer } from "@/components/disclaimer";
+
+interface OverlappingService {
+  category: string;
+  department: string;
+  why?: string;
+}
 
 interface NavigationResult {
   matched_category: string;
@@ -19,6 +25,8 @@ interface NavigationResult {
   explanation: string;
   url: string;
   alternative_categories: string[];
+  overlapping_services?: OverlappingService[];
+  important_note?: string;
   call_311: boolean;
   disclaimer: string;
 }
@@ -203,6 +211,38 @@ export default function ServiceNavigatorPage() {
                 {result.alternative_categories.map((cat, i) => (
                   <Badge key={i} variant="outline" className="text-sm px-3 py-1">{cat}</Badge>
                 ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Overlapping services */}
+          {result.overlapping_services && result.overlapping_services.length > 0 && (
+            <Card className="p-4 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/20">
+              <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-400 mb-3 flex items-center gap-1.5">
+                <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+                This could also involve:
+              </h3>
+              <div className="space-y-2">
+                {result.overlapping_services.map((svc, i) => (
+                  <div key={i} className="flex items-start gap-2 text-sm">
+                    <Building2 className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                    <div>
+                      <span className="font-medium">{svc.category}</span>
+                      <span className="text-slate-500 dark:text-slate-400"> — {svc.department}</span>
+                      {svc.why && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{svc.why}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Important safety note */}
+          {result.important_note && (
+            <Card className="p-4 border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/20">
+              <div className="flex items-start gap-2">
+                <Shield className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                <p className="text-sm text-red-800 dark:text-red-300">{result.important_note}</p>
               </div>
             </Card>
           )}

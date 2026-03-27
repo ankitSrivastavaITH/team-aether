@@ -10,13 +10,32 @@ router = APIRouter(prefix="/api/services", tags=["services"])
 # Curated Richmond City service categories based on rva.gov and RVA311
 # This is the "decision tree" the challenge doc asks teams to build
 CITY_SERVICES = [
-    {"category": "Pothole / Road Damage", "department": "Public Works", "311_type": "Street - Pothole", "description": "Report potholes, sinkholes, damaged roads, or deteriorating street surfaces", "next_step": "Submit via RVA311 or call 3-1-1", "url": "https://www.rva311.com"},
+    {"category": "Pothole / Road Damage", "department": "Public Works", "311_type": "Street - Pothole",
+     "description": "Report potholes, sinkholes, damaged roads, or deteriorating street surfaces",
+     "next_step": "Submit via RVA311 or call 3-1-1", "url": "https://www.rva311.com",
+     "related": ["Sinkhole", "Sidewalk Repair", "Road Damage"]},
+    {"category": "Sinkhole", "department": "Public Works / Public Utilities", "311_type": "Street - Sinkhole",
+     "description": "Report a sinkhole or ground collapse on a street or sidewalk. May involve water/sewer infrastructure underneath.",
+     "next_step": "Call 3-1-1 immediately. If the sinkhole is large or growing, also call 911.",
+     "url": "https://www.rva311.com",
+     "related": ["Pothole / Road Damage", "Water / Sewer Issue", "Sidewalk Repair"],
+     "important_note": "Sinkholes may involve multiple departments: Public Works (road surface), Public Utilities (underground water/sewer), and sometimes Emergency Services if there's a safety risk."},
     {"category": "Sidewalk Repair", "department": "Public Works", "311_type": "Sidewalk - Repair", "description": "Report broken, cracked, or uneven sidewalks", "next_step": "Submit via RVA311 or call 3-1-1", "url": "https://www.rva311.com"},
     {"category": "Street Light Out", "department": "Public Works", "311_type": "Street Light - Out/Damaged", "description": "Report a street light that is out, flickering, or damaged", "next_step": "Submit via RVA311 with pole number if visible", "url": "https://www.rva311.com"},
     {"category": "Trash / Recycling", "department": "Public Works", "311_type": "Solid Waste - Missed Collection", "description": "Report missed trash or recycling pickup, request bulk pickup, or report illegal dumping", "next_step": "Submit via RVA311 or call 3-1-1", "url": "https://www.rva311.com"},
     {"category": "Illegal Dumping", "department": "Public Works", "311_type": "Illegal Dumping", "description": "Report illegal dumping of trash, furniture, or debris on public or private property", "next_step": "Submit via RVA311 with location and photos if possible", "url": "https://www.rva311.com"},
     {"category": "Water / Sewer Issue", "department": "Public Utilities", "311_type": "Water - Main Break/Leak", "description": "Report water main breaks, leaks, sewer backups, or flooding from city infrastructure", "next_step": "For emergencies call (804) 646-4646. Non-emergency: submit via RVA311", "url": "https://www.rva311.com"},
-    {"category": "Gas Service", "department": "Public Utilities - Richmond Gas Works", "311_type": "Gas Service Request", "description": "Start, stop, or transfer gas service. Report gas leaks or gas billing questions", "next_step": "Gas leaks: call 911 immediately. Service: call (804) 646-4646 or visit richmondgasworks.com", "url": "https://www.richmondgasworks.com"},
+    {"category": "Water Emergency / Boil Advisory", "department": "Public Utilities", "311_type": "Water Emergency",
+     "description": "Water main break, boil water advisory, loss of water service, or water quality emergency",
+     "next_step": "For active emergencies: call (804) 646-4646 immediately. Check rva.gov/public-utilities for current advisories and water distribution locations.",
+     "url": "https://www.rva.gov/public-utilities",
+     "related": ["Water / Sewer Issue"],
+     "important_note": "During water emergencies, the city sets up free water distribution points. Check rva.gov for current locations and hours."},
+    {"category": "Gas Service", "department": "Public Utilities - Richmond Gas Works", "311_type": "Gas Service Request",
+     "description": "Start, stop, or transfer gas service. Report gas leaks or gas billing questions",
+     "next_step": "Gas leaks: call 911 immediately. New service: call (804) 646-4646 or visit richmondgasworks.com. Do NOT send personal information (SSN, ID) via email.",
+     "url": "https://www.richmondgasworks.com",
+     "important_note": "The current gas service signup process may ask you to send personal information via email. For your safety, call (804) 646-4646 instead or visit the Customer Service Center at 730 E Broad St in person."},
     {"category": "Billing Question", "department": "Public Utilities", "311_type": "Utility Billing", "description": "Questions about water, sewer, or gas bills. Payment plans or disputes", "next_step": "Call (804) 646-4646 or visit the Customer Service Center at 730 E Broad St", "url": "https://www.rva.gov/public-utilities"},
     {"category": "Abandoned Vehicle", "department": "Police", "311_type": "Abandoned Vehicle", "description": "Report a vehicle that appears abandoned on a public street", "next_step": "Submit via RVA311 with vehicle description and location", "url": "https://www.rva311.com"},
     {"category": "Noise Complaint", "department": "Police", "311_type": "Noise Complaint", "description": "Report excessive noise from construction, parties, or businesses", "next_step": "Non-emergency: call (804) 646-5100. Emergency: call 911", "url": "https://www.rva.gov/police"},
@@ -39,12 +58,55 @@ def list_service_categories():
     return {"categories": CITY_SERVICES, "total": len(CITY_SERVICES)}
 
 
+# Fast path for common overlapping scenarios (no LLM needed)
+FAST_ROUTES = {
+    "pothole": {"categories": ["Pothole / Road Damage", "Sinkhole", "Sidewalk Repair"], "primary": "Pothole / Road Damage"},
+    "sinkhole": {"categories": ["Sinkhole", "Pothole / Road Damage", "Water / Sewer Issue"], "primary": "Sinkhole"},
+    "hole in the road": {"categories": ["Pothole / Road Damage", "Sinkhole"], "primary": "Pothole / Road Damage"},
+    "road damage": {"categories": ["Pothole / Road Damage", "Sinkhole", "Sidewalk Repair"], "primary": "Pothole / Road Damage"},
+    "sidewalk": {"categories": ["Sidewalk Repair", "Pothole / Road Damage"], "primary": "Sidewalk Repair"},
+    "water emergency": {"categories": ["Water Emergency / Boil Advisory", "Water / Sewer Issue"], "primary": "Water Emergency / Boil Advisory"},
+    "fresh water": {"categories": ["Water Emergency / Boil Advisory"], "primary": "Water Emergency / Boil Advisory"},
+    "boil advisory": {"categories": ["Water Emergency / Boil Advisory"], "primary": "Water Emergency / Boil Advisory"},
+    "water crisis": {"categories": ["Water Emergency / Boil Advisory", "Water / Sewer Issue"], "primary": "Water Emergency / Boil Advisory"},
+    "gas service": {"categories": ["Gas Service"], "primary": "Gas Service"},
+    "gas leak": {"categories": ["Gas Service"], "primary": "Gas Service"},
+    "trash": {"categories": ["Trash / Recycling", "Illegal Dumping"], "primary": "Trash / Recycling"},
+    "recycling": {"categories": ["Trash / Recycling"], "primary": "Trash / Recycling"},
+    "dumping": {"categories": ["Illegal Dumping", "Trash / Recycling"], "primary": "Illegal Dumping"},
+}
+
+
 @router.post("/navigate")
 def navigate_service(question: dict):
     """Given a resident's description of their issue, find the right City service and next step."""
     user_input = question.get("question", "")
     if not user_input.strip():
         return {"error": "Please describe your issue or question."}
+
+    # Check fast path first (no LLM latency for common scenarios)
+    lower_input = user_input.lower()
+    for keyword, route in FAST_ROUTES.items():
+        if keyword in lower_input:
+            primary_svc = next((s for s in CITY_SERVICES if s["category"] == route["primary"]), None)
+            if primary_svc:
+                overlapping = [
+                    {"category": s["category"], "department": s["department"], "why": s["description"]}
+                    for s in CITY_SERVICES if s["category"] in route["categories"] and s["category"] != route["primary"]
+                ]
+                return {
+                    "matched_category": primary_svc["category"],
+                    "department": primary_svc["department"],
+                    "confidence": "high",
+                    "next_step": primary_svc["next_step"],
+                    "explanation": primary_svc["description"],
+                    "url": primary_svc["url"],
+                    "alternative_categories": route["categories"][1:],
+                    "overlapping_services": overlapping,
+                    "important_note": primary_svc.get("important_note"),
+                    "call_311": True,
+                    "disclaimer": "This is an AI-assisted suggestion. For official guidance, call 3-1-1 or visit rva311.com.",
+                }
 
     # Build context from our service knowledge base
     services_context = json.dumps(CITY_SERVICES, indent=2)
@@ -63,14 +125,22 @@ Given the resident's description, respond with a JSON object:
   "explanation": "1-2 sentence plain-language explanation of why this is the right service",
   "url": "the URL to visit",
   "alternative_categories": ["list of 1-2 other categories that might also apply"],
+  "overlapping_services": [{{"category": "...", "department": "...", "why": "..."}}],
+  "important_note": "any safety warnings or process issues the resident should know about",
   "call_311": true or false (whether they should call 3-1-1)
 }}
+
+CRITICAL: Many city services overlap. When categories overlap (e.g., pothole vs sinkhole vs road damage vs sidewalk damage), you MUST include ALL related categories in your response. The resident should see every option that might apply.
+
+When the issue involves road surfaces, ALWAYS mention: Pothole, Sinkhole, Road Damage, and Sidewalk Repair as potential matches and explain which department handles each.
+
+If there's an important_note field for a service, include it in your explanation.
 
 Rules:
 - If you're not confident, set confidence to "low" and add: "If this doesn't seem right, call 3-1-1 and a representative will help you."
 - Never make up services or departments that aren't in the list
 - Use plain language — the resident may not know government terminology
-- If the issue could be multiple categories (like pothole vs sinkhole), mention all of them
+- If the issue could be multiple categories (like pothole vs sinkhole), mention all of them in overlapping_services
 - Always provide a concrete next step, not just "contact the city"
 
 Return ONLY raw JSON, no markdown fences."""
