@@ -63,6 +63,8 @@ export default function ServiceNavigatorPage() {
   const [result, setResult] = useState<NavigationResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [address, setAddress] = useState("");
+  const [details, setDetails] = useState("");
 
   async function handleNavigate(q?: string) {
     const input = q || question;
@@ -247,12 +249,74 @@ export default function ServiceNavigatorPage() {
             </Card>
           )}
 
+          {/* Ready to Submit to RVA311 */}
+          {result.call_311 && (
+            <Card className="p-6 border-green-200 dark:border-green-800 bg-green-50/30 dark:bg-green-900/10 space-y-4">
+              <h3 className="text-lg font-semibold text-green-800 dark:text-green-400 flex items-center gap-2">
+                <CheckCircle className="h-5 w-5" aria-hidden="true" />
+                Ready to Submit a Request?
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Provide your address and details below. We will prepare everything you need to submit to RVA311.
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label htmlFor="address-input" className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">
+                    Address or Location <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="address-input"
+                    placeholder="e.g., 900 E Broad St, Richmond, VA"
+                    className="h-11 text-base dark:bg-slate-800 dark:border-slate-700"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Enter the address where the issue is located</p>
+                </div>
+                <div>
+                  <label htmlFor="details-input" className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">
+                    Additional Details
+                  </label>
+                  <textarea
+                    id="details-input"
+                    placeholder="Describe the issue in more detail (optional)"
+                    className="w-full h-20 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={details}
+                    onChange={(e) => setDetails(e.target.value)}
+                  />
+                </div>
+              </div>
+              {/* Summary of what will be submitted */}
+              <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-green-200 dark:border-green-700 text-sm space-y-1">
+                <p className="font-semibold text-slate-700 dark:text-slate-300">Request Summary:</p>
+                <p><span className="text-slate-500">Category:</span> {result.matched_category}</p>
+                <p><span className="text-slate-500">Department:</span> {result.department}</p>
+                {address && <p><span className="text-slate-500">Location:</span> {address}</p>}
+                <p><span className="text-slate-500">Issue:</span> {question}</p>
+                {details && <p><span className="text-slate-500">Details:</span> {details}</p>}
+              </div>
+              <a
+                href={`https://www.rva311.com/rvaone#/`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 w-full px-5 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-base font-medium"
+                style={{ minHeight: 44 }}
+              >
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                Open RVA311 to Submit Request
+              </a>
+              <p className="text-xs text-slate-400 text-center">
+                You will be redirected to the official RVA311 portal. Copy the summary above to paste into the form.
+              </p>
+            </Card>
+          )}
+
           {/* Disclaimer */}
           <p className="text-xs text-slate-400 text-center">{result.disclaimer}</p>
 
           {/* Try another */}
           <div className="text-center">
-            <Button variant="ghost" onClick={() => { setResult(null); setQuestion(""); }} className="gap-2">
+            <Button variant="ghost" onClick={() => { setResult(null); setQuestion(""); setAddress(""); setDetails(""); }} className="gap-2">
               <Search className="h-4 w-4" aria-hidden="true" />
               Search for another service
             </Button>
