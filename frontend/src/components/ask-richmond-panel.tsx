@@ -13,6 +13,7 @@ import { toast } from "sonner";
 interface QueryResult {
   sql?: string;
   explanation?: string;
+  analysis?: string;
   results?: Record<string, unknown>[];
   total?: number;
   error?: string;
@@ -115,6 +116,15 @@ function ChatBubble({ msg }: { msg: ChatMessage }) {
     <div className="flex justify-start w-full">
       <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 px-3 py-2.5 rounded-2xl rounded-bl-sm w-full space-y-2">
         {r.explanation && <p className="text-sm text-slate-700 dark:text-slate-300">{r.explanation}</p>}
+        {r.analysis && (
+          <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-2.5 text-xs text-blue-900 dark:text-blue-200">
+            <div className="flex items-center gap-1 mb-1">
+              <Sparkles className="h-3 w-3 text-blue-600" aria-hidden="true" />
+              <span className="font-semibold text-blue-700 dark:text-blue-400">Analysis</span>
+            </div>
+            <p>{r.analysis}</p>
+          </div>
+        )}
         {r.results && r.results.length > 0 && <ResultCards results={r.results} />}
         <div className="flex items-center justify-between">
           <span className="text-xs text-slate-400">{r.total} result{r.total !== 1 ? "s" : ""}</span>
