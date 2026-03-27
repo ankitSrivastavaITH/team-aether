@@ -70,15 +70,18 @@ export function ContractsTable({ contracts, onRowClick }: ContractsTableProps) {
         id: "risk_level",
         accessorKey: "risk_level",
         header: "Risk",
-        cell: ({ getValue }) => {
+        cell: ({ row, getValue }) => {
           const level = (getValue() as string) ?? "unknown";
           const colorClass = riskColor(level);
+          const daysLeft = row.original.days_until_expiry as number | undefined;
+          const daysLabel = typeof daysLeft === "number" ? (daysLeft < 0 ? "Exp" : `${daysLeft}d`) : "";
           return (
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium border ${colorClass} min-w-[max-content]`}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${colorClass}`}
+              title={`${level}${daysLabel ? ` - ${daysLabel}` : ""}`}
             >
-              <RiskIcon level={level} />
-              <span className="capitalize">{level}</span>
+              <RiskIcon level={level} className="h-3.5 w-3.5" />
+              {daysLabel && <span>{daysLabel}</span>}
             </span>
           );
         },
@@ -120,6 +123,24 @@ export function ContractsTable({ contracts, onRowClick }: ContractsTableProps) {
             </span>
           );
         },
+      },
+      {
+        id: "description",
+        accessorFn: (row) => (row.description as string) ?? (row.contract_description as string) ?? "",
+        header: "Description",
+        cell: ({ getValue }) => {
+          const value = (getValue() as string) ?? "";
+          const truncated = value.length > 80 ? `${value.slice(0, 80)}...` : value;
+          return (
+            <span
+              className="block max-w-[220px] truncate text-sm text-slate-600"
+              title={value || undefined}
+            >
+              {truncated || "—"}
+            </span>
+          );
+        },
+        enableSorting: false,
       },
       {
         id: "amount",
@@ -179,7 +200,7 @@ export function ContractsTable({ contracts, onRowClick }: ContractsTableProps) {
   });
 
   return (
-    <div className="overflow-x-auto rounded-xl ring-1 ring-slate-200 bg-white">
+    <div className="overflow-x-auto rounded-xl ring-1 ring-slate-200 bg-white shadow-sm">
       <table
         className="w-full text-base border-collapse"
         aria-label="Contracts table"
@@ -247,12 +268,12 @@ export function ContractsTable({ contracts, onRowClick }: ContractsTableProps) {
                 tabIndex={0}
                 role="button"
                 aria-label={`View details for ${(row.original.vendor_name as string) ?? "contract"}`}
-                className={`border-b border-slate-100 cursor-pointer transition-colors hover:bg-blue-50 focus:outline-none focus:ring-3 focus:ring-inset focus:ring-blue-500 ${
-                  rowIndex % 2 === 0 ? "bg-white" : "bg-slate-50/50"
+                className={`border-b border-slate-100 cursor-pointer transition-all hover:bg-blue-50/70 hover:border-l-[3px] hover:border-l-blue-500 focus:outline-none focus:ring-3 focus:ring-inset focus:ring-blue-500 ${
+                  rowIndex % 2 === 0 ? "bg-white" : "bg-slate-50/40"
                 }`}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3 align-middle">
+                  <td key={cell.id} className="px-4 py-2.5 align-middle">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

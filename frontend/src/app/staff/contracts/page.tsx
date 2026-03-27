@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/select";
 import { ContractsTable } from "@/components/contracts-table";
 import { ContractDetail } from "@/components/contract-detail";
+import { SmartFilter } from "@/components/smart-filter";
 import { useContracts, useDepartments, type Contract } from "@/hooks/use-contracts";
+import { formatCurrency } from "@/lib/utils";
 import { API_BASE } from "@/lib/api";
 
 const PAGE_SIZE = 50;
@@ -105,6 +107,45 @@ function ContractsPageContent() {
             Search, filter, and explore all City of Richmond contracts.
           </p>
         </div>
+
+        {/* Summary chips */}
+        {!contractsLoading && contracts.length > 0 && (
+          <div className="flex items-center gap-3 flex-wrap text-sm" aria-label="Filtered contract statistics">
+            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full font-medium">
+              {total.toLocaleString()} contracts
+            </span>
+            <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full font-medium">
+              {formatCurrency(contracts.reduce((sum, c) => sum + ((c as Record<string, unknown>).amount as number || (c as Record<string, unknown>).contract_amount as number || 0), 0))}
+            </span>
+            {contracts.length > 0 && (
+              <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full font-medium">
+                Avg: {formatCurrency(
+                  contracts.reduce((sum, c) => sum + ((c as Record<string, unknown>).amount as number || (c as Record<string, unknown>).contract_amount as number || 0), 0) / contracts.length
+                )}
+              </span>
+            )}
+            {contracts.some((c) => typeof (c as Record<string, unknown>).days_until_expiry === "number" && ((c as Record<string, unknown>).days_until_expiry as number) >= 0) && (
+              <span className="px-3 py-1 bg-red-50 text-red-700 rounded-full font-medium">
+                Soonest: {Math.min(
+                  ...contracts
+                    .filter((c) => typeof (c as Record<string, unknown>).days_until_expiry === "number" && ((c as Record<string, unknown>).days_until_expiry as number) >= 0)
+                    .map((c) => (c as Record<string, unknown>).days_until_expiry as number)
+                )} days
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Smart Filter */}
+        <SmartFilter
+          departments={departmentList}
+          onApply={(filters) => {
+            if (filters.search !== undefined) setSearch(filters.search);
+            if (filters.maxDays !== undefined) setMaxDays(filters.maxDays);
+            if (filters.department !== undefined) setDepartment(filters.department);
+          }}
+          onClear={handleClearFilters}
+        />
 
         {/* Filter Bar */}
         <section aria-label="Contract filters">
