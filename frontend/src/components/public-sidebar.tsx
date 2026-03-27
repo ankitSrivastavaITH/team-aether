@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  MapPin,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -21,6 +22,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const COLLAPSE_KEY = "public-sidebar-collapsed";
 
 const navItems = [
+  { href: "/public/services", label: "Find a Service", icon: MapPin },
   { href: "/public", label: "Overview", icon: Home, exact: true },
   { href: "/public/spending", label: "Spending", icon: BarChart3 },
   { href: "/public/vendors", label: "Vendors", icon: Building2 },
