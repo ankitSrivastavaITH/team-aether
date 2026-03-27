@@ -22,8 +22,10 @@ import { ContractsTable } from "@/components/contracts-table";
 import { ContractDetail } from "@/components/contract-detail";
 import { ConcentrationRisk } from "@/components/concentration-risk";
 import { useContracts, useContractStats, useDepartments, type Contract } from "@/hooks/use-contracts";
+import { API_BASE } from "@/lib/api";
+import { ExtractedContracts } from "@/components/extracted-contracts";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8200";
+const PAGE_SIZE = 50;
 
 function StaffDashboardContent() {
   const searchParams = useSearchParams();
@@ -36,6 +38,7 @@ function StaffDashboardContent() {
   const [department, setDepartment] = useState(searchParams.get("department") || "all");
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [page, setPage] = useState(1);
 
   // Sync filter state to URL when filters change
   useEffect(() => {
@@ -45,10 +48,15 @@ function StaffDashboardContent() {
     if (department && department !== "all") params.set("department", department);
     const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(newUrl, { scroll: false });
+    // Reset to first page when filters change
+    setPage(1);
   }, [search, maxDays, department, pathname, router]);
 
   // Build API params
-  const contractParams: Record<string, string | number> = { limit: 200 };
+  const contractParams: Record<string, string | number> = {
+    limit: PAGE_SIZE,
+    offset: (page - 1) * PAGE_SIZE,
+  };
   if (search.trim()) contractParams.search = search.trim();
   if (maxDays !== "all") contractParams.max_days = Number(maxDays);
   if (department !== "all") contractParams.department = department;
@@ -59,6 +67,7 @@ function StaffDashboardContent() {
 
   const contracts = contractsData?.contracts ?? [];
   const total = contractsData?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const handleRowClick = useCallback((contract: Contract) => {
     setSelectedContract(contract);
@@ -73,6 +82,7 @@ function StaffDashboardContent() {
     setSearch("");
     setMaxDays("all");
     setDepartment("all");
+    setPage(1);
   }, []);
 
   function handleExport() {
@@ -267,6 +277,36 @@ function StaffDashboardContent() {
           </div>
         ) : (
           <ContractsTable contracts={contracts} onRowClick={handleRowClick} />
+        )}
+
+        {/* Pagination */}
+        {!contractsLoading && !contractsError && totalPages > 1 && (
+          <nav
+            className="flex items-center justify-between gap-3"
+            aria-label="Contract table pagination"
+          >
+            <Button
+              variant="outline"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="min-h-[44px] px-4 text-base focus:ring-3 focus:ring-blue-500"
+              aria-label="Go to previous page"
+            >
+              Previous
+            </Button>
+            <p className="text-sm text-slate-600" aria-live="polite" aria-atomic="true">
+              Page {page} of {totalPages}
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="min-h-[44px] px-4 text-base focus:ring-3 focus:ring-blue-500"
+              aria-label="Go to next page"
+            >
+              Next
+            </Button>
+          </nav>
         )}
 
         {/* Risk Analysis */}

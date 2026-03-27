@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 function currencyTick(value: unknown) {
   const v = typeof value === "number" ? value : Number(value);
@@ -104,11 +105,6 @@ function PieTooltip({
   );
 }
 
-// Reduced motion check at render time
-function useReducedMotion(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
 
 export function DepartmentSpendingChart({ data }: DepartmentSpendingChartProps) {
   const reducedMotion = useReducedMotion();
@@ -119,11 +115,12 @@ export function DepartmentSpendingChart({ data }: DepartmentSpendingChartProps) 
     .sort((a, b) => a.total_value - b.total_value)
     .slice(-10);
 
-  const topDeptName = data.length > 0
-    ? [...data].sort((a, b) => b.total_value - a.total_value)[0]?.department
-    : "the largest department";
-
-  const ariaLabel = `Bar chart showing spending by department. ${topDeptName} has the highest spending. Click a bar to drill into that department.`;
+  // Dynamic aria-label: describe the data, not just the chart type
+  const descSorted = [...data].sort((a, b) => b.total_value - a.total_value);
+  const topDept = descSorted[0];
+  const ariaLabel = topDept
+    ? `Bar chart: ${topDept.department} leads spending at ${currencyTick(topDept.total_value)}, followed by ${descSorted[1]?.department || "others"}. Click a bar to drill into that department.`
+    : "Bar chart showing spending by department.";
 
   function handleBarClick(barData: { department?: string } | null) {
     if (barData?.department) {
@@ -217,9 +214,11 @@ export function VendorPieChart({ data }: VendorPieChartProps) {
     .sort((a, b) => b.total_value - a.total_value)
     .slice(0, 8);
 
-  const ariaLabel = `Donut chart showing top vendors by contract value. ${
-    top8[0]?.supplier ?? "Top vendor"
-  } holds the largest share at ${top8[0] ? formatTooltipValue(top8[0].total_value) : "unknown"}.`;
+  // Dynamic aria-label: describe the data, not just the chart type
+  const topVendor = top8[0];
+  const ariaLabel = topVendor
+    ? `Donut chart: ${topVendor.supplier} holds the largest share at ${currencyTick(topVendor.total_value)}.`
+    : "Donut chart showing top vendors.";
 
   // Custom label: render vendor name + short value on segment
   const renderLabel = ({

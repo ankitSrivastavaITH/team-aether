@@ -4,8 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Search, Loader2, ChevronDown, ChevronUp } from "lucide-react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { postAPI } from "@/lib/api";
 
 const EXAMPLE_QUERIES = [
   "Show me all contracts expiring in the next 30 days",
@@ -28,20 +27,25 @@ export function NLQueryBar() {
   const [result, setResult] = useState<QueryResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [showSql, setShowSql] = useState(false);
+  const [lastQueryTime, setLastQueryTime] = useState(0);
+  const [rateLimitMsg, setRateLimitMsg] = useState(false);
 
   async function handleQuery(q?: string) {
     const queryText = q || question;
     if (!queryText.trim()) return;
+    const now = Date.now();
+    if (now - lastQueryTime < 2000) {
+      setRateLimitMsg(true);
+      setTimeout(() => setRateLimitMsg(false), 2000);
+      return;
+    }
+    setLastQueryTime(now);
+    setRateLimitMsg(false);
     setLoading(true);
     setResult(null);
     setQuestion(queryText);
     try {
-      const res = await fetch(`${API_BASE}/api/nl-query`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: queryText }),
-      });
-      const data = await res.json();
+      const data = await postAPI<QueryResult>("/api/nl-query", { question: queryText });
       setResult(data);
     } catch {
       setResult({ error: "Could not connect to the server. Please try again." });
@@ -67,6 +71,7 @@ export function NLQueryBar() {
           onKeyDown={(e) => e.key === "Enter" && handleQuery()}
           className="h-12 text-base"
           aria-describedby="nl-query-help"
+          maxLength={500}
         />
         <Button
           onClick={() => handleQuery()}
@@ -81,6 +86,11 @@ export function NLQueryBar() {
           )}
         </Button>
       </div>
+      {rateLimitMsg && (
+        <p role="status" aria-live="polite" className="text-sm text-amber-600">
+          Please wait a moment before submitting another query.
+        </p>
+      )}
 
       {/* Example queries */}
       {!result && (
