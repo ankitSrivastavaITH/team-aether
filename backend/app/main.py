@@ -4,7 +4,7 @@ RVA Contract Lens — FastAPI backend entry point.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import contracts
+from app.routers import contracts, extract, nl_query
 
 app = FastAPI(
     title="RVA Contract Lens API",
@@ -25,6 +25,8 @@ app.add_middleware(
 
 
 app.include_router(contracts.router)
+app.include_router(extract.router)
+app.include_router(nl_query.router)
 
 
 @app.get("/api/health")
