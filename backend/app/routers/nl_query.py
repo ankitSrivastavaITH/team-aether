@@ -87,11 +87,25 @@ def nl_query(req: NLQueryRequest):
                 return {"error": f"Query contains forbidden keyword: {forbidden}"}
 
         results = query(sql)
+        # Generate AI analysis of the results
+        analysis = ""
+        if results and len(results) > 0:
+            try:
+                analysis_data = json.dumps(results[:20], default=str)
+                analysis_prompt = """You are a procurement analyst. Given these query results, write a brief 3-4 sentence analysis in markdown.
+Include: key takeaways, total value if applicable, any risks or patterns you notice.
+Be specific with numbers. Keep it concise. No headers, just a paragraph with **bold** for key figures.
+Return ONLY the markdown text, no JSON wrapping."""
+                analysis = chat(analysis_prompt, f"Question: {req.question}\nResults ({len(results)} rows):\n{analysis_data}")
+            except Exception:
+                analysis = ""
+
         result = {
             "sql": sql,
             "explanation": explanation,
             "results": results[:100],
             "total": len(results),
+            "analysis": analysis,
         }
 
         # Cache successful results (no "error" key)

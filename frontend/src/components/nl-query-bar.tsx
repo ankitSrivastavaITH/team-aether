@@ -3,8 +3,10 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Search, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Loader2, ChevronDown, ChevronUp, ExternalLink, Sparkles } from "lucide-react";
 import { postAPI } from "@/lib/api";
+import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 
 function formatResultValue(key: string, val: unknown): string {
   if (val === null || val === undefined) return "—";
@@ -30,24 +32,37 @@ function ResultCards({ results }: { results: Record<string, unknown>[] }) {
 
   return (
     <div className="space-y-2">
-      {visible.map((row, i) => (
-        <div key={i} className="bg-slate-50 dark:bg-slate-800 rounded-lg px-4 py-3 text-sm space-y-1 border border-slate-100 dark:border-slate-700">
-          <div className="flex items-start justify-between gap-3">
-            <span className="font-semibold text-slate-800 dark:text-slate-200">{String(row[nameKey] ?? `Row ${i + 1}`)}</span>
-            {valueKey && row[valueKey] != null && (
-              <span className="font-bold text-blue-700 dark:text-blue-400 whitespace-nowrap">{formatResultValue(String(valueKey), row[valueKey])}</span>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-500 dark:text-slate-400 text-xs">
-            {otherKeys.filter(k => k !== valueKey && row[k] != null && String(row[k]).trim() !== "").slice(0, 5).map(k => (
-              <span key={k}>
-                <span className="text-slate-400 dark:text-slate-500">{k.replace(/_/g, " ")}:</span>{" "}
-                <span className="text-slate-600 dark:text-slate-300">{formatResultValue(k, row[k])}</span>
+      {visible.map((row, i) => {
+        const supplierName = (row.supplier as string) || (row.vendor as string) || "";
+        const hasLink = supplierName.length > 0;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const Wrapper: React.ElementType = hasLink ? Link : "div";
+        const wrapperProps = hasLink ? { href: `/public/vendor/${encodeURIComponent(supplierName)}` } : {};
+
+        return (
+          <Wrapper key={i} {...wrapperProps} className="block bg-slate-50 dark:bg-slate-800 rounded-lg px-4 py-3 text-sm space-y-1 border border-slate-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-sm transition-all cursor-pointer group">
+            <div className="flex items-start justify-between gap-3">
+              <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">
+                {String(row[nameKey] ?? `Row ${i + 1}`)}
               </span>
-            ))}
-          </div>
-        </div>
-      ))}
+              <div className="flex items-center gap-2">
+                {valueKey && row[valueKey] != null && (
+                  <span className="font-bold text-blue-700 dark:text-blue-400 whitespace-nowrap">{formatResultValue(String(valueKey), row[valueKey])}</span>
+                )}
+                {hasLink && <ExternalLink className="h-3.5 w-3.5 text-slate-300 group-hover:text-blue-500 flex-shrink-0" aria-hidden="true" />}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-500 dark:text-slate-400 text-xs">
+              {otherKeys.filter(k => k !== valueKey && row[k] != null && String(row[k]).trim() !== "").slice(0, 5).map(k => (
+                <span key={k}>
+                  <span className="text-slate-400 dark:text-slate-500">{k.replace(/_/g, " ")}:</span>{" "}
+                  <span className="text-slate-600 dark:text-slate-300">{String(formatResultValue(k, row[k]))}</span>
+                </span>
+              ))}
+            </div>
+          </Wrapper>
+        );
+      })}
       {results.length > 8 && (
         <button
           onClick={() => setShowAll(!showAll)}
@@ -71,6 +86,7 @@ const EXAMPLE_QUERIES = [
 interface QueryResult {
   sql?: string;
   explanation?: string;
+  analysis?: string;
   results?: Record<string, unknown>[];
   total?: number;
   error?: string;
@@ -203,7 +219,20 @@ export function NLQueryBar() {
           {/* Result count */}
           <p className="text-sm text-gray-500">{result.total} result{result.total !== 1 ? "s" : ""} found</p>
 
-          {/* Results — formatted cards */}
+          {/* AI Analysis */}
+          {result.analysis && (
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Sparkles className="h-4 w-4 text-blue-600" aria-hidden="true" />
+                <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">AI Analysis</span>
+              </div>
+              <div className="text-sm text-blue-900 dark:text-blue-200 prose prose-sm prose-blue dark:prose-invert max-w-none">
+                <ReactMarkdown>{result.analysis}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* Results — clickable formatted cards */}
           {result.results.length > 0 && (
             <ResultCards results={result.results} />
           )}
