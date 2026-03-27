@@ -57,7 +57,7 @@ export function NLQueryBar() {
   return (
     <div className="space-y-4" role="region" aria-label="Natural language contract query">
       <div>
-        <h2 className="text-xl font-semibold mb-2">Ask a Question</h2>
+        <h2 className="text-xl font-semibold mb-2">Ask Richmond</h2>
         <p className="text-sm text-gray-500 mb-3">Ask about contracts in plain English. We will translate your question into a database query.</p>
       </div>
 
@@ -65,7 +65,7 @@ export function NLQueryBar() {
         <label htmlFor="nl-query-input" className="sr-only">Type your question about contracts</label>
         <Input
           id="nl-query-input"
-          placeholder="Example: Show me all contracts expiring in the next 30 days"
+          placeholder="Ask Richmond anything about city contracts..."
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleQuery()}

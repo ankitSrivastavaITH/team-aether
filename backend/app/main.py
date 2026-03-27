@@ -2,6 +2,9 @@
 RVA Contract Lens — FastAPI backend entry point.
 """
 
+import os
+from datetime import datetime
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import contracts, extract, nl_query, insights, analytics
@@ -32,3 +35,16 @@ app.include_router(analytics.router)
 async def health() -> dict:
     """Health check endpoint."""
     return {"status": "ok", "service": "rva-contract-lens"}
+
+
+@app.get("/api/data-freshness")
+def data_freshness() -> dict:
+    """Return the modification timestamp of the contracts database."""
+    db_path = os.path.join(os.path.dirname(__file__), "..", "data", "contracts.duckdb")
+    if os.path.exists(db_path):
+        mtime = os.path.getmtime(db_path)
+        return {
+            "last_updated": datetime.fromtimestamp(mtime).isoformat(),
+            "source": "City of Richmond Open Data (Socrata)",
+        }
+    return {"last_updated": None, "source": "City of Richmond Open Data (Socrata)"}

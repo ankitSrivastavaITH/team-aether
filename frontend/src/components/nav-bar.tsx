@@ -3,11 +3,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Shield, BarChart3 } from "lucide-react";
+import { Menu, Shield, BarChart3, GitCompare } from "lucide-react";
 
 const links = [
   { href: "/staff", label: "Staff Dashboard", icon: Shield },
   { href: "/public", label: "Public Transparency", icon: BarChart3 },
+  { href: "/compare", label: "Compare", icon: GitCompare },
 ];
 
 export function NavBar() {

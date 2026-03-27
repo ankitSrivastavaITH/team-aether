@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Shield, BarChart3, ArrowRight } from "lucide-react";
+import { Shield, BarChart3, ArrowRight, GitCompare } from "lucide-react";
+import { WelcomeModal } from "@/components/welcome-modal";
 
 export const metadata = {
   title: "RVA Contract Lens — Richmond Procurement Transparency",
@@ -46,10 +47,19 @@ export default function Home() {
         </Link>
       </div>
 
+      <Link
+        href="/compare"
+        className="flex items-center gap-2 text-sm text-[#475569] hover:text-[#2563EB] transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 rounded-md px-1"
+      >
+        <GitCompare className="h-4 w-4" aria-hidden="true" />
+        See how it compares to the old way &rarr;
+      </Link>
+
       <p className="text-sm text-[#475569] max-w-lg">
         All data comes from the City of Richmond&apos;s public open data portal.
         This is an exploratory tool — not official City reporting.
       </p>
+      <WelcomeModal />
     </div>
   );
 }

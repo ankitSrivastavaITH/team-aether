@@ -368,8 +368,6 @@ export function ProcurementTypeChart() {
     .sort((a, b) => a.total_value - b.total_value)
     .slice(-10);
 
-  const topType = data?.data?.[0]?.procurement_type ?? "the top category";
-
   return (
     <Card>
       <CardHeader>
