@@ -242,14 +242,17 @@ export default function PublicTransparencyPage() {
               id="federal-contracts-heading"
               className="text-2xl font-bold text-[#1E293B]"
             >
-              Federal Contracts in Richmond
+              Multi-Source Contract Explorer
             </h2>
             <p className="text-base text-[#475569]">
-              Beyond City contracts, federal agencies award billions to Richmond-area vendors.
-              Explore contracts across City and federal sources side-by-side.
+              Beyond City contracts, federal and state agencies award billions to Richmond-area vendors.
+              Explore contracts across City, State (eVA), and federal sources side-by-side.
             </p>
             <MultiSourceExplorer />
           </section>
+
+          {/* Virginia State Contracts */}
+          <StateContracts />
 
           {/* Top vendors grid */}
           <section aria-labelledby="vendors-heading" className="space-y-4">
