@@ -3,7 +3,11 @@ Contracts router — all /api/contracts endpoints.
 """
 
 from typing import List, Optional
+import csv
+import io
+
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import StreamingResponse
 
 from app.db import query
 from app.schemas import (
@@ -383,6 +387,67 @@ def concentration_risk():
         "methodology": "Vendor concentration measured as percentage of department spending. HHI (Herfindahl-Hirschman Index) measures overall market concentration. Higher values indicate greater concentration.",
     }
 
+
+# ---------------------------------------------------------------------------
+# GET /api/contracts/export
+# ---------------------------------------------------------------------------
+
+@router.get("/export")
+def export_contracts(
+    department: Optional[str] = Query(default=None),
+    risk_level: Optional[str] = Query(default=None),
+    min_value: Optional[float] = Query(default=None),
+    max_days: Optional[int] = Query(default=None),
+    search: Optional[str] = Query(default=None),
+):
+    """Export filtered contracts as CSV."""
+    where_clauses = []
+    params = []
+
+    if department:
+        where_clauses.append("department = ?")
+        params.append(department)
+    if risk_level:
+        where_clauses.append("risk_level = ?")
+        params.append(risk_level)
+    if min_value is not None:
+        where_clauses.append("value >= ?")
+        params.append(min_value)
+    if max_days is not None:
+        where_clauses.append("days_to_expiry BETWEEN 0 AND ?")
+        params.append(max_days)
+    if search:
+        where_clauses.append("(description ILIKE ? OR supplier ILIKE ?)")
+        params.extend([f"%{search}%", f"%{search}%"])
+
+    where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+
+    rows = query(
+        f"""SELECT department, contract_number, supplier, value, procurement_type,
+            solicitation_type, CAST(start_date AS VARCHAR) AS start_date,
+            CAST(end_date AS VARCHAR) AS end_date, days_to_expiry, risk_level, description
+        FROM city_contracts {where_sql}
+        ORDER BY CASE WHEN days_to_expiry >= 0 THEN 0 ELSE 1 END, days_to_expiry ASC NULLS LAST""",
+        params or None,
+    )
+
+    output = io.StringIO()
+    if rows:
+        writer = csv.DictWriter(output, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=rva_contracts_export.csv"},
+    )
+
+
+# ---------------------------------------------------------------------------
+# GET /api/contracts/{contract_number}
+# ---------------------------------------------------------------------------
 
 @router.get("/{contract_number}", response_model=Contract)
 def get_contract(contract_number: str) -> Contract:

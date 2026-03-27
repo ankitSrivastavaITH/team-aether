@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { FileUp, Search, X } from "lucide-react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { FileUp, Search, X, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,12 +23,29 @@ import { ContractDetail } from "@/components/contract-detail";
 import { ConcentrationRisk } from "@/components/concentration-risk";
 import { useContracts, useContractStats, useDepartments, type Contract } from "@/hooks/use-contracts";
 
-export default function StaffDashboard() {
-  const [search, setSearch] = useState("");
-  const [maxDays, setMaxDays] = useState<string>("all");
-  const [department, setDepartment] = useState<string>("all");
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8200";
+
+function StaffDashboardContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Initialize state from URL params
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [maxDays, setMaxDays] = useState(searchParams.get("max_days") || "all");
+  const [department, setDepartment] = useState(searchParams.get("department") || "all");
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+
+  // Sync filter state to URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (maxDays && maxDays !== "all") params.set("max_days", maxDays);
+    if (department && department !== "all") params.set("department", department);
+    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(newUrl, { scroll: false });
+  }, [search, maxDays, department, pathname, router]);
 
   // Build API params
   const contractParams: Record<string, string | number> = { limit: 200 };
@@ -56,6 +74,14 @@ export default function StaffDashboard() {
     setMaxDays("all");
     setDepartment("all");
   }, []);
+
+  function handleExport() {
+    const params = new URLSearchParams();
+    if (maxDays && maxDays !== "all") params.set("max_days", maxDays);
+    if (department && department !== "all") params.set("department", department);
+    if (search) params.set("search", search);
+    window.open(`${API_BASE}/api/contracts/export?${params.toString()}`, "_blank");
+  }
 
   const hasActiveFilters = search.trim() !== "" || maxDays !== "all" || department !== "all";
 
@@ -193,6 +219,17 @@ export default function StaffDashboard() {
               </Select>
             </div>
 
+            {/* Export CSV button */}
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              className="h-11 px-4 text-base focus:ring-3 focus:ring-blue-500 min-w-[44px] gap-2"
+              aria-label="Export filtered contracts as CSV"
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              Export CSV
+            </Button>
+
             {/* Clear button */}
             {hasActiveFilters && (
               <Button
@@ -248,5 +285,20 @@ export default function StaffDashboard() {
         onClose={handleCloseDetail}
       />
     </>
+  );
+}
+
+export default function StaffDashboard() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col gap-6">
+          <div className="h-10 w-64 bg-slate-100 rounded animate-pulse" />
+          <div className="h-28 bg-slate-100 rounded-xl animate-pulse" />
+        </div>
+      }
+    >
+      <StaffDashboardContent />
+    </Suspense>
   );
 }
