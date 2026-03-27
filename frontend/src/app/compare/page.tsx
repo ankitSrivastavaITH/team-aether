@@ -86,25 +86,25 @@ export default function ComparePage() {
                     <div className="flex-1 space-y-4">
                       <h2 className="text-lg font-semibold">{c.task}</h2>
                       <div className="grid md:grid-cols-2 gap-4">
-                        <div className="bg-red-50 rounded-lg p-4">
+                        <div className="bg-red-50 dark:bg-red-950/50 rounded-lg p-4">
                           <div className="flex items-center gap-2 mb-2">
                             <XCircle className="h-5 w-5 text-red-500" aria-hidden="true" />
-                            <span className="font-medium text-red-700">Before</span>
+                            <span className="font-medium text-red-700 dark:text-red-400">Before</span>
                             <span className="ml-auto text-sm text-red-500 flex items-center gap-1">
                               <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {c.oldTime}
                             </span>
                           </div>
-                          <p className="text-sm text-red-800">{c.oldWay}</p>
+                          <p className="text-sm text-red-800 dark:text-red-300">{c.oldWay}</p>
                         </div>
-                        <div className="bg-green-50 rounded-lg p-4">
+                        <div className="bg-green-50 dark:bg-green-950/50 rounded-lg p-4">
                           <div className="flex items-center gap-2 mb-2">
                             <CheckCircle className="h-5 w-5 text-green-500" aria-hidden="true" />
-                            <span className="font-medium text-green-700">With Contract Lens</span>
+                            <span className="font-medium text-green-700 dark:text-green-400">With Contract Lens</span>
                             <span className="ml-auto text-sm text-green-500 flex items-center gap-1">
                               <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {c.newTime}
                             </span>
                           </div>
-                          <p className="text-sm text-green-800">{c.newWay}</p>
+                          <p className="text-sm text-green-800 dark:text-green-300">{c.newWay}</p>
                         </div>
                       </div>
                     </div>
@@ -127,8 +127,8 @@ export default function ComparePage() {
           </div>
         </div>
       </main>
-      <footer role="contentinfo" className="border-t border-[#E2E8F0] bg-white mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 text-center text-sm text-[#475569]">
+      <footer role="contentinfo" className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
           <p>RVA Contract Lens — Built for Hack for RVA 2026</p>
           <p className="mt-1">Data from City of Richmond Open Data. Not official City reporting.</p>
         </div>

@@ -20,7 +20,7 @@ interface VendorData {
     total_value: number;
     first_contract: string | null;
     last_expiry: string | null;
-    departments_served: number;
+    departments_served: number | string | unknown[];
   };
 }
 
@@ -79,7 +79,7 @@ export default function VendorDetailPage() {
             <Building2 className="h-4 w-4" aria-hidden="true" />
             <span>Departments Served</span>
           </div>
-          <div className="text-2xl font-bold">{s.departments_served}</div>
+          <div className="text-2xl font-bold">{typeof s.departments_served === 'number' ? s.departments_served : Array.isArray(s.departments_served) ? s.departments_served.length : String(s.departments_served)}</div>
         </Card>
         <Card className="p-5">
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">

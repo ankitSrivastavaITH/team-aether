@@ -105,8 +105,8 @@ function StatCard({
   label,
   value,
   icon,
-  textClass = "text-[#1E293B]",
-  bgClass = "bg-white",
+  textClass = "text-slate-900 dark:text-slate-100",
+  bgClass = "bg-white dark:bg-slate-800",
 }: {
   label: string;
   value: string;
@@ -115,9 +115,9 @@ function StatCard({
   bgClass?: string;
 }) {
   return (
-    <Card className={`${bgClass} border border-[#E2E8F0] shadow-sm`}>
+    <Card className={`${bgClass} border border-slate-200 dark:border-slate-700 shadow-sm`}>
       <CardContent className="pt-5 pb-5">
-        <div className="flex items-center gap-2 text-sm text-[#475569] mb-1">
+        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-1">
           {icon && <span aria-hidden="true">{icon}</span>}
           <span>{label}</span>
         </div>
@@ -142,7 +142,7 @@ function AreaTooltip({
     <div
       role="status"
       aria-live="polite"
-      className="bg-white border border-[#E2E8F0] rounded-lg px-4 py-2 shadow-md text-[#1E293B] text-sm"
+      className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 shadow-md text-slate-900 dark:text-slate-100 text-sm"
     >
       <p className="font-semibold">{label}</p>
       <p>{currencyTick(payload[0].value)}</p>
@@ -163,7 +163,7 @@ function PieTooltip({
     <div
       role="status"
       aria-live="polite"
-      className="bg-white border border-[#E2E8F0] rounded-lg px-4 py-2 shadow-md text-[#1E293B] text-sm"
+      className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 shadow-md text-slate-900 dark:text-slate-100 text-sm"
     >
       <p className="font-semibold capitalize">{riskLabel(payload[0].name)}</p>
       <p>{payload[0].value} contracts</p>
@@ -198,15 +198,15 @@ export default function DepartmentDetailPage() {
         aria-label="Loading department details"
         className="space-y-6"
       >
-        <div className="h-12 w-1/3 bg-[#E2E8F0] animate-pulse rounded" />
+        <div className="h-12 w-1/3 bg-slate-200 dark:bg-slate-700 animate-pulse rounded" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-[#E2E8F0] animate-pulse rounded-xl" />
+            <div key={i} className="h-24 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-xl" />
           ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="h-72 bg-[#E2E8F0] animate-pulse rounded-xl" />
-          <div className="h-72 bg-[#E2E8F0] animate-pulse rounded-xl" />
+          <div className="h-72 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-xl" />
+          <div className="h-72 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-xl" />
         </div>
       </div>
     );
@@ -252,7 +252,7 @@ export default function DepartmentDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-bold text-[#1E293B]">{decodedName}</h1>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">{decodedName}</h1>
           <div className="flex gap-2 mt-2">
             <DataBadge />
           </div>
@@ -260,7 +260,7 @@ export default function DepartmentDetailPage() {
         <Link href="/public">
           <Button
             variant="outline"
-            className="h-11 gap-2 focus:ring-[3px] focus:ring-[#2563EB] focus:ring-offset-2"
+            className="h-11 gap-2 focus:ring-[3px] focus:ring-blue-600 focus:ring-offset-2"
             aria-label="Back to transparency overview"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -283,21 +283,21 @@ export default function DepartmentDetailPage() {
             label="Total Value"
             value={formatCurrency(s.total_value)}
             icon={<DollarSign className="h-4 w-4" />}
-            textClass="text-[#2563EB]"
+            textClass="text-blue-600 dark:text-blue-400"
           />
           <StatCard
             label="Expiring in 30 Days"
             value={(s.expiring_30 ?? 0).toLocaleString()}
             icon={<AlertTriangle className="h-4 w-4" />}
-            textClass={s.expiring_30 > 0 ? "text-[#d97706]" : "text-[#1E293B]"}
-            bgClass={s.expiring_30 > 0 ? "bg-amber-50" : "bg-white"}
+            textClass={s.expiring_30 > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-900 dark:text-slate-100"}
+            bgClass={s.expiring_30 > 0 ? "bg-amber-50 dark:bg-amber-950/50" : "bg-white dark:bg-slate-800"}
           />
           <StatCard
             label="Expired"
             value={(s.expired_count ?? 0).toLocaleString()}
             icon={<AlertCircle className="h-4 w-4" />}
-            textClass={s.expired_count > 0 ? "text-[#dc2626]" : "text-[#1E293B]"}
-            bgClass={s.expired_count > 0 ? "bg-red-50" : "bg-white"}
+            textClass={s.expired_count > 0 ? "text-red-600 dark:text-red-400" : "text-slate-900 dark:text-slate-100"}
+            bgClass={s.expired_count > 0 ? "bg-red-50 dark:bg-red-950/50" : "bg-white dark:bg-slate-800"}
           />
         </div>
       </section>
@@ -308,7 +308,7 @@ export default function DepartmentDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle>
-              <h2 className="text-xl font-bold text-[#1E293B]">Risk Breakdown</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Risk Breakdown</h2>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -359,12 +359,12 @@ export default function DepartmentDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle>
-              <h2 className="text-xl font-bold text-[#1E293B]">Spending Over Time</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Spending Over Time</h2>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {yearData.length === 0 ? (
-              <p className="text-[#475569] text-sm py-8 text-center">
+              <p className="text-slate-500 dark:text-slate-400 text-sm py-8 text-center">
                 No yearly spending data available.
               </p>
             ) : (
@@ -419,11 +419,11 @@ export default function DepartmentDetailPage() {
 
       {/* Top 10 Vendors */}
       <section aria-labelledby="vendors-heading">
-        <h2 id="vendors-heading" className="text-xl font-bold text-[#1E293B] mb-4">
+        <h2 id="vendors-heading" className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
           Top 10 Vendors
         </h2>
         {data.top_vendors.length === 0 ? (
-          <p className="text-[#475569]">No vendor data available.</p>
+          <p className="text-slate-500 dark:text-slate-400">No vendor data available.</p>
         ) : (
           <div
             role="img"
@@ -440,7 +440,7 @@ export default function DepartmentDetailPage() {
               <li key={vendor.supplier}>
                 <Link
                   href={`/public/vendor/${encodeURIComponent(vendor.supplier)}`}
-                  className="group block rounded-xl bg-white border border-[#E2E8F0] p-4 transition-all duration-150 hover:border-[#2563EB] hover:shadow-md focus:outline-none focus:ring-[3px] focus:ring-[#2563EB] focus:ring-offset-2 min-h-[44px]"
+                  className="group block rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 transition-all duration-150 hover:border-blue-600 hover:shadow-md focus:outline-none focus:ring-[3px] focus:ring-blue-600 focus:ring-offset-2 min-h-[44px]"
                   aria-label={`View contracts for ${vendor.supplier}: ${vendor.count} contracts worth ${formatCurrency(vendor.total_value)}`}
                 >
                   <div className="flex items-start gap-2 mb-2">
@@ -451,12 +451,12 @@ export default function DepartmentDetailPage() {
                     >
                       {index + 1}
                     </span>
-                    <p className="font-semibold text-sm text-[#1E293B] group-hover:text-[#2563EB] transition-colors leading-snug line-clamp-2" aria-hidden="true">
+                    <p className="font-semibold text-sm text-slate-900 dark:text-slate-100 group-hover:text-blue-600 transition-colors leading-snug line-clamp-2" aria-hidden="true">
                       {vendor.supplier}
                     </p>
                   </div>
-                  <div className="text-sm text-[#475569] space-y-0.5" aria-hidden="true">
-                    <div className="font-bold text-base text-[#1E293B]">
+                  <div className="text-sm text-slate-500 dark:text-slate-400 space-y-0.5" aria-hidden="true">
+                    <div className="font-bold text-base text-slate-900 dark:text-slate-100">
                       {formatCurrency(vendor.total_value)}
                     </div>
                     <div>{vendor.count} {vendor.count === 1 ? "contract" : "contracts"}</div>
@@ -470,39 +470,39 @@ export default function DepartmentDetailPage() {
 
       {/* Full Contracts Table */}
       <section aria-labelledby="contracts-heading">
-        <h2 id="contracts-heading" className="text-xl font-bold text-[#1E293B] mb-4">
+        <h2 id="contracts-heading" className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
           All Contracts ({data.contracts.length.toLocaleString()})
         </h2>
         {data.contracts.length === 0 ? (
-          <p className="text-[#475569]">No contracts found for this department.</p>
+          <p className="text-slate-500 dark:text-slate-400">No contracts found for this department.</p>
         ) : (
-          <div className="border border-[#E2E8F0] rounded-lg overflow-auto">
+          <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-auto">
             <table
               className="w-full text-sm"
               role="table"
               aria-label={`All contracts for ${decodedName}`}
             >
-              <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+              <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
                 <tr>
-                  <th scope="col" className="px-4 py-3 text-left font-semibold text-[#1E293B]">
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                     Contract #
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left font-semibold text-[#1E293B]">
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                     Supplier
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left font-semibold text-[#1E293B]">
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                     Value
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left font-semibold text-[#1E293B]">
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                     Start
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left font-semibold text-[#1E293B]">
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                     Expires
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left font-semibold text-[#1E293B]">
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                     Status
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left font-semibold text-[#1E293B]">
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                     Description
                   </th>
                 </tr>
@@ -511,27 +511,27 @@ export default function DepartmentDetailPage() {
                 {data.contracts.map((c, i) => (
                   <tr
                     key={c.contract_number || i}
-                    className={i % 2 === 0 ? "bg-white" : "bg-[#F8FAFC]"}
+                    className={i % 2 === 0 ? "bg-white dark:bg-slate-800" : "bg-slate-50 dark:bg-slate-900"}
                   >
-                    <td className="px-4 py-3 font-mono text-xs text-[#475569]">
+                    <td className="px-4 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">
                       {c.contract_number || "—"}
                     </td>
-                    <td className="px-4 py-3 text-[#1E293B]">
+                    <td className="px-4 py-3 text-slate-900 dark:text-slate-100">
                       <Link
                         href={`/public/vendor/${encodeURIComponent(c.supplier)}`}
-                        className="hover:text-[#2563EB] hover:underline focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:ring-offset-1 rounded"
+                        className="hover:text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-1 rounded"
                         aria-label={`View vendor ${c.supplier}`}
                       >
                         {c.supplier}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 font-semibold text-[#1E293B]">
+                    <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
                       {formatCurrency(c.value)}
                     </td>
-                    <td className="px-4 py-3 text-[#475569]">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
                       {formatDate(c.start_date)}
                     </td>
-                    <td className="px-4 py-3 text-[#475569]">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
                       {formatDate(c.end_date)}
                     </td>
                     <td className="px-4 py-3">
@@ -542,7 +542,7 @@ export default function DepartmentDetailPage() {
                       </span>
                     </td>
                     <td
-                      className="px-4 py-3 max-w-[280px] truncate text-[#475569]"
+                      className="px-4 py-3 max-w-[280px] truncate text-slate-500 dark:text-slate-400"
                       title={c.description}
                     >
                       {c.description || "—"}
@@ -556,7 +556,7 @@ export default function DepartmentDetailPage() {
       </section>
 
       {/* Footer */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-[#E2E8F0]">
+      <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
         <Disclaimer />
         <DataBadge />
       </div>

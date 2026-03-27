@@ -59,7 +59,7 @@ export function ContractDetail({ contract, open, onClose }: ContractDetailProps)
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-2">
               <SheetTitle className="text-lg font-semibold text-slate-900 leading-tight">
-                {(contract.vendor_name as string) ?? (contract.contractor_name as string) ?? "Unknown Vendor"}
+                {(contract.supplier as string) ?? (contract.vendor_name as string) ?? (contract.contractor_name as string) ?? "Unknown Vendor"}
               </SheetTitle>
               <SheetDescription className="text-sm text-slate-500">
                 Contract #{(contract.contract_number as string) ?? contract.id}
@@ -89,18 +89,22 @@ export function ContractDetail({ contract, open, onClose }: ContractDetailProps)
         <div className="px-4 pb-6">
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
             <DetailRow label="Department" value={contract.department as string} />
-            <DetailRow label="Contract Value" value={formatCurrency(contract.amount as number ?? contract.contract_amount as number)} />
+            <DetailRow label="Contract Value" value={formatCurrency((contract.value as number) ?? (contract.amount as number) ?? (contract.contract_amount as number))} />
             <DetailRow label="Start Date" value={formatDate(contract.start_date as string)} />
-            <DetailRow label="End Date / Expiry" value={formatDate(contract.end_date as string ?? contract.expiration_date as string)} />
-            {contract.days_until_expiry !== undefined && (
+            <DetailRow label="End Date / Expiry" value={formatDate((contract.end_date as string) ?? (contract.expiration_date as string))} />
+            {(contract.days_to_expiry !== undefined || contract.days_until_expiry !== undefined) && (
               <DetailRow
                 label="Days Until Expiry"
                 value={
-                  typeof contract.days_until_expiry === "number"
-                    ? contract.days_until_expiry < 0
-                      ? `Expired ${Math.abs(contract.days_until_expiry)} days ago`
-                      : `${contract.days_until_expiry} days`
-                    : String(contract.days_until_expiry)
+                  (() => {
+                    const days = (contract.days_to_expiry ?? contract.days_until_expiry) as number | undefined;
+                    if (typeof days === "number") {
+                      return days < 0
+                        ? `Expired ${Math.abs(days)} days ago`
+                        : `${days} days`;
+                    }
+                    return String(days);
+                  })()
                 }
               />
             )}

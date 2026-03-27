@@ -7,10 +7,10 @@ export default function AskRichmondPage() {
     <div className="flex flex-col gap-8">
       {/* Hero */}
       <div className="text-center space-y-3 py-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
           Ask Richmond
         </h1>
-        <p className="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
           Ask questions about city contracts in plain English. Our AI translates your
           question into a database query and returns results instantly.
         </p>

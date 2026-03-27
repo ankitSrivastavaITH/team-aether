@@ -27,14 +27,14 @@ function QuickLink({
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 group"
+      className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-300 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 group"
       style={{ minHeight: 44 }}
     >
       <Icon
         className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors"
         aria-hidden="true"
       />
-      <span className="text-sm font-medium text-slate-700 group-hover:text-blue-700 transition-colors flex-1">
+      <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-blue-700 transition-colors flex-1">
         {label}
       </span>
       <ArrowRight
@@ -52,10 +52,10 @@ function StaffDashboardContent() {
     <div className="flex flex-col gap-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
           Staff Dashboard — Contract Risk
         </h1>
-        <p className="text-base text-slate-500 mt-1">
+        <p className="text-base text-slate-500 dark:text-slate-400 mt-1">
           Monitor contract expirations and procurement risk across departments.
         </p>
       </div>
@@ -91,7 +91,7 @@ function StaffDashboardContent() {
       <section aria-labelledby="expiry-timeline-heading">
         <h2
           id="expiry-timeline-heading"
-          className="text-xl font-semibold text-slate-800 mb-4"
+          className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-4"
         >
           Upcoming Expirations
         </h2>
@@ -100,7 +100,7 @@ function StaffDashboardContent() {
 
       {/* Quick Links to Sub-Pages */}
       <section aria-label="Quick navigation">
-        <h2 className="text-lg font-semibold text-slate-800 mb-3">
+        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-3">
           Explore
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

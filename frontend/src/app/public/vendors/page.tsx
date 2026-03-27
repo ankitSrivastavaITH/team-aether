@@ -41,10 +41,10 @@ export default function VendorsPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-[#1E293B]">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
           {t("public.top20", locale)}
         </h1>
-        <p className="text-base text-[#475569] mt-1">
+        <p className="text-base text-slate-500 dark:text-slate-400 mt-1">
           {t("public.top20Desc", locale)}
         </p>
       </div>
@@ -54,7 +54,7 @@ export default function VendorsPage() {
       {isLoading ? (
         <div aria-busy="true" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-32 rounded-xl bg-[#E2E8F0] animate-pulse" />
+            <div key={i} className="h-32 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
           ))}
         </div>
       ) : topVendors.length > 0 ? (
@@ -73,7 +73,7 @@ export default function VendorsPage() {
           ))}
         </ul>
       ) : (
-        <p className="text-[#475569] text-base">No vendor data available.</p>
+        <p className="text-slate-500 dark:text-slate-400 text-base">No vendor data available.</p>
       )}
     </div>
   );

@@ -47,10 +47,10 @@ export default function SpendingPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-[#1E293B]">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
           Spending Analysis
         </h1>
-        <p className="text-base text-[#475569] mt-1">
+        <p className="text-base text-slate-500 dark:text-slate-400 mt-1">
           Department spending breakdown, vendor distribution, trends over time,
           and contract size analysis.
         </p>
@@ -61,14 +61,14 @@ export default function SpendingPage() {
       {isLoading ? (
         <div aria-busy="true" className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-[400px] rounded-xl bg-[#E2E8F0] animate-pulse" />
+            <div key={i} className="h-[400px] rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
           ))}
         </div>
       ) : (
         <>
           {/* Primary charts */}
           <section aria-label={t("public.spendingBreakdown", locale)} className="space-y-4">
-            <h2 className="text-2xl font-bold text-[#1E293B]">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
               {t("public.spendingBreakdown", locale)}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -81,11 +81,11 @@ export default function SpendingPage() {
           <section aria-labelledby="deeper-analysis-heading" className="space-y-4">
             <h2
               id="deeper-analysis-heading"
-              className="text-2xl font-bold text-[#1E293B]"
+              className="text-2xl font-bold text-slate-900 dark:text-slate-100"
             >
               {t("public.deeperAnalysis", locale)}
             </h2>
-            <p className="text-base text-[#475569]">
+            <p className="text-base text-slate-500 dark:text-slate-400">
               Trends over time, upcoming expirations, procurement methods, and contract sizes.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Database } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+import { API_BASE } from "@/lib/api";
 
 interface FreshnessData {
   last_updated: string | null;
@@ -26,7 +25,7 @@ export function DataBadge({ source = "City of Richmond Open Data" }: { source?: 
   const [freshness, setFreshness] = useState<FreshnessData | null>(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/data-freshness`)
+    fetch(`${API_BASE}/api/data-freshness`)
       .then((r) => r.json())
       .then((data: FreshnessData) => setFreshness(data))
       .catch(() => {

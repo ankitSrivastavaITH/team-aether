@@ -53,12 +53,12 @@ function StatCard({
             {icon}
           </div>
         )}
-        <p className="text-base font-medium text-[#1E293B] leading-snug">{label}</p>
+        <p className="text-base font-medium text-slate-900 dark:text-slate-100 leading-snug">{label}</p>
         <p className={`text-4xl font-bold leading-none tracking-tight ${textClass}`}>
           {value}
         </p>
         {subtext && (
-          <p className="text-sm text-[#475569] mt-1">{subtext}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{subtext}</p>
         )}
       </CardContent>
     </Card>
@@ -79,7 +79,7 @@ function QuickLink({
   return (
     <Link
       href={href}
-      className="flex items-start gap-4 px-5 py-4 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 group"
+      className="flex items-start gap-4 px-5 py-4 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-300 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 group"
       style={{ minHeight: 44 }}
     >
       <Icon
@@ -105,7 +105,7 @@ function LoadingSkeleton() {
     <div aria-busy="true" aria-label="Loading spending data" className="space-y-8">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-36 rounded-xl bg-[#E2E8F0] animate-pulse" />
+          <div key={i} className="h-36 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
         ))}
       </div>
     </div>
@@ -141,21 +141,21 @@ export default function PublicOverviewPage() {
       <section aria-labelledby="hero-heading" className="text-center space-y-4 py-4">
         <h1
           id="hero-heading"
-          className="text-4xl sm:text-5xl font-extrabold text-[#1E293B] leading-tight"
+          className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-slate-100 leading-tight"
         >
           {t("public.title", locale)}
         </h1>
-        <p className="text-lg sm:text-xl text-[#475569] max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg sm:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
           {isLoading ? (
             t("common.loading", locale)
           ) : data ? (
             <>
               {t("public.explore", locale)}{" "}
-              <strong className="text-[#1E293B]">
+              <strong className="text-slate-900 dark:text-slate-100">
                 {totalContracts.toLocaleString()}
               </strong>{" "}
               {t("public.contracts", locale)}{" "}
-              <strong className="text-[#1E293B]">{totalFormatted}</strong>.
+              <strong className="text-slate-900 dark:text-slate-100">{totalFormatted}</strong>.
             </>
           ) : (
             t("public.explore", locale) + " City of Richmond contracts."
@@ -213,7 +213,7 @@ export default function PublicOverviewPage() {
 
           {/* Quick Links to Sub-Pages */}
           <section aria-label="Explore sections">
-            <h2 className="text-lg font-semibold text-[#1E293B] mb-3">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
               Explore
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
