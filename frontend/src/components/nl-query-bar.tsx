@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Search, Loader2, ChevronDown, ChevronUp, ExternalLink, Sparkles } from "lucide-react";
 import { postAPI } from "@/lib/api";
-import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 
 function formatResultValue(key: string, val: unknown): string {
@@ -34,13 +33,27 @@ function ResultCards({ results }: { results: Record<string, unknown>[] }) {
     <div className="space-y-2">
       {visible.map((row, i) => {
         const supplierName = (row.supplier as string) || (row.vendor as string) || "";
-        const hasLink = supplierName.length > 0;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const Wrapper: React.ElementType = hasLink ? Link : "div";
-        const wrapperProps = hasLink ? { href: `/public/vendor/${encodeURIComponent(supplierName)}` } : {};
+        // contract_number available but not used for linking currently
+        const deptName = (row.department as string) || "";
+
+        // Determine best link: vendor page if supplier exists, department page if department exists
+        let linkHref = "";
+        if (supplierName) linkHref = `/public/vendor/${encodeURIComponent(supplierName)}`;
+        else if (deptName) linkHref = `/public/department/${encodeURIComponent(deptName)}`;
+
+        function handleCardClick() {
+          if (linkHref) {
+            window.open(linkHref, "_blank");
+          }
+        }
 
         return (
-          <Wrapper key={i} {...wrapperProps} className="block bg-slate-50 dark:bg-slate-800 rounded-lg px-4 py-3 text-sm space-y-1 border border-slate-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-sm transition-all cursor-pointer group">
+          <button
+            key={i}
+            onClick={handleCardClick}
+            className="w-full text-left bg-slate-50 dark:bg-slate-800 rounded-lg px-4 py-3 text-sm space-y-1 border border-slate-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-sm transition-all cursor-pointer group focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label={`View details for ${supplierName || deptName || `row ${i + 1}`}`}
+          >
             <div className="flex items-start justify-between gap-3">
               <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">
                 {String(row[nameKey] ?? `Row ${i + 1}`)}
@@ -49,7 +62,7 @@ function ResultCards({ results }: { results: Record<string, unknown>[] }) {
                 {valueKey && row[valueKey] != null && (
                   <span className="font-bold text-blue-700 dark:text-blue-400 whitespace-nowrap">{formatResultValue(String(valueKey), row[valueKey])}</span>
                 )}
-                {hasLink && <ExternalLink className="h-3.5 w-3.5 text-slate-300 group-hover:text-blue-500 flex-shrink-0" aria-hidden="true" />}
+                {linkHref && <ExternalLink className="h-3.5 w-3.5 text-slate-300 group-hover:text-blue-500 flex-shrink-0" aria-hidden="true" />}
               </div>
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-500 dark:text-slate-400 text-xs">
@@ -60,7 +73,7 @@ function ResultCards({ results }: { results: Record<string, unknown>[] }) {
                 </span>
               ))}
             </div>
-          </Wrapper>
+          </button>
         );
       })}
       {results.length > 8 && (
