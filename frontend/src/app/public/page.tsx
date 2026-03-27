@@ -18,6 +18,8 @@ import { MultiSourceExplorer } from "@/components/multi-source-explorer";
 import { StateContracts } from "@/components/state-contracts";
 import { fetchAPI } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
+import { useLocale } from "@/hooks/use-locale";
+import { t } from "@/lib/i18n";
 
 interface DepartmentStat {
   department: string;
@@ -120,6 +122,7 @@ function ErrorMessage({ message }: { message: string }) {
 
 export default function PublicTransparencyPage() {
   const { data, isLoading, isError, error } = usePublicStats();
+  const { locale } = useLocale();
 
   const totalFormatted = data ? formatCurrency(data.total_value) : "—";
   const totalContracts = data?.total_contracts ?? 0;
@@ -140,31 +143,31 @@ export default function PublicTransparencyPage() {
           id="hero-heading"
           className="text-4xl sm:text-5xl font-extrabold text-[#1E293B] leading-tight"
         >
-          Where Do Your Tax Dollars Go?
+          {t("public.title", locale)}
         </h1>
         <p className="text-lg sm:text-xl text-[#475569] max-w-2xl mx-auto leading-relaxed">
           {isLoading ? (
-            "Loading contract data…"
+            t("common.loading", locale)
           ) : data ? (
             <>
-              Explore{" "}
+              {t("public.explore", locale)}{" "}
               <strong className="text-[#1E293B]">
                 {totalContracts.toLocaleString()}
               </strong>{" "}
-              City of Richmond contracts worth{" "}
+              {t("public.contracts", locale)}{" "}
               <strong className="text-[#1E293B]">{totalFormatted}</strong>.
             </>
           ) : (
-            "Explore City of Richmond contracts."
+            t("public.explore", locale) + " City of Richmond contracts."
           )}
         </p>
         <div className="flex flex-wrap justify-center gap-3 pt-2">
-          <DataBadge source="City of Richmond Open Data" />
+          <DataBadge source={t("common.source", locale)} />
         </div>
       </section>
 
       {/* Disclaimer */}
-      <Disclaimer />
+      <Disclaimer locale={locale} />
 
       {/* Main content */}
       {isLoading && <LoadingSkeleton />}
@@ -181,26 +184,26 @@ export default function PublicTransparencyPage() {
           <section aria-label="Key spending figures">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <StatCard
-                label="Total Contract Value"
+                label={t("public.totalValue", locale)}
                 value={formatCurrency(data.total_value)}
                 bgClass="bg-blue-50"
                 textClass="text-[#2563EB]"
-                subtext="All active and historical contracts"
+                subtext={t("public.totalValueDesc", locale)}
               />
               <StatCard
-                label="Active Contracts"
+                label={t("public.activeContracts", locale)}
                 value={totalContracts.toLocaleString()}
                 bgClass="bg-purple-50"
                 textClass="text-[#7c3aed]"
-                subtext="Total contracts on record"
+                subtext={t("public.activeDesc", locale)}
               />
               <StatCard
-                label="Expiring in 30 Days"
+                label={t("public.expiring30", locale)}
                 value={expiring30.toLocaleString()}
                 bgClass="bg-red-50"
                 textClass="text-[#dc2626]"
                 icon={<AlertCircle className="h-6 w-6" />}
-                subtext="Contracts needing renewal attention"
+                subtext={t("public.expiringDesc", locale)}
               />
             </div>
           </section>
@@ -209,8 +212,8 @@ export default function PublicTransparencyPage() {
           <SpendingInsights />
 
           {/* Charts */}
-          <section aria-label="Spending charts" className="space-y-4">
-            <h2 className="sr-only">Spending Breakdown</h2>
+          <section aria-label={t("public.spendingBreakdown", locale)} className="space-y-4">
+            <h2 className="sr-only">{t("public.spendingBreakdown", locale)}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <DepartmentSpendingChart data={data.departments ?? []} />
               <VendorPieChart data={data.top_vendors ?? []} />
@@ -223,7 +226,7 @@ export default function PublicTransparencyPage() {
               id="deeper-analysis-heading"
               className="text-2xl font-bold text-[#1E293B]"
             >
-              Deeper Analysis
+              {t("public.deeperAnalysis", locale)}
             </h2>
             <p className="text-base text-[#475569]">
               Trends over time, upcoming expirations, procurement methods, and contract sizes.
@@ -260,15 +263,15 @@ export default function PublicTransparencyPage() {
               id="vendors-heading"
               className="text-2xl font-bold text-[#1E293B]"
             >
-              Top 20 Vendors
+              {t("public.top20", locale)}
             </h2>
             <p className="text-base text-[#475569]">
-              Click any vendor to explore their contracts in detail.
+              {t("public.top20Desc", locale)}
             </p>
             {topVendors.length > 0 ? (
               <ul
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 list-none p-0"
-                aria-label="Top vendors by contract value"
+                aria-label={t("public.topVendors", locale)}
               >
                 {topVendors.map((vendor) => (
                   <li key={vendor.supplier}>

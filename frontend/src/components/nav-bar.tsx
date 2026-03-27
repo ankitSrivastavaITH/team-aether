@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Shield, BarChart3, GitCompare } from "lucide-react";
+import { LanguageToggle } from "@/components/language-toggle";
 
 const links = [
   { href: "/staff", label: "Staff Dashboard", icon: Shield },
@@ -42,6 +43,7 @@ export function NavBar() {
               </Link>
             );
           })}
+          <LanguageToggle />
         </div>
 
         {/* Mobile hamburger */}
@@ -73,6 +75,9 @@ export function NavBar() {
                   </Link>
                 );
               })}
+              <div className="mt-2 border-t border-slate-100 pt-2">
+                <LanguageToggle />
+              </div>
             </div>
           </SheetContent>
         </Sheet>
