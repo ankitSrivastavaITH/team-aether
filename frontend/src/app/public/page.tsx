@@ -1,37 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, BarChart3, Building2, Layers, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataBadge } from "@/components/data-badge";
 import { Disclaimer } from "@/components/disclaimer";
-import { DepartmentSpendingChart, VendorPieChart } from "@/components/spending-charts";
-import { VendorCard } from "@/components/vendor-card";
 import { SpendingInsights } from "@/components/ai-insights";
-import {
-  YearlySpendingChart,
-  ExpiryTimelineChart,
-  ProcurementTypeChart,
-  ContractSizeChart,
-} from "@/components/analytics-charts";
-import { MultiSourceExplorer } from "@/components/multi-source-explorer";
-import { StateContracts } from "@/components/state-contracts";
 import { fetchAPI } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 import { useLocale } from "@/hooks/use-locale";
 import { t } from "@/lib/i18n";
-
-interface DepartmentStat {
-  department: string;
-  count: number;
-  total_value: number;
-}
-
-interface VendorStat {
-  supplier: string;
-  count: number;
-  total_value: number;
-}
 
 interface PublicStats {
   total_contracts: number;
@@ -39,8 +18,8 @@ interface PublicStats {
   expiring_30: number;
   expiring_60: number;
   expiring_90: number;
-  departments: DepartmentStat[];
-  top_vendors: VendorStat[];
+  departments: Array<{ department: string; count: number; total_value: number }>;
+  top_vendors: Array<{ supplier: string; count: number; total_value: number }>;
 }
 
 function usePublicStats() {
@@ -86,20 +65,48 @@ function StatCard({
   );
 }
 
+function QuickLink({
+  href,
+  label,
+  description,
+  icon: Icon,
+}: {
+  href: string;
+  label: string;
+  description: string;
+  icon: React.ElementType;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-start gap-4 px-5 py-4 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 group"
+      style={{ minHeight: 44 }}
+    >
+      <Icon
+        className="h-6 w-6 text-slate-400 group-hover:text-blue-600 transition-colors shrink-0 mt-0.5"
+        aria-hidden="true"
+      />
+      <div className="flex-1">
+        <span className="text-sm font-semibold text-slate-800 group-hover:text-blue-700 transition-colors">
+          {label}
+        </span>
+        <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+      </div>
+      <ArrowRight
+        className="h-4 w-4 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0 mt-1"
+        aria-hidden="true"
+      />
+    </Link>
+  );
+}
+
 function LoadingSkeleton() {
   return (
     <div aria-busy="true" aria-label="Loading spending data" className="space-y-8">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="h-36 rounded-xl bg-[#E2E8F0] animate-pulse"
-          />
+          <div key={i} className="h-36 rounded-xl bg-[#E2E8F0] animate-pulse" />
         ))}
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="h-[400px] rounded-xl bg-[#E2E8F0] animate-pulse" />
-        <div className="h-[400px] rounded-xl bg-[#E2E8F0] animate-pulse" />
       </div>
     </div>
   );
@@ -120,20 +127,13 @@ function ErrorMessage({ message }: { message: string }) {
   );
 }
 
-export default function PublicTransparencyPage() {
+export default function PublicOverviewPage() {
   const { data, isLoading, isError, error } = usePublicStats();
   const { locale } = useLocale();
 
   const totalFormatted = data ? formatCurrency(data.total_value) : "—";
   const totalContracts = data?.total_contracts ?? 0;
   const expiring30 = data?.expiring_30 ?? 0;
-
-  // Top 20 vendors for vendor grid
-  const topVendors = data?.top_vendors
-    ? [...data.top_vendors]
-        .sort((a, b) => b.total_value - a.total_value)
-        .slice(0, 20)
-    : [];
 
   return (
     <div className="space-y-10">
@@ -211,81 +211,31 @@ export default function PublicTransparencyPage() {
           {/* AI Spending Insights */}
           <SpendingInsights />
 
-          {/* Charts */}
-          <section aria-label={t("public.spendingBreakdown", locale)} className="space-y-4">
-            <h2 className="sr-only">{t("public.spendingBreakdown", locale)}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <DepartmentSpendingChart data={data.departments ?? []} />
-              <VendorPieChart data={data.top_vendors ?? []} />
+          {/* Quick Links to Sub-Pages */}
+          <section aria-label="Explore sections">
+            <h2 className="text-lg font-semibold text-[#1E293B] mb-3">
+              Explore
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <QuickLink
+                href="/public/spending"
+                label="Spending Analysis"
+                description="Department spending, vendor breakdown, trends over time"
+                icon={BarChart3}
+              />
+              <QuickLink
+                href="/public/vendors"
+                label="Top Vendors"
+                description="Top 20 vendors by contract value"
+                icon={Building2}
+              />
+              <QuickLink
+                href="/public/sources"
+                label="Multi-Source Explorer"
+                description="Federal, State, and VITA contract data"
+                icon={Layers}
+              />
             </div>
-          </section>
-
-          {/* Deeper Analysis */}
-          <section aria-labelledby="deeper-analysis-heading" className="space-y-4">
-            <h2
-              id="deeper-analysis-heading"
-              className="text-2xl font-bold text-[#1E293B]"
-            >
-              {t("public.deeperAnalysis", locale)}
-            </h2>
-            <p className="text-base text-[#475569]">
-              Trends over time, upcoming expirations, procurement methods, and contract sizes.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <YearlySpendingChart />
-              <ExpiryTimelineChart />
-              <ProcurementTypeChart />
-              <ContractSizeChart />
-            </div>
-          </section>
-
-          {/* Federal Contracts Multi-Source Explorer */}
-          <section aria-labelledby="federal-contracts-heading" className="space-y-4">
-            <h2
-              id="federal-contracts-heading"
-              className="text-2xl font-bold text-[#1E293B]"
-            >
-              Multi-Source Contract Explorer
-            </h2>
-            <p className="text-base text-[#475569]">
-              Beyond City contracts, federal and state agencies award billions to Richmond-area vendors.
-              Explore contracts across City, State (eVA), and federal sources side-by-side.
-            </p>
-            <MultiSourceExplorer />
-          </section>
-
-          {/* Virginia State Contracts */}
-          <StateContracts />
-
-          {/* Top vendors grid */}
-          <section aria-labelledby="vendors-heading" className="space-y-4">
-            <h2
-              id="vendors-heading"
-              className="text-2xl font-bold text-[#1E293B]"
-            >
-              {t("public.top20", locale)}
-            </h2>
-            <p className="text-base text-[#475569]">
-              {t("public.top20Desc", locale)}
-            </p>
-            {topVendors.length > 0 ? (
-              <ul
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 list-none p-0"
-                aria-label={t("public.topVendors", locale)}
-              >
-                {topVendors.map((vendor) => (
-                  <li key={vendor.supplier}>
-                    <VendorCard
-                      name={vendor.supplier}
-                      contractCount={vendor.count}
-                      totalValue={vendor.total_value}
-                    />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-[#475569] text-base">No vendor data available.</p>
-            )}
           </section>
         </>
       )}

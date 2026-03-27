@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { NavBar } from "@/components/nav-bar";
 import { CheckCircle, XCircle, Clock, FileSpreadsheet, Search, BarChart3, Brain, Download } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -61,64 +62,77 @@ const comparisons = [
 
 export default function ComparePage() {
   return (
-    <div className="max-w-4xl mx-auto space-y-10">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold">RVA Contract Lens vs. The Old Way</h1>
-        <p className="text-xl text-slate-500">
-          Procurement staff currently use Excel spreadsheets and manual PDF review.
-          Here is what changes.
-        </p>
-      </div>
+    <>
+      <header role="banner">
+        <NavBar />
+      </header>
+      <main id="main-content" role="main" className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-4xl mx-auto space-y-10">
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl font-bold">RVA Contract Lens vs. The Old Way</h1>
+            <p className="text-xl text-slate-500">
+              Procurement staff currently use Excel spreadsheets and manual PDF review.
+              Here is what changes.
+            </p>
+          </div>
 
-      <div className="space-y-6">
-        {comparisons.map((c, i) => {
-          const Icon = c.icon;
-          return (
-            <Card key={i} className="p-6">
-              <div className="flex items-start gap-4">
-                <Icon className="h-8 w-8 text-blue-600 flex-shrink-0 mt-1" aria-hidden="true" />
-                <div className="flex-1 space-y-4">
-                  <h2 className="text-lg font-semibold">{c.task}</h2>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="bg-red-50 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <XCircle className="h-5 w-5 text-red-500" aria-hidden="true" />
-                        <span className="font-medium text-red-700">Before</span>
-                        <span className="ml-auto text-sm text-red-500 flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {c.oldTime}
-                        </span>
+          <div className="space-y-6">
+            {comparisons.map((c, i) => {
+              const Icon = c.icon;
+              return (
+                <Card key={i} className="p-6">
+                  <div className="flex items-start gap-4">
+                    <Icon className="h-8 w-8 text-blue-600 flex-shrink-0 mt-1" aria-hidden="true" />
+                    <div className="flex-1 space-y-4">
+                      <h2 className="text-lg font-semibold">{c.task}</h2>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="bg-red-50 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <XCircle className="h-5 w-5 text-red-500" aria-hidden="true" />
+                            <span className="font-medium text-red-700">Before</span>
+                            <span className="ml-auto text-sm text-red-500 flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {c.oldTime}
+                            </span>
+                          </div>
+                          <p className="text-sm text-red-800">{c.oldWay}</p>
+                        </div>
+                        <div className="bg-green-50 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <CheckCircle className="h-5 w-5 text-green-500" aria-hidden="true" />
+                            <span className="font-medium text-green-700">With Contract Lens</span>
+                            <span className="ml-auto text-sm text-green-500 flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {c.newTime}
+                            </span>
+                          </div>
+                          <p className="text-sm text-green-800">{c.newWay}</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-red-800">{c.oldWay}</p>
-                    </div>
-                    <div className="bg-green-50 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle className="h-5 w-5 text-green-500" aria-hidden="true" />
-                        <span className="font-medium text-green-700">With Contract Lens</span>
-                        <span className="ml-auto text-sm text-green-500 flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {c.newTime}
-                        </span>
-                      </div>
-                      <p className="text-sm text-green-800">{c.newWay}</p>
                     </div>
                   </div>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+                </Card>
+              );
+            })}
+          </div>
 
-      <div className="text-center space-y-4 py-8">
-        <p className="text-2xl font-bold">Ready to see it in action?</p>
-        <div className="flex justify-center gap-4">
-          <Link href="/public">
-            <Button className="h-12 px-8 text-base">Explore Public Data</Button>
-          </Link>
-          <Link href="/staff">
-            <Button variant="outline" className="h-12 px-8 text-base">Staff Dashboard</Button>
-          </Link>
+          <div className="text-center space-y-4 py-8">
+            <p className="text-2xl font-bold">Ready to see it in action?</p>
+            <div className="flex justify-center gap-4">
+              <Link href="/public">
+                <Button className="h-12 px-8 text-base">Explore Public Data</Button>
+              </Link>
+              <Link href="/staff">
+                <Button variant="outline" className="h-12 px-8 text-base">Staff Dashboard</Button>
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </main>
+      <footer role="contentinfo" className="border-t border-[#E2E8F0] bg-white mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 text-center text-sm text-[#475569]">
+          <p>RVA Contract Lens — Built for Hack for RVA 2026</p>
+          <p className="mt-1">Data from City of Richmond Open Data. Not official City reporting.</p>
+        </div>
+      </footer>
+    </>
   );
 }
