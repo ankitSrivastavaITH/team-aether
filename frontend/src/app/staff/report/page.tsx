@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Disclaimer } from "@/components/disclaimer";
 import { Loader2, Download, RefreshCw, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ReportData {
   report: string;
@@ -79,13 +80,17 @@ export default function ReportPage() {
                 <Download className="h-3.5 w-3.5" aria-hidden="true" />
                 Download .md
               </Button>
+              <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-1.5">
+                <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                Print / PDF
+              </Button>
             </div>
           </div>
 
           {/* Report Content */}
           <Card className="p-8">
             <article className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-slate-900">
-              <ReactMarkdown>{data.report}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.report}</ReactMarkdown>
             </article>
           </Card>
 
