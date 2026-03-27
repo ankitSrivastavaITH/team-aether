@@ -158,3 +158,125 @@ Do NOT make legal or compliance determinations. Return ONLY raw JSON, no markdow
         "total_critical": len(critical),
         "disclaimer": "AI-generated risk summary. All procurement decisions require human review.",
     }
+
+
+@router.get("/full-report")
+def full_report():
+    """Generate a comprehensive markdown report across all contract sources."""
+    
+    # Gather data from all sources
+    city_stats = db_query("""
+        SELECT COUNT(*) AS count, SUM(value) AS total_value,
+            SUM(CASE WHEN days_to_expiry BETWEEN 0 AND 30 THEN 1 ELSE 0 END) AS expiring_30,
+            SUM(CASE WHEN days_to_expiry BETWEEN 0 AND 90 THEN 1 ELSE 0 END) AS expiring_90
+        FROM city_contracts
+    """)[0]
+    
+    top_city_vendors = db_query("""
+        SELECT supplier, COUNT(*) AS count, SUM(value) AS total_value
+        FROM city_contracts GROUP BY supplier ORDER BY total_value DESC LIMIT 5
+    """)
+    
+    top_depts = db_query("""
+        SELECT department, COUNT(*) AS count, SUM(value) AS total_value
+        FROM city_contracts GROUP BY department ORDER BY total_value DESC LIMIT 5
+    """)
+    
+    critical = db_query("""
+        SELECT supplier, department, value, days_to_expiry
+        FROM city_contracts WHERE days_to_expiry BETWEEN 0 AND 30
+        ORDER BY value DESC LIMIT 5
+    """)
+    
+    # Federal
+    federal_stats = {"count": 0, "total_value": 0}
+    federal_contracts = []
+    try:
+        fs = db_query("SELECT COUNT(*) AS count, SUM(value) AS total_value FROM federal_contracts WHERE value IS NOT NULL")
+        if fs:
+            federal_stats = fs[0]
+        federal_contracts = db_query("SELECT title, department, value FROM federal_contracts WHERE value IS NOT NULL ORDER BY value DESC LIMIT 5")
+    except Exception:
+        pass
+    
+    # State
+    state_stats = {"count": 0, "total_value": 0}
+    state_contracts = []
+    try:
+        ss = db_query("SELECT COUNT(*) AS count, SUM(value) AS total_value FROM state_contracts")
+        if ss:
+            state_stats = ss[0]
+        state_contracts = db_query("SELECT title, department, value FROM state_contracts ORDER BY value DESC LIMIT 5")
+    except Exception:
+        pass
+    
+    # VITA
+    vita_stats = {"count": 0, "total_value": 0}
+    vita_contracts = []
+    try:
+        vs = db_query("SELECT COUNT(*) AS count, SUM(value) AS total_value FROM vita_contracts WHERE value IS NOT NULL")
+        if vs:
+            vita_stats = vs[0]
+        vita_contracts = db_query("SELECT title, vendor, value FROM vita_contracts WHERE value IS NOT NULL ORDER BY value DESC LIMIT 5")
+    except Exception:
+        pass
+    
+    data_context = json.dumps({
+        "city": {"stats": city_stats, "top_vendors": top_city_vendors, "top_departments": top_depts, "critical_contracts": critical},
+        "federal": {"stats": federal_stats, "top_contracts": federal_contracts},
+        "state": {"stats": state_stats, "top_contracts": state_contracts},
+        "vita": {"stats": vita_stats, "top_contracts": vita_contracts},
+    }, default=str)
+    
+    report_prompt = """You are a civic procurement analyst writing a comprehensive executive summary report.
+Generate a well-structured markdown report covering ALL contract sources for Richmond, VA.
+
+The report must include:
+1. **Executive Summary** — 3-4 sentences overview of total spending across all sources
+2. **City Contracts Overview** — key stats, top departments, top vendors
+3. **Federal Contracts (SAM.gov)** — what federal agencies have contracts in Richmond
+4. **State Contracts (eVA)** — Virginia state contracts affecting Richmond
+5. **VITA IT Contracts** — statewide IT infrastructure contracts
+6. **Risk Assessment** — contracts expiring soon, concentration risk
+7. **Recommendations** — 3-5 specific actionable recommendations
+
+Use specific dollar amounts and numbers from the data. Format as clean markdown with headers, bullet points, and bold key figures. Keep it under 800 words.
+
+Do NOT make legal or compliance determinations. Label all analysis as advisory."""
+    
+    try:
+        report = chat(report_prompt, f"Contract data across all sources:\n{data_context}")
+    except Exception:
+        # Fallback static report
+        total_contracts = city_stats.get("count", 0) + federal_stats.get("count", 0) + state_stats.get("count", 0) + vita_stats.get("count", 0)
+        total_value = (city_stats.get("total_value", 0) or 0) + (federal_stats.get("total_value", 0) or 0) + (state_stats.get("total_value", 0) or 0) + (vita_stats.get("total_value", 0) or 0)
+        report = f"""# RVA Contract Lens — Multi-Source Report
+
+## Executive Summary
+Richmond manages **{total_contracts:,}** contracts worth **${total_value:,.0f}** across City, federal, state, and VITA sources.
+**{city_stats.get('expiring_30', 0)}** City contracts are expiring within 30 days requiring immediate attention.
+
+## City Contracts
+- **{city_stats.get('count', 0):,}** contracts totaling **${city_stats.get('total_value', 0):,.0f}**
+- **{city_stats.get('expiring_30', 0)}** expiring in 30 days, **{city_stats.get('expiring_90', 0)}** in 90 days
+
+## Federal Contracts (SAM.gov)
+- **{federal_stats.get('count', 0)}** contracts totaling **${federal_stats.get('total_value', 0):,.0f}**
+
+## State Contracts (eVA)
+- **{state_stats.get('count', 0)}** contracts totaling **${state_stats.get('total_value', 0):,.0f}**
+
+## VITA IT Contracts
+- **{vita_stats.get('count', 0)}** contracts totaling **${vita_stats.get('total_value', 0):,.0f}**
+
+## Recommendations
+1. Review all {city_stats.get('expiring_30', 0)} contracts expiring within 30 days
+2. Assess vendor concentration risk in top departments
+3. Cross-reference City vendors with federal debarment records
+"""
+    
+    return {
+        "report": report,
+        "generated_at": __import__("datetime").datetime.now().isoformat(),
+        "disclaimer": "AI-generated report for informational purposes. Verify all figures against official records.",
+    }

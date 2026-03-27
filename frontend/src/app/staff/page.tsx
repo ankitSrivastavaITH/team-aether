@@ -124,6 +124,13 @@ function StaffDashboardContent() {
             <FileUp className="h-5 w-5" aria-hidden="true" />
             PDF Extractor
           </Link>
+          <Link
+            href="/staff/report"
+            className="inline-flex items-center gap-2 px-5 py-3 bg-slate-800 text-white text-base font-medium rounded-lg hover:bg-slate-900 transition-colors focus:outline-none focus:ring-3 focus:ring-slate-500 focus:ring-offset-2 min-h-[44px] shrink-0"
+          >
+            <FileUp className="h-5 w-5" aria-hidden="true" />
+            AI Report
+          </Link>
         </div>
 
         {/* Disclaimer */}
