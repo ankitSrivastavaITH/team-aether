@@ -32,38 +32,76 @@ const SUGGESTIONS = [
   "Departments with most contracts",
 ];
 
-function ResultTable({ results }: { results: Record<string, unknown>[] }) {
+function formatValue(key: string, val: unknown): string {
+  if (val === null || val === undefined) return "—";
+  const s = String(val);
+  // Format currency-like fields
+  if (key === "value" || key === "total_value" || key.includes("value")) {
+    const num = Number(val);
+    if (!isNaN(num) && num > 0) {
+      return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(num);
+    }
+  }
+  // Format date fields
+  if (key.includes("date") && s.match(/^\d{4}-\d{2}-\d{2}/)) {
+    return new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+  return s;
+}
+
+function ResultCards({ results }: { results: Record<string, unknown>[] }) {
+  const [expanded, setExpanded] = useState(false);
   if (!results.length) return null;
+
   const keys = Object.keys(results[0]);
+  // Identify the "name" column (first string-like key)
+  const nameKey = keys.find(k =>
+    k === "supplier" || k === "department" || k === "title" || k === "name"
+  ) || keys[0];
+  const valueKey = keys.find(k => k === "value" || k === "total_value" || k.includes("value"));
+  const otherKeys = keys.filter(k => k !== nameKey);
+
+  const displayResults = expanded ? results.slice(0, 50) : results.slice(0, 5);
 
   return (
-    <div className="overflow-auto max-h-[200px] border rounded-md text-xs">
-      <table className="w-full">
-        <thead className="bg-slate-50 sticky top-0">
-          <tr>
-            {keys.map((k) => (
-              <th key={k} className="px-2 py-1.5 text-left font-medium text-slate-600 whitespace-nowrap">
-                {k.replace(/_/g, " ")}
-              </th>
+    <div className="space-y-1.5">
+      {displayResults.map((row, i) => (
+        <div key={i} className="bg-slate-50 rounded-lg px-3 py-2 text-xs space-y-1">
+          <div className="flex items-start justify-between gap-2">
+            <span className="font-semibold text-slate-800 text-sm leading-tight">
+              {String(row[nameKey] ?? `Row ${i + 1}`)}
+            </span>
+            {valueKey && row[valueKey] != null && (
+              <span className="font-bold text-blue-700 whitespace-nowrap">
+                {formatValue(String(valueKey), row[valueKey])}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-slate-500">
+            {otherKeys.filter(k => k !== valueKey && row[k] != null && String(row[k]).trim() !== "").slice(0, 4).map(k => (
+              <span key={k}>
+                <span className="text-slate-400">{k.replace(/_/g, " ")}:</span>{" "}
+                <span className="text-slate-600">{String(formatValue(k, row[k]))}</span>
+              </span>
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {results.slice(0, 20).map((row, i) => (
-            <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
-              {keys.map((k) => (
-                <td key={k} className="px-2 py-1 whitespace-nowrap max-w-[150px] truncate">
-                  {String(row[k] ?? "")}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {results.length > 20 && (
-        <div className="px-2 py-1 text-center text-slate-400 bg-slate-50 border-t">
-          +{results.length - 20} more rows
+          </div>
         </div>
+      ))}
+      {results.length > 5 && !expanded && (
+        <button
+          onClick={() => setExpanded(true)}
+          className="w-full text-center text-xs text-blue-600 hover:text-blue-800 py-1"
+        >
+          Show all {results.length} results
+        </button>
+      )}
+      {expanded && results.length > 5 && (
+        <button
+          onClick={() => setExpanded(false)}
+          className="w-full text-center text-xs text-blue-600 hover:text-blue-800 py-1"
+        >
+          Show less
+        </button>
       )}
     </div>
   );
@@ -102,7 +140,7 @@ function ChatBubble({ msg }: { msg: ChatMessage }) {
           <p className="text-sm text-slate-700">{r.explanation}</p>
         )}
         {r.results && r.results.length > 0 && (
-          <ResultTable results={r.results} />
+          <ResultCards results={r.results} />
         )}
         <div className="flex items-center justify-between">
           <span className="text-xs text-slate-400">{r.total} result{r.total !== 1 ? "s" : ""}</span>
