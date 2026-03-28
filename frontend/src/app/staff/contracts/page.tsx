@@ -105,7 +105,7 @@ function ContractsPageContent() {
       <div className="flex flex-col gap-6">
         {/* Page Header */}
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Contracts</h1>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Contracts</h1>
           <p className="text-base text-slate-500 mt-1">
             Search, filter, and explore all City of Richmond contracts.
           </p>
@@ -118,12 +118,12 @@ function ContractsPageContent() {
               {total.toLocaleString()} contracts
             </span>
             <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full font-medium">
-              {formatCurrency(contracts.reduce((sum, c) => sum + ((c as Record<string, unknown>).amount as number || (c as Record<string, unknown>).contract_amount as number || 0), 0))}
+              {formatCurrency(contracts.reduce((sum, c) => sum + ((c as Record<string, unknown>).value as number || 0), 0))}
             </span>
             {contracts.length > 0 && (
               <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full font-medium">
                 Avg: {formatCurrency(
-                  contracts.reduce((sum, c) => sum + ((c as Record<string, unknown>).amount as number || (c as Record<string, unknown>).contract_amount as number || 0), 0) / contracts.length
+                  contracts.reduce((sum, c) => sum + ((c as Record<string, unknown>).value as number || 0), 0) / contracts.length
                 )}
               </span>
             )}

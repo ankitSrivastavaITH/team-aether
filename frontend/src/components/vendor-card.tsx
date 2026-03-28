@@ -15,21 +15,21 @@ export function VendorCard({ name, contractCount, totalValue }: VendorCardProps)
   return (
     <Link
       href={`/public/vendor/${encodedName}`}
-      className="group block rounded-xl bg-white border border-[#E2E8F0] p-5 transition-all duration-150 hover:border-[#2563EB] hover:shadow-md focus:outline-none focus:ring-[3px] focus:ring-[#2563EB] focus:ring-offset-2 min-h-[44px]"
+      className="group block rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-5 transition-all duration-150 hover:border-blue-600 dark:hover:border-blue-400 hover:shadow-md focus:outline-none focus:ring-[3px] focus:ring-blue-600 dark:focus:ring-blue-400 focus:ring-offset-2 min-h-[44px]"
       aria-label={`View contracts for ${name}: ${contractCount} contracts worth ${formatCurrency(totalValue)}`}
     >
       <p
-        className="font-bold text-base text-[#1E293B] group-hover:text-[#2563EB] transition-colors leading-snug mb-3 line-clamp-2"
+        className="font-bold text-base text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-snug mb-3 line-clamp-2"
         aria-hidden="true"
       >
         {name}
       </p>
-      <div className="flex flex-col gap-1 text-sm text-[#475569]" aria-hidden="true">
+      <div className="flex flex-col gap-1 text-sm text-slate-500 dark:text-slate-400" aria-hidden="true">
         <span>
-          <span className="font-semibold text-[#1E293B]">{contractCount}</span>{" "}
+          <span className="font-semibold text-slate-900 dark:text-slate-100">{contractCount}</span>{" "}
           {contractCount === 1 ? "contract" : "contracts"}
         </span>
-        <span className="font-semibold text-lg text-[#1E293B]">
+        <span className="font-semibold text-lg text-slate-900 dark:text-slate-100">
           {formatCurrency(totalValue)}
         </span>
       </div>

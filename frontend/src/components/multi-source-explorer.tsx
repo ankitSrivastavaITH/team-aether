@@ -88,14 +88,14 @@ function SourceSummaryCard({
       aria-label={`${source}: ${count.toLocaleString()} contracts worth ${formatCurrency(totalValue)}. Click to view this data section.`}
     >
       <div className="pt-6 pb-6 flex flex-col items-center text-center gap-2 px-4">
-        <p className="text-sm font-semibold text-[#475569] uppercase tracking-wide">{source}</p>
+        <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{source}</p>
         <p className={`text-3xl font-bold leading-none tracking-tight ${textClass}`}>
           {count.toLocaleString()}
         </p>
-        <p className="text-sm text-[#475569]">contracts</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">contracts</p>
         <p className={`text-lg font-semibold ${textClass}`}>{formatCurrency(totalValue)}</p>
-        <p className="text-xs text-[#64748b]">total value</p>
-        <p className="text-xs text-[#94a3b8] mt-1">Click to explore</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">total value</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Click to explore</p>
       </div>
     </a>
   );
@@ -113,7 +113,7 @@ function StackedSourceBar({ sources }: { sources: SourceStat[] }) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-[#475569] uppercase tracking-wide">
+      <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
         Combined Contract Value by Source
       </h3>
       <div
@@ -139,7 +139,7 @@ function StackedSourceBar({ sources }: { sources: SourceStat[] }) {
         {sources.map((s) => {
           const pct = ((s.total_value || 0) / total) * 100;
           return (
-            <div key={s.source} className="flex items-center gap-2 text-sm text-[#475569]">
+            <div key={s.source} className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
               <span
                 className="inline-block w-3 h-3 rounded-sm flex-shrink-0"
                 style={{ backgroundColor: colors[s.source] || "#94a3b8" }}
@@ -147,7 +147,7 @@ function StackedSourceBar({ sources }: { sources: SourceStat[] }) {
               />
               <span>
                 {s.source}: {formatCurrency(s.total_value)}{" "}
-                <span className="text-[#94a3b8]">({pct.toFixed(1)}%)</span>
+                <span className="text-slate-400 dark:text-slate-500">({pct.toFixed(1)}%)</span>
               </span>
             </div>
           );
@@ -185,14 +185,14 @@ function TypeBadge({ value }: { value: string }) {
 function FederalContractsTable({ contracts }: { contracts: FederalContract[] }) {
   if (contracts.length === 0) {
     return (
-      <p className="text-[#475569] text-sm py-4">No federal contracts available.</p>
+      <p className="text-slate-500 dark:text-slate-400 text-sm py-4">No federal contracts available.</p>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-[#E2E8F0]">
+    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
       <table className="w-full text-sm" aria-label="Federal contracts from SAM.gov">
-        <thead className="bg-[#F8FAFC] text-[#475569] text-xs uppercase tracking-wide">
+        <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wide">
           <tr>
             <th scope="col" className="px-4 py-3 text-left font-semibold">Title</th>
             <th scope="col" className="px-4 py-3 text-left font-semibold">Department / Agency</th>
@@ -203,28 +203,28 @@ function FederalContractsTable({ contracts }: { contracts: FederalContract[] }) 
             <th scope="col" className="px-4 py-3 text-center font-semibold">Link</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#E2E8F0]">
+        <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
           {contracts.map((c, idx) => (
             <tr
               key={c.contract_id || idx}
-              className="bg-white hover:bg-[#F8FAFC] transition-colors"
+              className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
             >
               <td className="px-4 py-3">
-                <p className="font-medium text-[#1E293B] leading-snug max-w-xs">{c.title}</p>
+                <p className="font-medium text-slate-900 dark:text-slate-100 leading-snug max-w-xs">{c.title}</p>
                 {c.description && (
-                  <p className="text-xs text-[#64748b] mt-0.5 line-clamp-2 max-w-xs">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 max-w-xs">
                     {c.description}
                   </p>
                 )}
               </td>
               <td className="px-4 py-3">
-                <p className="text-[#1E293B] font-medium">{c.department}</p>
+                <p className="text-slate-900 dark:text-slate-100 font-medium">{c.department}</p>
                 {c.agency && c.agency !== c.department && (
-                  <p className="text-xs text-[#64748b]">{c.agency}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{c.agency}</p>
                 )}
               </td>
-              <td className="px-4 py-3 text-right font-mono text-[#1E293B] whitespace-nowrap">
-                {c.value != null ? formatCurrency(c.value) : <span className="text-[#94a3b8]">—</span>}
+              <td className="px-4 py-3 text-right font-mono text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                {c.value != null ? formatCurrency(c.value) : <span className="text-slate-400 dark:text-slate-500">—</span>}
               </td>
               <td className="px-4 py-3">
                 <TypeBadge value={c.type} />
@@ -232,8 +232,8 @@ function FederalContractsTable({ contracts }: { contracts: FederalContract[] }) 
               <td className="px-4 py-3">
                 <SetAsideBadge value={c.set_aside} />
               </td>
-              <td className="px-4 py-3 whitespace-nowrap text-[#475569]">
-                {c.posted_date || <span className="text-[#94a3b8]">—</span>}
+              <td className="px-4 py-3 whitespace-nowrap text-slate-500 dark:text-slate-400">
+                {c.posted_date || <span className="text-slate-400 dark:text-slate-500">—</span>}
               </td>
               <td className="px-4 py-3 text-center">
                 {c.url ? (
@@ -241,7 +241,7 @@ function FederalContractsTable({ contracts }: { contracts: FederalContract[] }) 
                     href={c.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[#2563EB] hover:underline focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:ring-offset-1 rounded"
+                    className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-400 focus:ring-offset-1 rounded"
                     aria-label={`View ${c.title} on SAM.gov (opens in new tab)`}
                   >
                     <ExternalLink className="h-4 w-4" aria-hidden="true" />
@@ -267,8 +267,8 @@ export function MultiSourceExplorer() {
   if (isLoading) {
     return (
       <div aria-busy="true" aria-label="Loading federal contract data" className="space-y-4">
-        <div className="h-28 rounded-xl bg-[#E2E8F0] animate-pulse" />
-        <div className="h-64 rounded-xl bg-[#E2E8F0] animate-pulse" />
+        <div className="h-28 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
+        <div className="h-64 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
       </div>
     );
   }
@@ -301,31 +301,31 @@ export function MultiSourceExplorer() {
             source="City of Richmond"
             count={citySource.count}
             totalValue={citySource.total_value}
-            bgClass="bg-blue-50"
-            textClass="text-[#2563EB]"
+            bgClass="bg-blue-50 dark:bg-blue-950"
+            textClass="text-blue-600 dark:text-blue-400"
           />
         )}
         <SourceSummaryCard
           source="SAM.gov (Federal)"
           count={federalTotal}
           totalValue={federalValue}
-          bgClass="bg-emerald-50"
-          textClass="text-[#059669]"
+          bgClass="bg-emerald-50 dark:bg-emerald-950"
+          textClass="text-emerald-600 dark:text-emerald-400"
         />
         {stateSource && (
           <SourceSummaryCard
             source="eVA (Virginia)"
             count={stateSource.count}
             totalValue={stateSource.total_value}
-            bgClass="bg-violet-50"
-            textClass="text-[#7c3aed]"
+            bgClass="bg-violet-50 dark:bg-violet-950"
+            textClass="text-violet-600 dark:text-violet-400"
           />
         )}
       </div>
 
       {/* Stacked bar */}
       {sources.length > 0 && (
-        <Card className="border border-[#E2E8F0] shadow-sm">
+        <Card className="border border-slate-200 dark:border-slate-700 shadow-sm">
           <CardContent className="pt-6 pb-6">
             <StackedSourceBar sources={sources} />
           </CardContent>
@@ -340,14 +340,14 @@ export function MultiSourceExplorer() {
       </div>
 
       {/* Federal contracts table */}
-      <Card id="federal-contracts" className="border border-[#E2E8F0] shadow-sm">
+      <Card id="federal-contracts" className="border border-slate-200 dark:border-slate-700 shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-bold text-[#1E293B]">
+          <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
             Federal Contracts in the Richmond Area
           </CardTitle>
-          <p className="text-sm text-[#475569]">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {federalTotal} contracts totaling{" "}
-            <strong className="text-[#1E293B]">{formatCurrency(federalValue)}</strong> from SAM.gov federal
+            <strong className="text-slate-900 dark:text-slate-100">{formatCurrency(federalValue)}</strong> from SAM.gov federal
             opportunities and awards.
           </p>
         </CardHeader>

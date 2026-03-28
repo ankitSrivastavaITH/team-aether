@@ -65,7 +65,7 @@ function LoadingSkeleton() {
   return (
     <div aria-busy="true" aria-label="Loading state contracts" className="space-y-3">
       {[0, 1, 2, 3].map((i) => (
-        <div key={i} className="h-16 rounded-lg bg-[#E2E8F0] animate-pulse" />
+        <div key={i} className="h-16 rounded-lg bg-slate-200 dark:bg-slate-700 animate-pulse" />
       ))}
     </div>
   );
@@ -92,11 +92,11 @@ export function StateContracts() {
         <div>
           <h2
             id="state-contracts-heading"
-            className="text-2xl font-bold text-[#1E293B]"
+            className="text-2xl font-bold text-slate-900 dark:text-slate-100"
           >
             Virginia State Contracts (eVA)
           </h2>
-          <p className="text-base text-[#475569] mt-1">
+          <p className="text-base text-slate-500 dark:text-slate-400 mt-1">
             State procurement contracts relevant to the Richmond region from the Virginia eVA portal.
           </p>
         </div>
@@ -108,20 +108,20 @@ export function StateContracts() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card className="bg-indigo-50 border-0 shadow-sm">
             <CardContent className="pt-5 pb-5 text-center">
-              <p className="text-base font-medium text-[#1E293B]">State Contracts</p>
+              <p className="text-base font-medium text-slate-900 dark:text-slate-100">State Contracts</p>
               <p className="text-3xl font-bold text-indigo-700 mt-1">
                 {data.total.toLocaleString()}
               </p>
-              <p className="text-sm text-[#475569] mt-1">Richmond-region contracts</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Richmond-region contracts</p>
             </CardContent>
           </Card>
           <Card className="bg-violet-50 border-0 shadow-sm">
             <CardContent className="pt-5 pb-5 text-center">
-              <p className="text-base font-medium text-[#1E293B]">Total State Value</p>
+              <p className="text-base font-medium text-slate-900 dark:text-slate-100">Total State Value</p>
               <p className="text-3xl font-bold text-violet-700 mt-1">
                 {formatCurrency(data.total_value)}
               </p>
-              <p className="text-sm text-[#475569] mt-1">Across all eVA contracts</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Across all eVA contracts</p>
             </CardContent>
           </Card>
         </div>
@@ -136,9 +136,9 @@ export function StateContracts() {
       )}
 
       {data && data.contracts.length > 0 && (
-        <Card className="border border-[#E2E8F0] shadow-sm overflow-hidden">
-          <CardHeader className="bg-[#F8FAFC] border-b border-[#E2E8F0] pb-3 pt-4">
-            <CardTitle className="text-base font-semibold text-[#1E293B]">
+        <Card className="border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+          <CardHeader className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 pb-3 pt-4">
+            <CardTitle className="text-base font-semibold text-slate-900 dark:text-slate-100">
               Contract Details
             </CardTitle>
           </CardHeader>
@@ -149,52 +149,52 @@ export function StateContracts() {
                 aria-label="Virginia state contracts table"
               >
                 <thead>
-                  <tr className="border-b border-[#E2E8F0] bg-[#F8FAFC]">
+                  <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
                     <th
                       scope="col"
-                      className="text-left px-4 py-3 font-semibold text-[#475569] whitespace-nowrap"
+                      className="text-left px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap"
                     >
                       Title
                     </th>
                     <th
                       scope="col"
-                      className="text-left px-4 py-3 font-semibold text-[#475569] whitespace-nowrap"
+                      className="text-left px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap"
                     >
                       Department
                     </th>
                     <th
                       scope="col"
-                      className="text-left px-4 py-3 font-semibold text-[#475569] whitespace-nowrap"
+                      className="text-left px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap"
                     >
                       Vendor
                     </th>
                     <th
                       scope="col"
-                      className="text-right px-4 py-3 font-semibold text-[#475569] whitespace-nowrap"
+                      className="text-right px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap"
                     >
                       Value
                     </th>
                     <th
                       scope="col"
-                      className="text-left px-4 py-3 font-semibold text-[#475569] whitespace-nowrap"
+                      className="text-left px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap"
                     >
                       Category
                     </th>
                     <th
                       scope="col"
-                      className="text-left px-4 py-3 font-semibold text-[#475569] whitespace-nowrap"
+                      className="text-left px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap"
                     >
                       Region
                     </th>
                     <th
                       scope="col"
-                      className="text-left px-4 py-3 font-semibold text-[#475569] whitespace-nowrap"
+                      className="text-left px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap"
                     >
                       Dates
                     </th>
                     <th
                       scope="col"
-                      className="text-left px-4 py-3 font-semibold text-[#475569] whitespace-nowrap"
+                      className="text-left px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap"
                     >
                       Portal
                     </th>
@@ -204,39 +204,39 @@ export function StateContracts() {
                   {data.contracts.map((contract, idx) => (
                     <tr
                       key={contract.contract_id}
-                      className={`border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors ${
-                        idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]"
+                      className={`border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors ${
+                        idx % 2 === 0 ? "bg-white dark:bg-slate-800" : "bg-slate-50 dark:bg-slate-800/60"
                       }`}
                     >
                       <td className="px-4 py-3 max-w-[220px]">
-                        <p className="font-medium text-[#1E293B] leading-snug line-clamp-2">
+                        <p className="font-medium text-slate-900 dark:text-slate-100 leading-snug line-clamp-2">
                           {contract.title}
                         </p>
                         <p
-                          className="text-xs text-[#94A3B8] mt-0.5"
+                          className="text-xs text-slate-400 dark:text-slate-500 mt-0.5"
                           title={contract.description}
                         >
                           {contract.contract_id}
                         </p>
                       </td>
-                      <td className="px-4 py-3 text-[#475569] max-w-[180px]">
+                      <td className="px-4 py-3 text-slate-500 dark:text-slate-400 max-w-[180px]">
                         <span className="line-clamp-2">{contract.department}</span>
                       </td>
-                      <td className="px-4 py-3 text-[#475569] whitespace-nowrap">
+                      <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                         {contract.vendor}
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold text-[#1E293B] whitespace-nowrap">
+                      <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap">
                         {formatCurrency(contract.value)}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <CategoryBadge category={contract.category} />
                       </td>
-                      <td className="px-4 py-3 text-[#475569] max-w-[140px]">
+                      <td className="px-4 py-3 text-slate-500 dark:text-slate-400 max-w-[140px]">
                         <span className="line-clamp-2">{contract.region}</span>
                       </td>
-                      <td className="px-4 py-3 text-[#475569] whitespace-nowrap text-xs">
+                      <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap text-xs">
                         <span>{contract.start_date}</span>
-                        <span className="mx-1 text-[#CBD5E1]">–</span>
+                        <span className="mx-1 text-slate-300 dark:text-slate-600">–</span>
                         <span>{contract.end_date}</span>
                       </td>
                       <td className="px-4 py-3">
@@ -274,7 +274,7 @@ export function StateContracts() {
       )}
 
       {data && data.contracts.length === 0 && (
-        <p className="text-[#475569] text-base">No state contract data available.</p>
+        <p className="text-slate-500 dark:text-slate-400 text-base">No state contract data available.</p>
       )}
     </section>
   );

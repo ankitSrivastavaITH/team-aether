@@ -8,7 +8,7 @@ export default function ExtractPage() {
     <div className="max-w-3xl mx-auto space-y-8">
       <div>
         <h1 className="text-3xl font-bold">Contract PDF Analyzer</h1>
-        <p className="text-gray-500 mt-2 text-base">
+        <p className="text-slate-500 dark:text-slate-400 mt-2 text-base">
           Upload procurement PDFs to extract key terms and search across documents.
         </p>
       </div>

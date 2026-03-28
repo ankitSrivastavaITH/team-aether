@@ -89,7 +89,7 @@ export default function ReportPage() {
 
           {/* Report Content */}
           <Card className="p-8">
-            <article className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-slate-900">
+            <article className="prose prose-slate dark:prose-invert max-w-none prose-headings:text-slate-900 dark:prose-headings:text-slate-100 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-slate-900 dark:prose-strong:text-slate-100">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.report}</ReactMarkdown>
             </article>
           </Card>
