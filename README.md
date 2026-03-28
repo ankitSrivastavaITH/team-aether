@@ -152,13 +152,18 @@ Interactive charts showing spending by department. Click any department or vendo
 
 ## Accessibility & Equity
 
-RVA Contract Lens is designed to work for **everyone**, not just the easiest users:
+RVA Contract Lens is designed to work for **everyone**, not just the easiest users.
+
+Every page includes a persistent accessibility toolbar — font scaling, high contrast, bilingual toggle, and dark mode — available to both staff and the public:
+
+![Accessibility Toolbar](demo-screenshots/16-accessibility-toolbar.png)
 
 - **Bilingual EN/ES** across all staff pages (30+ translated strings)
 - **Atkinson Hyperlegible** font — designed for low-vision and dyslexia accessibility
 - **Font size toggle** (A, A+, A++) and **high-contrast mode** on both staff and public pages
 - **Skip links** on every page (bilingual) for keyboard and screen reader users
 - **44px minimum touch targets** throughout, with `prefers-reduced-motion` support
+- **Dark mode** for reduced eye strain and low-light environments
 - **MBE/equity context** embedded in the AI Decision Engine — not a separate page, but part of every analysis
 - **Public transparency view** so residents with any level of digital literacy can explore city spending
 

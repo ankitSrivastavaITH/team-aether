@@ -146,12 +146,12 @@ We designed this to work for everyone, not just the easiest users. Equity is wov
 
 ---
 
-### SCENE 12 — Equity: Accessibility (2:22-2:35)
+### SCENE 12 — Equity: Accessibility Toolbar (2:22-2:35)
 
-**IMAGE:** `demo-screenshots/04-health-scanner.png`
+**IMAGE:** `demo-screenshots/16-accessibility-toolbar.png`
 
 **VOICEOVER:**
-Full bilingual support in English and Spanish across all staff pages. Atkinson Hyperlegible font designed for low-vision users. Font size toggle, high-contrast mode, skip links on every page, and forty-four pixel touch targets. Accessibility controls are available to both staff and the public.
+Every page includes a persistent accessibility toolbar. Font size scaling from A to A plus plus. High-contrast mode for low-vision users. One-click Spanish toggle for bilingual staff. Dark mode for reduced eye strain. Atkinson Hyperlegible font throughout — specifically designed for dyslexia accessibility. Skip links and forty-four pixel touch targets on every page. These controls are available to both staff and the public.
 
 **DURATION:** 13 seconds
 
@@ -203,7 +203,7 @@ The City could pilot this next quarter. Swap in a new Socrata dataset, and it wo
 | 9 | `demo-screenshots/12-public-overview.png` | 10s |
 | 10 | `demo-screenshots/13-public-spending.png` | 15s |
 | 11 | `demo-screenshots/09-mbe.png` | 12s |
-| 12 | `demo-screenshots/04-health-scanner.png` | 13s |
+| 12 | `demo-screenshots/16-accessibility-toolbar.png` | 13s |
 | 13 | `demo-screenshots/02-dashboard.png` | 15s |
 | 14 | `demo-screenshots/01-landing.png` | 10s |
 
@@ -212,7 +212,7 @@ The City could pilot this next quarter. Swap in a new Socrata dataset, and it wo
 1. `01-landing.png` — Scenes 1, 2, 14
 2. `02-dashboard.png` — Scenes 3, 13
 3. `03-decision-engine.png` — Scenes 4, 5
-4. `04-health-scanner.png` — Scene 12
+4. `16-accessibility-toolbar.png` — Scene 12
 5. `05-what-if.png` — Scene 6
 6. `06-portfolio.png` — Scene 7
 7. `07-audit.png` — Scene 8
@@ -258,7 +258,7 @@ Interactive spending breakdowns by department. Click any vendor to see their ful
 We designed this to work for everyone, not just the easiest users. Equity is woven into the Decision Engine itself. When you analyze a contract, you see the department's vendor diversity score and a specific equity note — whether to seek MBE vendors, whether competition is healthy. Equity isn't a separate page. It's part of every procurement decision.
 
 **Scene 12:**
-Full bilingual support in English and Spanish across all staff pages. Atkinson Hyperlegible font designed for low-vision users. Font size toggle, high-contrast mode, skip links on every page, and forty-four pixel touch targets. Accessibility controls are available to both staff and the public.
+Every page includes a persistent accessibility toolbar. Font size scaling from A to A plus plus. High-contrast mode for low-vision users. One-click Spanish toggle for bilingual staff. Dark mode for reduced eye strain. Atkinson Hyperlegible font throughout — specifically designed for dyslexia accessibility. Skip links and forty-four pixel touch targets on every page. These controls are available to both staff and the public.
 
 **Scene 13:**
 Everything you've seen runs on real City of Richmond data — one thousand three hundred sixty-five contracts, six point one billion dollars, from the City's own open data portal. No synthetic data. No internal system access required. The entire platform was built by our team of four in forty-eight hours.
