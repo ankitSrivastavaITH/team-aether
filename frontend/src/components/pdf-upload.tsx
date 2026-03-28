@@ -23,7 +23,7 @@ interface ExtractionResult {
   disclaimer: string;
 }
 
-export function PdfUpload() {
+export function PdfUpload({ onUploadComplete }: { onUploadComplete?: () => void } = {}) {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<ExtractionResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -42,6 +42,7 @@ export function PdfUpload() {
       const data = await res.json();
       setResult(data);
       toast.success("PDF analyzed successfully", { description: `${data.chunks_stored} sections indexed for search.` });
+      onUploadComplete?.();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Upload failed. Please try again.";
       setError(msg);

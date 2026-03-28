@@ -107,5 +107,6 @@ export function getLocale(): Locale {
 export function setLocale(locale: Locale): void {
   if (typeof window !== "undefined") {
     localStorage.setItem("rva_locale", locale);
+    document.documentElement.lang = locale;
   }
 }

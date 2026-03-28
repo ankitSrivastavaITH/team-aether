@@ -6,7 +6,9 @@ export function useLocale() {
   const [locale, setLocaleState] = useState<Locale>("en");
 
   useEffect(() => {
-    setLocaleState(getLocale());
+    const saved = getLocale();
+    setLocaleState(saved);
+    document.documentElement.lang = saved;
   }, []);
 
   const setLocale = useCallback((l: Locale) => {

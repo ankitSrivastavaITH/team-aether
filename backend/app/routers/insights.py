@@ -2,14 +2,16 @@
 
 import json
 from typing import Optional
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from app.db import query as db_query
 from app.services.groq_client import chat
+from app.rate_limit import limiter
 
 router = APIRouter(prefix="/api/insights", tags=["insights"])
 
 @router.get("/summary")
-def spending_summary():
+@limiter.limit("5/minute")
+def spending_summary(request: Request):
     """Generate AI-powered summary of contract data."""
 
     # Gather key data points
@@ -89,7 +91,8 @@ Return ONLY a JSON array of 5 strings. No markdown, no code fences. Example:
 
 
 @router.get("/risk-narrative")
-def risk_narrative():
+@limiter.limit("5/minute")
+def risk_narrative(request: Request):
     """Generate rich risk alerts with contract details and AI recommendations."""
 
     critical = db_query("""
@@ -161,7 +164,8 @@ Do NOT make legal or compliance determinations. Return ONLY raw JSON, no markdow
 
 
 @router.get("/full-report")
-def full_report():
+@limiter.limit("5/minute")
+def full_report(request: Request):
     """Generate a comprehensive markdown report across all contract sources."""
     
     # Gather data from all sources

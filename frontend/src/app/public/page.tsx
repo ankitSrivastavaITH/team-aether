@@ -94,7 +94,7 @@ function QuickLink({
       style={{ minHeight: 44 }}
     >
       <Icon
-        className="h-6 w-6 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors shrink-0 mt-0.5"
+        className="h-6 w-6 text-slate-400 dark:text-slate-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors shrink-0 mt-0.5"
         aria-hidden="true"
       />
       <div className="flex-1">
@@ -307,7 +307,7 @@ export default function PublicOverviewPage() {
             </Card>
             <Card className={`${expiring30 > 0 ? "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800" : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"} p-4`}>
               <div className="flex items-center gap-2 mb-1">
-                <AlertCircle className={`h-4 w-4 ${expiring30 > 0 ? "text-red-600 dark:text-red-400" : "text-slate-500"}`} aria-hidden="true" />
+                <AlertCircle className={`h-4 w-4 ${expiring30 > 0 ? "text-red-600 dark:text-red-400" : "text-slate-500 dark:text-slate-400"}`} aria-hidden="true" />
                 <span className="text-xs text-slate-500 dark:text-slate-400">Expiring 30d</span>
               </div>
               <p className={`text-xl font-bold ${expiring30 > 0 ? "text-red-700 dark:text-red-400" : "text-slate-700 dark:text-slate-300"}`}>{expiring30}</p>

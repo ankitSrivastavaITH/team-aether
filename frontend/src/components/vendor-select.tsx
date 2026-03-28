@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAPI } from "@/lib/api";
@@ -24,6 +24,9 @@ export function VendorSelect({ value, onChange, placeholder = "Select a vendor..
   const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
   const { data: vendors = [] } = useQuery<Vendor[]>({
@@ -31,6 +34,14 @@ export function VendorSelect({ value, onChange, placeholder = "Select a vendor..
     queryFn: () => fetchAPI<Vendor[]>("/api/contracts/vendors"),
     staleTime: 10 * 60 * 1000,
   });
+
+  // Close dropdown and return focus to trigger
+  const closeDropdown = useCallback(() => {
+    setOpen(false);
+    setActiveIndex(-1);
+    // Return focus to trigger button after portal unmounts
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  }, []);
 
   // Close on click outside (check both trigger and portal dropdown)
   useEffect(() => {
@@ -42,11 +53,58 @@ export function VendorSelect({ value, onChange, placeholder = "Select a vendor..
       // Check if click is inside the portal dropdown (it has z-9999)
       const portal = document.querySelector("[style*='z-index: 9999']");
       if (portal?.contains(target)) return;
-      setOpen(false);
+      closeDropdown();
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open, closeDropdown]);
+
+  // Focus the search input when dropdown opens
+  useEffect(() => {
+    if (open) {
+      // Wait for the portal to mount before focusing
+      requestAnimationFrame(() => searchInputRef.current?.focus());
+      setActiveIndex(-1);
+    }
   }, [open]);
+
+  // Keyboard handler for dropdown navigation
+  const handleDropdownKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      const items = listRef.current?.querySelectorAll<HTMLButtonElement>("button[data-vendor-item]");
+      const count = items?.length ?? 0;
+
+      switch (e.key) {
+        case "Escape":
+          e.preventDefault();
+          closeDropdown();
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          setActiveIndex((prev) => {
+            const next = prev < count - 1 ? prev + 1 : 0;
+            items?.[next]?.scrollIntoView({ block: "nearest" });
+            return next;
+          });
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          setActiveIndex((prev) => {
+            const next = prev > 0 ? prev - 1 : count - 1;
+            items?.[next]?.scrollIntoView({ block: "nearest" });
+            return next;
+          });
+          break;
+        case "Enter":
+          if (activeIndex >= 0 && items && items[activeIndex]) {
+            e.preventDefault();
+            items[activeIndex].click();
+          }
+          break;
+      }
+    },
+    [activeIndex, closeDropdown],
+  );
 
   const filtered = vendors.filter((v) =>
     v.supplier.toLowerCase().includes(search.toLowerCase())
@@ -58,6 +116,12 @@ export function VendorSelect({ value, onChange, placeholder = "Select a vendor..
       <button
         ref={triggerRef}
         type="button"
+        onKeyDown={(e) => {
+          if (e.key === "Escape" && open) {
+            e.preventDefault();
+            closeDropdown();
+          }
+        }}
         onClick={() => {
           if (!open && triggerRef.current) {
             const rect = triggerRef.current.getBoundingClientRect();
@@ -96,29 +160,41 @@ export function VendorSelect({ value, onChange, placeholder = "Select a vendor..
       </button>
 
       {open && typeof document !== "undefined" && createPortal(
-        <div style={dropdownStyle} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-2xl max-h-[300px] flex flex-col">
+        <div
+          style={dropdownStyle}
+          className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-2xl max-h-[300px] flex flex-col"
+          role="listbox"
+          aria-label="Vendor list"
+          onKeyDown={handleDropdownKeyDown}
+        >
           <div className="p-2 border-b border-slate-100 dark:border-slate-700">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" aria-hidden="true" />
               <Input
+                ref={searchInputRef}
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setActiveIndex(-1); }}
                 placeholder="Search vendors..."
                 className="pl-8 h-9 text-sm"
-                autoFocus
+                aria-label="Search vendors"
               />
             </div>
           </div>
-          <div className="overflow-y-auto flex-1">
+          <div ref={listRef} className="overflow-y-auto flex-1">
             {filtered.length === 0 ? (
               <p className="text-sm text-slate-400 p-3 text-center">No vendors found</p>
             ) : (
-              filtered.slice(0, 50).map((v) => (
+              filtered.slice(0, 50).map((v, idx) => (
                 <button
                   key={v.supplier}
                   type="button"
-                  onClick={() => { onChange(v.supplier); setOpen(false); setSearch(""); }}
+                  data-vendor-item
+                  role="option"
+                  aria-selected={v.supplier === value}
+                  onClick={() => { onChange(v.supplier); closeDropdown(); setSearch(""); }}
                   className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors flex items-center justify-between ${
+                    idx === activeIndex ? "bg-blue-100 dark:bg-blue-900/40 outline-none" : ""
+                  } ${
                     v.supplier === value ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 font-medium" : "text-slate-700 dark:text-slate-300"
                   }`}
                   style={{ minHeight: 40 }}

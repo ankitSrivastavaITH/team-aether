@@ -312,6 +312,7 @@ function DetailPanel({
 export default function TimelinePage() {
   const [department, setDepartment] = useState("all");
   const [selected, setSelected] = useState<Contract | null>(null);
+  const [riskFilters, setRiskFilters] = useState<string[]>([]);
 
   const { data: contractsData, isLoading, isError } = useQuery<ContractsResponse>({
     queryKey: ["timeline-contracts"],
@@ -333,10 +334,21 @@ export default function TimelinePage() {
   }, [departmentsData]);
 
   const contracts = useMemo(() => {
-    const all = contractsData?.contracts ?? [];
-    if (department === "all") return all;
-    return all.filter((c) => c.department === department);
-  }, [contractsData, department]);
+    let filtered = contractsData?.contracts ?? [];
+    if (department !== "all") {
+      filtered = filtered.filter((c) => c.department === department);
+    }
+    if (riskFilters.length > 0) {
+      filtered = filtered.filter((c) => {
+        const risk = (c.risk_level ?? "").toLowerCase();
+        return riskFilters.some((f) => {
+          if (f === "expired") return risk === "expired" || risk === "unknown" || risk === "";
+          return risk === f;
+        });
+      });
+    }
+    return filtered;
+  }, [contractsData, department, riskFilters]);
 
   const handleSelect = (c: Contract) => {
     setSelected((prev) =>
@@ -386,19 +398,41 @@ export default function TimelinePage() {
         </span>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap gap-4 text-xs text-slate-600 dark:text-slate-400" role="list" aria-label="Risk level legend">
+      {/* Risk filter toggles */}
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter by risk level">
         {[
-          { label: "Critical", cls: "bg-red-500" },
-          { label: "Warning", cls: "bg-amber-400" },
-          { label: "OK", cls: "bg-emerald-500" },
-          { label: "Expired / Unknown", cls: "bg-slate-400" },
-        ].map(({ label, cls }) => (
-          <span key={label} className="flex items-center gap-1.5" role="listitem">
-            <span className={`inline-block w-3 h-3 rounded-sm ${cls}`} aria-hidden="true" />
-            {label}
-          </span>
-        ))}
+          { key: "critical", label: "Critical", bg: "bg-red-500", activeBg: "bg-red-100 dark:bg-red-950/50 border-red-400 dark:border-red-700", activeText: "text-red-700 dark:text-red-400" },
+          { key: "warning", label: "Warning", bg: "bg-amber-400", activeBg: "bg-amber-100 dark:bg-amber-950/50 border-amber-400 dark:border-amber-700", activeText: "text-amber-700 dark:text-amber-400" },
+          { key: "ok", label: "OK", bg: "bg-emerald-500", activeBg: "bg-emerald-100 dark:bg-emerald-950/50 border-emerald-400 dark:border-emerald-700", activeText: "text-emerald-700 dark:text-emerald-400" },
+          { key: "expired", label: "Expired / Unknown", bg: "bg-slate-400", activeBg: "bg-slate-100 dark:bg-slate-800 border-slate-400 dark:border-slate-600", activeText: "text-slate-700 dark:text-slate-300" },
+        ].map(({ key, label, bg, activeBg, activeText }) => {
+          const isActive = riskFilters.includes(key);
+          return (
+            <button
+              key={key}
+              onClick={() => setRiskFilters((prev) => prev.includes(key) ? prev.filter((f) => f !== key) : [...prev, key])}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                isActive
+                  ? `${activeBg} ${activeText}`
+                  : "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
+              }`}
+              aria-pressed={isActive}
+              style={{ minHeight: 32 }}
+            >
+              <span className={`inline-block w-2.5 h-2.5 rounded-sm ${bg}`} aria-hidden="true" />
+              {label}
+              {isActive && <X className="h-3 w-3 ml-0.5" aria-hidden="true" />}
+            </button>
+          );
+        })}
+        {riskFilters.length > 0 && (
+          <button
+            onClick={() => setRiskFilters([])}
+            className="text-xs text-blue-600 dark:text-blue-400 hover:underline px-2"
+          >
+            Clear filters
+          </button>
+        )}
       </div>
 
       {/* Main panel */}

@@ -85,9 +85,9 @@ function StatCard({
       <span className={`text-2xl font-bold ${colorClass}`}>{value.toLocaleString()}</span>
       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
       <div className="flex items-center gap-2 mt-1">
-        <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full h-1.5" aria-hidden="true">
+        <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden" aria-hidden="true">
           <div
-            className={`h-1.5 rounded-full ${colorClass.replace("text-", "bg-")}`}
+            className={`h-full rounded-full ${colorClass.replaceAll("text-", "bg-")}`}
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -330,11 +330,13 @@ export default function ParsedPage() {
   const [vendor, setVendor] = useState("");
   const [contractNumber, setContractNumber] = useState("");
   const [filterTerm, setFilterTerm] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(20);
+  const [searchInput, setSearchInput] = useState("");
 
   // Fetch contracts matching the selected stat card filter
   const { data: filteredContracts } = useQuery({
     queryKey: ["filtered-parsed", filterTerm],
-    queryFn: () => fetchAPI<{ contracts: Array<Record<string, unknown>>; total: number }>("/api/contracts", { search: filterTerm!, limit: 10 }),
+    queryFn: () => fetchAPI<{ contracts: Array<Record<string, unknown>>; total: number }>("/api/contracts", { search: filterTerm!, limit: 200 }),
     enabled: Boolean(filterTerm),
     staleTime: 5 * 60 * 1000,
   });
@@ -400,6 +402,54 @@ export default function ParsedPage() {
           Parsing Coverage — {total.toLocaleString()} Contracts
         </h2>
 
+        {/* Contract search bar */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const trimmed = searchInput.trim();
+            if (trimmed) {
+              setFilterTerm(trimmed);
+              setVisibleCount(20);
+            }
+          }}
+          className="mb-4"
+        >
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" aria-hidden="true" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search contracts by keyword, vendor, description..."
+              className="w-full pl-10 pr-24 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+              aria-label="Search contracts"
+            />
+            <button
+              type="submit"
+              disabled={!searchInput.trim()}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 rounded-md transition-colors"
+            >
+              Search
+            </button>
+          </div>
+          {filterTerm && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs text-slate-500 dark:text-slate-400">Active filter:</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
+                {filterTerm}
+                <button
+                  type="button"
+                  onClick={() => { setFilterTerm(null); setSearchInput(""); setVisibleCount(20); }}
+                  className="ml-0.5 hover:text-blue-900 dark:hover:text-blue-100"
+                  aria-label="Clear filter"
+                >
+                  &times;
+                </button>
+              </span>
+            </div>
+          )}
+        </form>
+
         {statsLoading && (
           <div
             className="grid grid-cols-2 sm:grid-cols-3 gap-3"
@@ -417,12 +467,12 @@ export default function ParsedPage() {
 
         {!statsLoading && stats && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <StatCard value={stats.ifb_count} label="Have IFB numbers" of={total} colorClass="text-violet-600 dark:text-violet-400" searchTerm="IFB" active={filterTerm === "IFB"} onClick={() => setFilterTerm(filterTerm === "IFB" ? null : "IFB")} />
-            <StatCard value={stats.rfp_count} label="Have RFP references" of={total} colorClass="text-blue-600 dark:text-blue-400" searchTerm="RFP" active={filterTerm === "RFP"} onClick={() => setFilterTerm(filterTerm === "RFP" ? null : "RFP")} />
-            <StatCard value={stats.cooperative_count} label="Cooperative agreements" of={total} colorClass="text-emerald-600 dark:text-emerald-400" searchTerm="cooperative" active={filterTerm === "cooperative"} onClick={() => setFilterTerm(filterTerm === "cooperative" ? null : "cooperative")} />
-            <StatCard value={stats.has_renewal_info} label="Have renewal info" of={total} colorClass="text-amber-600 dark:text-amber-400" searchTerm="renewal" active={filterTerm === "renewal"} onClick={() => setFilterTerm(filterTerm === "renewal" ? null : "renewal")} />
-            <StatCard value={stats.has_term_info} label="Have term info" of={total} colorClass="text-cyan-600 dark:text-cyan-400" searchTerm="year" active={filterTerm === "year"} onClick={() => setFilterTerm(filterTerm === "year" ? null : "year")} />
-            <StatCard value={stats.has_requisition} label="Have requisition refs" of={total} colorClass="text-rose-600 dark:text-rose-400" searchTerm="requisition" active={filterTerm === "requisition"} onClick={() => setFilterTerm(filterTerm === "requisition" ? null : "requisition")} />
+            <StatCard value={stats.ifb_count} label="Have IFB numbers" of={total} colorClass="text-violet-600 dark:text-violet-400" searchTerm="IFB" active={filterTerm === "IFB"} onClick={() => { const next = filterTerm === "IFB" ? null : "IFB"; setFilterTerm(next); setSearchInput(next ?? ""); setVisibleCount(20); }} />
+            <StatCard value={stats.rfp_count} label="Have RFP references" of={total} colorClass="text-blue-600 dark:text-blue-400" searchTerm="RFP" active={filterTerm === "RFP"} onClick={() => { const next = filterTerm === "RFP" ? null : "RFP"; setFilterTerm(next); setSearchInput(next ?? ""); setVisibleCount(20); }} />
+            <StatCard value={stats.cooperative_count} label="Cooperative agreements" of={total} colorClass="text-emerald-600 dark:text-emerald-400" searchTerm="cooperative" active={filterTerm === "cooperative"} onClick={() => { const next = filterTerm === "cooperative" ? null : "cooperative"; setFilterTerm(next); setSearchInput(next ?? ""); setVisibleCount(20); }} />
+            <StatCard value={stats.has_renewal_info} label="Have renewal info" of={total} colorClass="text-amber-600 dark:text-amber-400" searchTerm="renewal" active={filterTerm === "renewal"} onClick={() => { const next = filterTerm === "renewal" ? null : "renewal"; setFilterTerm(next); setSearchInput(next ?? ""); setVisibleCount(20); }} />
+            <StatCard value={stats.has_term_info} label="Have term info" of={total} colorClass="text-cyan-600 dark:text-cyan-400" searchTerm="year" active={filterTerm === "year"} onClick={() => { const next = filterTerm === "year" ? null : "year"; setFilterTerm(next); setSearchInput(next ?? ""); setVisibleCount(20); }} />
+            <StatCard value={stats.has_requisition} label="Have requisition refs" of={total} colorClass="text-rose-600 dark:text-rose-400" searchTerm="requisition" active={filterTerm === "requisition"} onClick={() => { const next = filterTerm === "requisition" ? null : "requisition"; setFilterTerm(next); setSearchInput(next ?? ""); setVisibleCount(20); }} />
           </div>
         )}
 
@@ -434,15 +484,15 @@ export default function ParsedPage() {
                 <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300">
                   Contracts matching &ldquo;{filterTerm}&rdquo; ({filteredContracts.total} found)
                 </h3>
-                <button onClick={() => setFilterTerm(null)} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                <button onClick={() => { setFilterTerm(null); setVisibleCount(20); }} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
                   Close
                 </button>
               </div>
-              <div className="space-y-1.5 max-h-[300px] overflow-y-auto">
-                {filteredContracts.contracts.slice(0, 10).map((c, i) => (
+              <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
+                {filteredContracts.contracts.slice(0, visibleCount).map((c, i) => (
                   <button
                     key={i}
-                    onClick={() => { setContractNumber(String(c.contract_number)); setFilterTerm(null); }}
+                    onClick={() => { setContractNumber(String(c.contract_number)); setFilterTerm(null); setVisibleCount(20); }}
                     className="w-full text-left px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 transition-all text-sm"
                     style={{ minHeight: 40 }}
                   >
@@ -458,9 +508,27 @@ export default function ParsedPage() {
                   </button>
                 ))}
               </div>
-              {filteredContracts.total > 10 && (
-                <p className="text-xs text-slate-400 mt-2 text-center">Showing 10 of {filteredContracts.total}. Click a contract to parse it.</p>
-              )}
+              <div className="mt-3 flex items-center justify-between">
+                <p className="text-xs text-slate-400">
+                  Showing {Math.min(visibleCount, filteredContracts.contracts.length)} of {filteredContracts.total}. Click a contract to parse it.
+                </p>
+                {visibleCount < filteredContracts.contracts.length && (
+                  <button
+                    onClick={() => setVisibleCount((prev) => prev + 20)}
+                    className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all"
+                  >
+                    Show 20 more
+                  </button>
+                )}
+                {visibleCount < filteredContracts.contracts.length && filteredContracts.contracts.length > 40 && (
+                  <button
+                    onClick={() => setVisibleCount(filteredContracts.contracts.length)}
+                    className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                  >
+                    Load all ({filteredContracts.contracts.length})
+                  </button>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}

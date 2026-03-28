@@ -1,0 +1,752 @@
+"use client";
+
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAPI, postAPI } from "@/lib/api";
+import { formatCurrency, formatDate, riskColor } from "@/lib/utils";
+import { VendorSelect } from "@/components/vendor-select";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import {
+  Brain,
+  Loader2,
+  Sparkles,
+  CheckCircle,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Printer,
+  Info,
+  Shield,
+  TrendingUp,
+  FileSearch,
+  Scale,
+  ScrollText,
+  CircleDot,
+} from "lucide-react";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface Contract {
+  contract_number: string;
+  supplier: string;
+  department: string;
+  value: number;
+  start_date: string;
+  end_date: string;
+  description: string;
+  days_to_expiry?: number;
+  risk_level?: string;
+  [key: string]: unknown;
+}
+
+interface VendorDetailResponse {
+  supplier: string;
+  contracts: Contract[];
+  count: number;
+  total_value: number | null;
+  first_contract: string | null;
+  last_expiry: string | null;
+  departments_served: (string | null)[];
+}
+
+interface EvidenceItem {
+  point: string;
+  evidence: string;
+  source: string;
+}
+
+interface DecisionResult {
+  verdict: "RENEW" | "REBID" | "ESCALATE";
+  confidence: "HIGH" | "MEDIUM" | "LOW";
+  summary: string;
+  pros: EvidenceItem[];
+  cons: EvidenceItem[];
+  memo: string;
+  contract_number: string;
+  supplier: string;
+  contract_value: number;
+  department: string;
+}
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const VERDICT_STYLES: Record<string, { bg: string; text: string; border: string; glow: string }> = {
+  RENEW: {
+    bg: "bg-emerald-500/10 dark:bg-emerald-500/20",
+    text: "text-emerald-700 dark:text-emerald-300",
+    border: "border-emerald-500/30",
+    glow: "shadow-emerald-500/20",
+  },
+  REBID: {
+    bg: "bg-amber-500/10 dark:bg-amber-500/20",
+    text: "text-amber-700 dark:text-amber-300",
+    border: "border-amber-500/30",
+    glow: "shadow-amber-500/20",
+  },
+  ESCALATE: {
+    bg: "bg-red-500/10 dark:bg-red-500/20",
+    text: "text-red-700 dark:text-red-300",
+    border: "border-red-500/30",
+    glow: "shadow-red-500/20",
+  },
+};
+
+const CONFIDENCE_STYLES: Record<string, string> = {
+  HIGH: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700",
+  MEDIUM: "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700",
+  LOW: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700",
+};
+
+const ANALYSIS_STEPS = [
+  { label: "Checking vendor history...", icon: FileSearch },
+  { label: "Running compliance checks...", icon: Shield },
+  { label: "Analyzing price trends...", icon: TrendingUp },
+  { label: "Evaluating concentration risk...", icon: CircleDot },
+  { label: "Parsing contract terms...", icon: ScrollText },
+  { label: "Generating recommendation...", icon: Scale },
+];
+
+// ---------------------------------------------------------------------------
+// Loading Animation
+// ---------------------------------------------------------------------------
+
+function AnalysisLoader() {
+  const [completed, setCompleted] = useState<boolean[]>(
+    new Array(ANALYSIS_STEPS.length).fill(false)
+  );
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    ANALYSIS_STEPS.forEach((_, i) => {
+      timers.push(
+        setTimeout(() => {
+          setCompleted((prev) => {
+            const next = [...prev];
+            next[i] = true;
+            return next;
+          });
+        }, 800 + i * 900)
+      );
+    });
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  return (
+    <Card className="p-8 md:p-12">
+      <div className="flex flex-col items-center text-center mb-8">
+        <div className="relative mb-4">
+          <Loader2
+            className="h-12 w-12 animate-spin text-blue-600 dark:text-blue-400"
+            aria-hidden="true"
+          />
+          <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full bg-blue-400/20" />
+        </div>
+        <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+          Analyzing contract...
+        </p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Our AI is running a comprehensive multi-factor analysis
+        </p>
+      </div>
+
+      <div
+        className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto"
+        role="status"
+        aria-label="Analysis progress"
+      >
+        {ANALYSIS_STEPS.map((step, i) => {
+          const Icon = step.icon;
+          return (
+            <div
+              key={step.label}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg border transition-all duration-500 ${
+                completed[i]
+                  ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800"
+                  : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
+              }`}
+            >
+              {completed[i] ? (
+                <CheckCircle
+                  className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 animate-in fade-in zoom-in duration-300"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Icon
+                  className="h-5 w-5 text-slate-400 dark:text-slate-500 shrink-0 animate-pulse"
+                  aria-hidden="true"
+                />
+              )}
+              <span
+                className={`text-sm transition-colors duration-300 ${
+                  completed[i]
+                    ? "text-emerald-800 dark:text-emerald-300 font-medium"
+                    : "text-slate-500 dark:text-slate-400"
+                }`}
+              >
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Contract Selection Cards
+// ---------------------------------------------------------------------------
+
+function ContractCard({
+  contract,
+  selected,
+  onSelect,
+}: {
+  contract: Contract;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const risk = contract.risk_level || "unknown";
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${
+        selected
+          ? "border-blue-500 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-950/30 shadow-md shadow-blue-500/10"
+          : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-sm"
+      }`}
+      aria-label={`Contract ${contract.contract_number}, ${formatCurrency(contract.value)}, ${risk} risk`}
+      aria-pressed={selected}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+            {contract.contract_number}
+          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+            {contract.department || "No department"}
+          </p>
+        </div>
+        <Badge className={`shrink-0 ${riskColor(risk)}`}>
+          {risk}
+        </Badge>
+      </div>
+
+      <div className="mt-3 flex items-center gap-4 text-sm">
+        <span className="font-semibold text-slate-900 dark:text-slate-100">
+          {formatCurrency(contract.value)}
+        </span>
+        <span className="text-slate-400 dark:text-slate-500">
+          {formatDate(contract.start_date)} &mdash; {formatDate(contract.end_date)}
+        </span>
+      </div>
+
+      {contract.description && (
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+          {contract.description}
+        </p>
+      )}
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Layer 1: Traffic Light Verdict
+// ---------------------------------------------------------------------------
+
+function VerdictSection({ result }: { result: DecisionResult }) {
+  const vs = VERDICT_STYLES[result.verdict] || VERDICT_STYLES.REBID;
+  const cs = CONFIDENCE_STYLES[result.confidence] || CONFIDENCE_STYLES.MEDIUM;
+
+  return (
+    <Card className="overflow-hidden">
+      {/* Gradient accent bar */}
+      <div
+        className={`h-1.5 w-full ${
+          result.verdict === "RENEW"
+            ? "bg-gradient-to-r from-emerald-400 to-emerald-600"
+            : result.verdict === "REBID"
+            ? "bg-gradient-to-r from-amber-400 to-amber-600"
+            : "bg-gradient-to-r from-red-400 to-red-600"
+        }`}
+        aria-hidden="true"
+      />
+
+      <div className="p-6 md:p-10 text-center">
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <Sparkles className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <span className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            AI Recommendation
+          </span>
+        </div>
+
+        {/* Verdict badge */}
+        <div
+          className={`inline-flex items-center gap-3 px-8 py-4 rounded-2xl border-2 ${vs.bg} ${vs.border} ${vs.glow} shadow-lg mb-5`}
+          role="status"
+          aria-label={`Verdict: ${result.verdict}`}
+        >
+          <span className={`text-4xl md:text-5xl font-extrabold tracking-tight ${vs.text}`}>
+            {result.verdict}
+          </span>
+        </div>
+
+        {/* Confidence */}
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <Badge className={`text-xs font-semibold border px-3 py-1 ${cs}`}>
+            {result.confidence} CONFIDENCE
+          </Badge>
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {result.contract_number} &middot; {formatCurrency(result.contract_value)}
+          </span>
+        </div>
+
+        {/* Summary */}
+        <p className="text-base md:text-lg text-slate-700 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
+          {result.summary}
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Layer 2: Evidence Grid
+// ---------------------------------------------------------------------------
+
+function EvidenceGrid({ pros, cons }: { pros: EvidenceItem[]; cons: EvidenceItem[] }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+      {/* Pros column */}
+      <Card className="border-emerald-200/60 dark:border-emerald-800/40">
+        <CardContent className="pt-2">
+          <div className="flex items-center gap-2 mb-4">
+            <CheckCircle
+              className="h-5 w-5 text-emerald-600 dark:text-emerald-400"
+              aria-hidden="true"
+            />
+            <h3 className="font-semibold text-emerald-800 dark:text-emerald-300">
+              Reasons to Renew
+            </h3>
+          </div>
+          <div className="space-y-4" role="list" aria-label="Reasons to renew">
+            {pros.map((item, i) => (
+              <div
+                key={i}
+                className="pl-4 border-l-2 border-emerald-300 dark:border-emerald-700"
+                role="listitem"
+              >
+                <p className="font-medium text-slate-900 dark:text-slate-100 text-sm">
+                  {item.point}
+                </p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+                  {item.evidence}
+                </p>
+                <Badge
+                  variant="outline"
+                  className="mt-1.5 text-[10px] text-slate-400 dark:text-slate-500"
+                >
+                  {item.source}
+                </Badge>
+              </div>
+            ))}
+            {pros.length === 0 && (
+              <p className="text-sm text-slate-400 italic">No supporting evidence found.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Cons column */}
+      <Card className="border-red-200/60 dark:border-red-800/40">
+        <CardContent className="pt-2">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle
+              className="h-5 w-5 text-red-600 dark:text-red-400"
+              aria-hidden="true"
+            />
+            <h3 className="font-semibold text-red-800 dark:text-red-300">
+              Reasons to Rebid
+            </h3>
+          </div>
+          <div className="space-y-4" role="list" aria-label="Reasons to rebid">
+            {cons.map((item, i) => (
+              <div
+                key={i}
+                className="pl-4 border-l-2 border-red-300 dark:border-red-700"
+                role="listitem"
+              >
+                <p className="font-medium text-slate-900 dark:text-slate-100 text-sm">
+                  {item.point}
+                </p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+                  {item.evidence}
+                </p>
+                <Badge
+                  variant="outline"
+                  className="mt-1.5 text-[10px] text-slate-400 dark:text-slate-500"
+                >
+                  {item.source}
+                </Badge>
+              </div>
+            ))}
+            {cons.length === 0 && (
+              <p className="text-sm text-slate-400 italic">No concerns identified.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Layer 3: Decision Memo
+// ---------------------------------------------------------------------------
+
+function DecisionMemo({ memo }: { memo: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(memo);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement("textarea");
+      textarea.value = memo;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [memo]);
+
+  return (
+    <Card>
+      <CardContent className="pt-2">
+        {/* Toggle button */}
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="w-full flex items-center justify-between py-3 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg px-1"
+          aria-expanded={expanded}
+          aria-controls="decision-memo-content"
+        >
+          <div className="flex items-center gap-2">
+            <ScrollText
+              className="h-5 w-5 text-blue-600 dark:text-blue-400"
+              aria-hidden="true"
+            />
+            <span className="font-semibold text-slate-900 dark:text-slate-100">
+              View Full Decision Memo
+            </span>
+          </div>
+          {expanded ? (
+            <ChevronUp className="h-5 w-5 text-slate-400" aria-hidden="true" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-slate-400" aria-hidden="true" />
+          )}
+        </button>
+
+        {expanded && (
+          <div id="decision-memo-content" className="mt-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+            {/* AI disclaimer banner */}
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800">
+              <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" aria-hidden="true" />
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                AI-generated draft &mdash; requires staff review before submission
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopy}
+                className="gap-1.5"
+                aria-label={copied ? "Copied to clipboard" : "Copy memo to clipboard"}
+              >
+                {copied ? (
+                  <CheckCircle className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
+                {copied ? "Copied!" : "Copy to Clipboard"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                className="gap-1.5"
+                aria-label="Print decision memo"
+              >
+                <Printer className="h-3.5 w-3.5" aria-hidden="true" />
+                Print
+              </Button>
+            </div>
+
+            {/* Markdown content */}
+            <article className="prose prose-slate dark:prose-invert max-w-none prose-headings:text-slate-900 dark:prose-headings:text-slate-100 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:leading-relaxed prose-li:leading-relaxed prose-strong:text-slate-900 dark:prose-strong:text-slate-100">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{memo}</ReactMarkdown>
+            </article>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main Page
+// ---------------------------------------------------------------------------
+
+export default function DecisionPage() {
+  const [selectedVendor, setSelectedVendor] = useState("");
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [result, setResult] = useState<DecisionResult | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  // Fetch contracts for the selected vendor
+  const { data: vendorData, isLoading: vendorLoading } = useQuery<VendorDetailResponse>({
+    queryKey: ["decision-vendor-contracts", selectedVendor],
+    queryFn: () =>
+      fetchAPI<VendorDetailResponse>(
+        `/api/contracts/vendor/${encodeURIComponent(selectedVendor)}`
+      ),
+    enabled: selectedVendor.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Reset downstream state when vendor changes
+  useEffect(() => {
+    setSelectedContract(null);
+    setResult(null);
+    setError(null);
+  }, [selectedVendor]);
+
+  // Scroll to results when they load
+  useEffect(() => {
+    if (result && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [result]);
+
+  const handleAnalyze = useCallback(async () => {
+    if (!selectedContract || !selectedVendor) return;
+
+    setAnalyzing(true);
+    setResult(null);
+    setError(null);
+
+    try {
+      const data = await postAPI<DecisionResult>("/api/decision", {
+        contract_number: selectedContract.contract_number,
+        supplier: selectedVendor,
+      });
+      setResult(data);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Analysis failed. Please try again."
+      );
+    } finally {
+      setAnalyzing(false);
+    }
+  }, [selectedContract, selectedVendor]);
+
+  const contracts = vendorData?.contracts || [];
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      {/* ----------------------------------------------------------------- */}
+      {/* Page Header                                                       */}
+      {/* ----------------------------------------------------------------- */}
+      <div>
+        <h1 className="text-3xl font-bold flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/20 to-blue-500/20 dark:from-violet-500/30 dark:to-blue-500/30">
+            <Brain
+              className="h-7 w-7 text-violet-600 dark:text-violet-400"
+              aria-hidden="true"
+            />
+          </div>
+          AI Decision Engine
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-2xl">
+          AI-powered procurement decision intelligence. Select a contract for a
+          comprehensive analysis.
+        </p>
+      </div>
+
+      {/* ----------------------------------------------------------------- */}
+      {/* Section 1: Contract Selection                                     */}
+      {/* ----------------------------------------------------------------- */}
+      <Card>
+        <CardContent className="pt-2 space-y-5">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
+              Select a Contract to Analyze
+            </h2>
+            <div className="max-w-md">
+              <VendorSelect
+                value={selectedVendor}
+                onChange={setSelectedVendor}
+                label="Vendor"
+                placeholder="Search and select a vendor..."
+              />
+            </div>
+          </div>
+
+          {/* Vendor loading state */}
+          {selectedVendor && vendorLoading && (
+            <div className="flex items-center gap-2 py-6 justify-center">
+              <Loader2
+                className="h-5 w-5 animate-spin text-blue-600"
+                aria-hidden="true"
+              />
+              <span className="text-sm text-slate-500">
+                Loading contracts...
+              </span>
+            </div>
+          )}
+
+          {/* Contract cards grid */}
+          {selectedVendor && !vendorLoading && contracts.length > 0 && (
+            <div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+                {contracts.length} contract{contracts.length !== 1 ? "s" : ""} found for{" "}
+                <span className="font-medium text-slate-700 dark:text-slate-300">
+                  {selectedVendor}
+                </span>
+              </p>
+              <div
+                className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-1"
+                role="listbox"
+                aria-label="Select a contract"
+              >
+                {contracts.map((c) => (
+                  <ContractCard
+                    key={c.contract_number}
+                    contract={c}
+                    selected={selectedContract?.contract_number === c.contract_number}
+                    onSelect={() => setSelectedContract(c)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* No contracts */}
+          {selectedVendor && !vendorLoading && contracts.length === 0 && (
+            <p className="text-sm text-slate-400 dark:text-slate-500 py-4 text-center">
+              No contracts found for this vendor.
+            </p>
+          )}
+
+          {/* Analyze button */}
+          {selectedContract && !analyzing && !result && (
+            <div className="flex justify-center pt-2">
+              <Button
+                onClick={handleAnalyze}
+                size="lg"
+                className="gap-2 px-8 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-200"
+                aria-label={`Analyze contract ${selectedContract.contract_number}`}
+              >
+                <Brain className="h-5 w-5" aria-hidden="true" />
+                Analyze Contract
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ----------------------------------------------------------------- */}
+      {/* Section 2: Loading State                                          */}
+      {/* ----------------------------------------------------------------- */}
+      {analyzing && <AnalysisLoader />}
+
+      {/* ----------------------------------------------------------------- */}
+      {/* Error State                                                       */}
+      {/* ----------------------------------------------------------------- */}
+      {error && (
+        <Card className="border-red-200 dark:border-red-800">
+          <CardContent className="pt-2">
+            <div className="flex items-start gap-3 py-4">
+              <AlertTriangle
+                className="h-5 w-5 text-red-500 shrink-0 mt-0.5"
+                aria-hidden="true"
+              />
+              <div>
+                <p className="font-medium text-red-800 dark:text-red-300">
+                  Analysis Failed
+                </p>
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                  {error}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAnalyze}
+                  className="mt-3 gap-1.5"
+                >
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ----------------------------------------------------------------- */}
+      {/* Section 3: Results                                                */}
+      {/* ----------------------------------------------------------------- */}
+      {result && (
+        <div ref={resultRef} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {/* Layer 1: Traffic Light Verdict */}
+          <VerdictSection result={result} />
+
+          {/* Layer 2: Evidence Grid */}
+          <EvidenceGrid pros={result.pros} cons={result.cons} />
+
+          {/* Layer 3: Decision Memo */}
+          <DecisionMemo memo={result.memo} />
+
+          {/* Analyze another */}
+          <div className="flex justify-center pt-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setResult(null);
+                setError(null);
+                setSelectedContract(null);
+              }}
+              className="gap-2"
+            >
+              <Brain className="h-4 w-4" aria-hidden="true" />
+              Analyze Another Contract
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

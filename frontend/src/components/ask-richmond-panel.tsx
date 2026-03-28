@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   MessageSquare, X, Send, Loader2,
-  Sparkles, Trash2, ArrowRight,
+  Sparkles, Trash2, ArrowRight, ExternalLink,
 } from "lucide-react";
 import { postAPI } from "@/lib/api";
 import { toast } from "sonner";
@@ -73,11 +73,14 @@ function ResultCards({ results }: { results: Record<string, unknown>[] }) {
               <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm leading-tight group-hover:text-blue-600">
                 {String(row[nameKey] ?? `Row ${i + 1}`)}
               </span>
-              {valueKey && row[valueKey] != null && (
-                <span className="font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap text-sm">
-                  {formatVal(String(valueKey), row[valueKey])}
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {valueKey && row[valueKey] != null && (
+                  <span className="font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap text-sm">
+                    {formatVal(String(valueKey), row[valueKey])}
+                  </span>
+                )}
+                {href && <ExternalLink className="h-3.5 w-3.5 text-slate-300 group-hover:text-blue-500 flex-shrink-0" aria-hidden="true" />}
+              </div>
             </div>
             <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-slate-500 dark:text-slate-400 mt-1">
               {keys.filter(k => k !== nameKey && k !== valueKey && row[k] != null && String(row[k]).trim()).slice(0, 3).map(k => (
@@ -172,6 +175,8 @@ export function AskRichmondPanel() {
   const [lastQueryTime, setLastQueryTime] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const toggleButtonRef = useRef<HTMLButtonElement>(null);
   const nextId = useRef(1);
 
   useEffect(() => {
@@ -180,6 +185,47 @@ export function AskRichmondPanel() {
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 100);
+  }, [open]);
+
+  // Focus trap: keep Tab cycling within the panel and close on Escape
+  useEffect(() => {
+    if (!open) return;
+
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        toggleButtonRef.current?.focus();
+        return;
+      }
+
+      if (e.key !== "Tab") return;
+
+      const focusable = panel!.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open]);
 
   async function handleQuery(q?: string) {
@@ -214,6 +260,7 @@ export function AskRichmondPanel() {
   if (!open) {
     return (
       <button
+        ref={toggleButtonRef}
         onClick={() => setOpen(true)}
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all focus:outline-none focus:ring-3 focus:ring-blue-400 focus:ring-offset-2"
         aria-label="Open Ask Richmond"
@@ -228,6 +275,7 @@ export function AskRichmondPanel() {
   // Docked right sidebar panel (like Aether)
   return (
     <div
+      ref={panelRef}
       className="fixed top-0 right-0 z-50 h-full w-[420px] max-w-[90vw] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col"
       role="complementary"
       aria-label="Ask Richmond AI assistant"

@@ -102,6 +102,51 @@ interface RiskInsight {
   [key: string]: unknown;
 }
 
+interface VendorDetailContract {
+  contract_number: string;
+  supplier: string;
+  department: string;
+  value: number;
+  start_date: string;
+  end_date: string;
+  description: string;
+  risk_level?: string;
+  days_to_expiry?: number;
+  [key: string]: unknown;
+}
+
+interface VendorDetailResponse {
+  supplier: string;
+  contracts: VendorDetailContract[];
+  count: number;
+  total_value: number | null;
+  first_contract: string | null;
+  last_expiry: string | null;
+  departments_served: (string | null)[];
+}
+
+interface ComplianceCheckResult {
+  checked: boolean;
+  debarred?: boolean;
+  flagged?: boolean;
+  details: string;
+}
+
+interface ComplianceCheckResponse {
+  supplier: string;
+  sam_check: ComplianceCheckResult;
+  fcc_check: ComplianceCheckResult;
+  csl_check: ComplianceCheckResult;
+  federal_lists: string[];
+  total_lists: number;
+  auto_checked: number;
+  manual_review_needed: number;
+  any_flagged: boolean;
+  recommendation: string;
+  virginia_code_reference: string;
+  disclaimer: string;
+}
+
 
 // ---------------------------------------------------------------------------
 // Step Indicator
@@ -352,6 +397,28 @@ export default function ReviewPage() {
         `/api/contracts/risk-insight/${encodeURIComponent(selectedContract!.contract_number)}`
       ),
     enabled: Boolean(selectedContract?.contract_number) && step >= 2,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Vendor detail — fetched immediately when supplier is selected (not step-gated)
+  const { data: vendorDetail, isLoading: vendorDetailLoading } = useQuery<VendorDetailResponse>({
+    queryKey: ["vendor-detail-review", selectedContract?.supplier],
+    queryFn: () =>
+      fetchAPI<VendorDetailResponse>(
+        `/api/contracts/vendor/${encodeURIComponent(selectedContract!.supplier)}`
+      ),
+    enabled: Boolean(selectedContract?.supplier),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Compliance check — fetched immediately when supplier is selected (not step-gated)
+  const { data: complianceData, isLoading: complianceLoading } = useQuery<ComplianceCheckResponse>({
+    queryKey: ["compliance-check-review", selectedContract?.supplier],
+    queryFn: () =>
+      fetchAPI<ComplianceCheckResponse>(
+        `/api/contracts/compliance-check/${encodeURIComponent(selectedContract!.supplier)}`
+      ),
+    enabled: Boolean(selectedContract?.supplier),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -660,6 +727,130 @@ export default function ReviewPage() {
               );
             })()}
 
+            {/* Auto-populated vendor intelligence */}
+            {vendorDetailLoading && (
+              <Card className="border-slate-200 dark:border-slate-700">
+                <CardContent className="pt-5 pb-5">
+                  <div className="space-y-3" aria-busy="true">
+                    <div className="h-5 w-48 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                    <div className="grid grid-cols-3 gap-3">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="h-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-lg" />
+                      ))}
+                    </div>
+                    <div className="h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-lg" />
+                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                      Loading vendor intelligence...
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {vendorDetail && (
+              <Card className="border-blue-100 dark:border-blue-900/50 bg-blue-50/30 dark:bg-blue-950/20">
+                <CardContent className="pt-5 pb-5 space-y-4">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <Info className="h-4 w-4 text-blue-500" aria-hidden="true" />
+                    Vendor Intelligence (Auto-populated)
+                  </h3>
+
+                  {/* Key metrics */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="text-center p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Total Contracts</p>
+                      <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{vendorDetail.count}</p>
+                    </div>
+                    <div className="text-center p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Total Value</p>
+                      <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                        {vendorDetail.total_value ? formatCurrency(vendorDetail.total_value) : "N/A"}
+                      </p>
+                    </div>
+                    <div className="text-center p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">First Contract</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {vendorDetail.first_contract ? formatDate(vendorDetail.first_contract) : "N/A"}
+                      </p>
+                    </div>
+                    <div className="text-center p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Last Expiry</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {vendorDetail.last_expiry ? formatDate(vendorDetail.last_expiry) : "N/A"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Departments served */}
+                  {vendorDetail.departments_served.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
+                        Departments Served
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {vendorDetail.departments_served
+                          .filter((d): d is string => d !== null)
+                          .map((dept) => (
+                            <Badge
+                              key={dept}
+                              className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 text-xs"
+                            >
+                              {dept}
+                            </Badge>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Risk distribution across vendor's contracts */}
+                  {vendorDetail.contracts.length > 0 && (() => {
+                    const riskCounts: Record<string, number> = {};
+                    vendorDetail.contracts.forEach((c) => {
+                      const level = c.risk_level || "unknown";
+                      riskCounts[level] = (riskCounts[level] || 0) + 1;
+                    });
+                    return (
+                      <div>
+                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
+                          Risk Distribution
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(riskCounts).map(([level, count]) => {
+                            const colors =
+                              level === "critical"
+                                ? "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 border-red-200 dark:border-red-700"
+                                : level === "warning"
+                                ? "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-700"
+                                : level === "expired"
+                                ? "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-600"
+                                : "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-green-200 dark:border-green-700";
+                            return (
+                              <Badge key={level} className={`${colors} text-xs gap-1`}>
+                                {level}: {count}
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* AI summary line */}
+                  {riskData?.recommendation && (
+                    <div className="bg-white/60 dark:bg-slate-800/60 rounded-lg p-3 border border-blue-100 dark:border-blue-900/50">
+                      <p className="text-sm text-slate-700 dark:text-slate-300">
+                        <span className="font-medium text-blue-700 dark:text-blue-400">AI Summary: </span>
+                        {vendorDetail.count} contracts totaling{" "}
+                        {vendorDetail.total_value ? formatCurrency(vendorDetail.total_value) : "$0"} across{" "}
+                        {vendorDetail.departments_served.filter(Boolean).length} department(s).{" "}
+                        {riskData.recommendation}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Price context */}
             {priceTrend && priceTrend.total_contracts > 0 && (
               <Card className="border-slate-200 dark:border-slate-700">
@@ -843,6 +1034,154 @@ export default function ReviewPage() {
                 Auto-checks run against 3 federal databases. Complete all 4 manual checks by visiting each link.
               </p>
             </div>
+
+            {/* Auto-populated compliance results (pre-fetched) */}
+            {complianceLoading && (
+              <Card className="border-slate-200 dark:border-slate-700">
+                <CardContent className="pt-5 pb-5">
+                  <div className="space-y-3" aria-busy="true">
+                    <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      Checking federal compliance databases...
+                    </div>
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-12 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-lg" />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {complianceData && (
+              <>
+                {/* Flagged warning banner */}
+                {complianceData.any_flagged && (
+                  <Card className="border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/50">
+                    <CardContent className="pt-4 pb-4">
+                      <div className="flex items-center gap-3">
+                        <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 shrink-0" aria-hidden="true" />
+                        <div>
+                          <p className="font-semibold text-red-800 dark:text-red-300">
+                            Compliance Flag Detected
+                          </p>
+                          <p className="text-sm text-red-700 dark:text-red-400">
+                            This vendor was flagged on one or more federal exclusion lists. Review required before procurement.
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Auto-check results summary */}
+                <Card className="border-slate-200 dark:border-slate-700">
+                  <CardContent className="pt-5 pb-5 space-y-3">
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-blue-500" aria-hidden="true" />
+                      Automated Screening Results (Pre-fetched)
+                    </h4>
+                    <div className="grid gap-2">
+                      {/* SAM.gov */}
+                      <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+                        complianceData.sam_check.debarred
+                          ? "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800"
+                          : complianceData.sam_check.checked
+                          ? "bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800"
+                          : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                      }`}>
+                        {complianceData.sam_check.debarred ? (
+                          <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0" aria-hidden="true" />
+                        ) : complianceData.sam_check.checked ? (
+                          <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" aria-hidden="true" />
+                        ) : (
+                          <Clock className="h-5 w-5 text-slate-400 shrink-0" aria-hidden="true" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">SAM.gov Exclusions</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{complianceData.sam_check.details}</p>
+                        </div>
+                        <Badge className={`shrink-0 text-xs ${
+                          complianceData.sam_check.debarred
+                            ? "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300"
+                            : complianceData.sam_check.checked
+                            ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                        }`}>
+                          {complianceData.sam_check.debarred ? "FLAGGED" : complianceData.sam_check.checked ? "CLEAR" : "N/A"}
+                        </Badge>
+                      </div>
+
+                      {/* FCC Covered List */}
+                      <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+                        complianceData.fcc_check.flagged
+                          ? "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800"
+                          : complianceData.fcc_check.checked
+                          ? "bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800"
+                          : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                      }`}>
+                        {complianceData.fcc_check.flagged ? (
+                          <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0" aria-hidden="true" />
+                        ) : complianceData.fcc_check.checked ? (
+                          <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" aria-hidden="true" />
+                        ) : (
+                          <Clock className="h-5 w-5 text-slate-400 shrink-0" aria-hidden="true" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">FCC Covered List</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{complianceData.fcc_check.details}</p>
+                        </div>
+                        <Badge className={`shrink-0 text-xs ${
+                          complianceData.fcc_check.flagged
+                            ? "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300"
+                            : complianceData.fcc_check.checked
+                            ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                        }`}>
+                          {complianceData.fcc_check.flagged ? "FLAGGED" : complianceData.fcc_check.checked ? "CLEAR" : "N/A"}
+                        </Badge>
+                      </div>
+
+                      {/* Consolidated Screening List */}
+                      <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+                        complianceData.csl_check.flagged
+                          ? "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800"
+                          : complianceData.csl_check.checked
+                          ? "bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800"
+                          : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                      }`}>
+                        {complianceData.csl_check.flagged ? (
+                          <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0" aria-hidden="true" />
+                        ) : complianceData.csl_check.checked ? (
+                          <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" aria-hidden="true" />
+                        ) : (
+                          <Clock className="h-5 w-5 text-slate-400 shrink-0" aria-hidden="true" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">Consolidated Screening List</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{complianceData.csl_check.details}</p>
+                        </div>
+                        <Badge className={`shrink-0 text-xs ${
+                          complianceData.csl_check.flagged
+                            ? "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300"
+                            : complianceData.csl_check.checked
+                            ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                        }`}>
+                          {complianceData.csl_check.flagged ? "FLAGGED" : complianceData.csl_check.checked ? "CLEAR" : "N/A"}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Summary line */}
+                    <p className="text-xs text-slate-500 dark:text-slate-400 pt-1">
+                      {complianceData.auto_checked} of {complianceData.total_lists} federal lists checked automatically.{" "}
+                      {complianceData.manual_review_needed} require manual verification below.
+                    </p>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+
             <ComplianceCheck supplier={selectedContract.supplier} />
           </div>
         </section>

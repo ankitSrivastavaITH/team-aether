@@ -61,6 +61,64 @@ function SortIcon({ isSorted }: { isSorted: false | "asc" | "desc" }) {
   return <ChevronsUpDown className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />;
 }
 
+function MobileContractCard({
+  contract,
+  onRowClick,
+}: {
+  contract: Contract;
+  onRowClick: (contract: Contract) => void;
+}) {
+  const vendor = (contract.supplier as string) ?? (contract.vendor_name as string) ?? "N/A";
+  const department = (contract.department as string) ?? "N/A";
+  const value = (contract.value as number) ?? (contract.amount as number) ?? null;
+  const riskLevel = (contract.risk_level as string) ?? "unknown";
+  const colorClass = riskColor(riskLevel);
+  const daysLeft = contract.days_to_expiry as number | undefined | null;
+  const contractNumber = (contract.contract_number as string) ?? (contract.id as string) ?? "";
+
+  return (
+    <div
+      onClick={() => onRowClick(contract)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onRowClick(contract);
+        }
+      }}
+      tabIndex={0}
+      role="button"
+      aria-label={`View details for ${vendor}`}
+      className="rounded-lg border border-slate-200 bg-white p-3.5 shadow-sm cursor-pointer transition-all hover:bg-blue-50/70 hover:border-blue-300 focus:outline-none focus:ring-3 focus:ring-blue-500 active:scale-[0.98]"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-slate-900 truncate">{vendor}</p>
+          <p className="text-xs text-slate-500 truncate mt-0.5">{department}</p>
+        </div>
+        <span className="text-sm font-semibold text-slate-800 whitespace-nowrap shrink-0">
+          {formatCurrency(value)}
+        </span>
+      </div>
+      <div className="flex items-center justify-between gap-2 mt-2.5">
+        <span
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${colorClass}`}
+        >
+          <RiskIcon level={riskLevel} className="h-3.5 w-3.5" />
+          <span className="capitalize">{riskLevel}</span>
+        </span>
+        <div className="flex items-center gap-3 text-xs text-slate-500">
+          <DaysLeftDisplay daysLeft={daysLeft as number | null} />
+          {contractNumber && (
+            <span className="text-slate-400 truncate max-w-[100px]" title={contractNumber}>
+              #{contractNumber}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ContractsTable({ contracts, onRowClick }: ContractsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -200,88 +258,108 @@ export function ContractsTable({ contracts, onRowClick }: ContractsTableProps) {
   });
 
   return (
-    <div className="overflow-x-auto rounded-xl ring-1 ring-slate-200 bg-white shadow-sm">
-      <table
-        className="w-full text-base border-collapse"
-        aria-label="Contracts table"
-      >
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="border-b border-slate-200 bg-slate-50">
-              {headerGroup.headers.map((header) => {
-                const isSorted = header.column.getIsSorted();
-                const canSort = header.column.getCanSort();
-                return (
-                  <th
-                    key={header.id}
-                    scope="col"
-                    aria-sort={
-                      isSorted === "asc"
-                        ? "ascending"
-                        : isSorted === "desc"
-                        ? "descending"
-                        : canSort
-                        ? "none"
-                        : undefined
-                    }
-                    className="px-4 py-3 text-left text-sm font-semibold text-slate-700 whitespace-nowrap"
-                  >
-                    {canSort ? (
-                      <button
-                        onClick={header.column.getToggleSortingHandler()}
-                        className="inline-flex items-center gap-1.5 hover:text-slate-900 focus:outline-none focus:ring-3 focus:ring-blue-500 focus:ring-offset-1 rounded min-h-[44px] px-1 -mx-1"
-                        aria-label={`Sort by ${typeof header.column.columnDef.header === "string" ? header.column.columnDef.header : "column"}${isSorted === "asc" ? ", currently ascending" : isSorted === "desc" ? ", currently descending" : ""}`}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        <SortIcon isSorted={isSorted} />
-                      </button>
-                    ) : (
-                      <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
-                    )}
-                  </th>
-                );
-              })}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.length === 0 ? (
-            <tr>
-              <td
-                colSpan={columns.length}
-                className="px-4 py-12 text-center text-base text-slate-500"
-              >
-                No contracts found matching your filters.
-              </td>
-            </tr>
-          ) : (
-            table.getRowModel().rows.map((row, rowIndex) => (
-              <tr
-                key={row.id}
-                onClick={() => onRowClick(row.original)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onRowClick(row.original);
-                  }
-                }}
-                tabIndex={0}
-                role="button"
-                aria-label={`View details for ${(row.original.supplier as string) ?? "contract"}`}
-                className={`border-b border-slate-100 cursor-pointer transition-all hover:bg-blue-50/70 hover:border-l-[3px] hover:border-l-blue-500 focus:outline-none focus:ring-3 focus:ring-inset focus:ring-blue-500 ${
-                  rowIndex % 2 === 0 ? "bg-white" : "bg-slate-50/40"
-                }`}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-2.5 align-middle">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
+    <>
+      {/* Mobile cards - visible below md */}
+      <div className="md:hidden space-y-2">
+        {contracts.length === 0 ? (
+          <div className="rounded-lg border border-slate-200 bg-white px-4 py-12 text-center text-sm text-slate-500">
+            No contracts found matching your filters.
+          </div>
+        ) : (
+          contracts.map((contract) => (
+            <MobileContractCard
+              key={(contract.contract_number as string) ?? contract.id}
+              contract={contract}
+              onRowClick={onRowClick}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Desktop table - hidden below md */}
+      <div className="hidden md:block overflow-x-auto rounded-xl ring-1 ring-slate-200 bg-white shadow-sm">
+        <table
+          className="w-full text-base border-collapse"
+          aria-label="Contracts table"
+        >
+          <thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id} className="border-b border-slate-200 bg-slate-50">
+                {headerGroup.headers.map((header) => {
+                  const isSorted = header.column.getIsSorted();
+                  const canSort = header.column.getCanSort();
+                  return (
+                    <th
+                      key={header.id}
+                      scope="col"
+                      aria-sort={
+                        isSorted === "asc"
+                          ? "ascending"
+                          : isSorted === "desc"
+                          ? "descending"
+                          : canSort
+                          ? "none"
+                          : undefined
+                      }
+                      className="px-4 py-3 text-left text-sm font-semibold text-slate-700 whitespace-nowrap"
+                    >
+                      {canSort ? (
+                        <button
+                          onClick={header.column.getToggleSortingHandler()}
+                          className="inline-flex items-center gap-1.5 hover:text-slate-900 focus:outline-none focus:ring-3 focus:ring-blue-500 focus:ring-offset-1 rounded min-h-[44px] px-1 -mx-1"
+                          aria-label={`Sort by ${typeof header.column.columnDef.header === "string" ? header.column.columnDef.header : "column"}${isSorted === "asc" ? ", currently ascending" : isSorted === "desc" ? ", currently descending" : ""}`}
+                        >
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          <SortIcon isSorted={isSorted} />
+                        </button>
+                      ) : (
+                        <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
+                      )}
+                    </th>
+                  );
+                })}
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+            ))}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={columns.length}
+                  className="px-4 py-12 text-center text-base text-slate-500"
+                >
+                  No contracts found matching your filters.
+                </td>
+              </tr>
+            ) : (
+              table.getRowModel().rows.map((row, rowIndex) => (
+                <tr
+                  key={row.id}
+                  onClick={() => onRowClick(row.original)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onRowClick(row.original);
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`View details for ${(row.original.supplier as string) ?? "contract"}`}
+                  className={`border-b border-slate-100 cursor-pointer transition-all hover:bg-blue-50/70 hover:border-l-[3px] hover:border-l-blue-500 focus:outline-none focus:ring-3 focus:ring-inset focus:ring-blue-500 ${
+                    rowIndex % 2 === 0 ? "bg-white" : "bg-slate-50/40"
+                  }`}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="px-4 py-2.5 align-middle">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

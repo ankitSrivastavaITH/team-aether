@@ -56,7 +56,7 @@ export function DepartmentChartFilter({ selected, onChange }: ChartFilterProps) 
           </button>
         )}
       </div>
-      <div className="space-y-0.5">
+      <div className="space-y-1">
         {visible.map((dept) => {
           const barWidth = (dept.total_value / maxValue) * 100;
 
@@ -66,10 +66,10 @@ export function DepartmentChartFilter({ selected, onChange }: ChartFilterProps) 
               onClick={() => toggle(dept.department)}
               className={`w-full text-left rounded-md transition-all group relative overflow-hidden ${
                 selected.length > 0 && !selected.includes(dept.department)
-                  ? "opacity-40 hover:opacity-70"
+                  ? "hover:bg-slate-50 dark:hover:bg-slate-800/50"
                   : "hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
               }`}
-              style={{ minHeight: 32 }}
+              style={{ minHeight: 44 }}
               aria-pressed={selected.includes(dept.department)}
               aria-label={`${dept.department}: ${dept.count} contracts, ${formatCurrency(dept.total_value)}`}
             >
@@ -84,6 +84,8 @@ export function DepartmentChartFilter({ selected, onChange }: ChartFilterProps) 
                   width: `${barWidth}%`,
                   backgroundColor: selected.includes(dept.department)
                     ? undefined
+                    : selected.length > 0
+                    ? `rgba(148, 163, 184, ${0.06 + (barWidth / 100) * 0.12})`
                     : `rgba(37, 99, 235, ${0.08 + (barWidth / 100) * 0.25})`,
                 }}
               />
@@ -105,16 +107,26 @@ export function DepartmentChartFilter({ selected, onChange }: ChartFilterProps) 
                 <span className={`text-xs font-medium truncate flex-1 ${
                   selected.includes(dept.department)
                     ? "text-blue-800 dark:text-blue-300"
+                    : selected.length > 0
+                    ? "text-slate-500 dark:text-slate-400"
                     : "text-slate-700 dark:text-slate-300"
                 }`}>
                   {dept.department}
                 </span>
 
                 {/* Stats */}
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 flex-shrink-0 tabular-nums">
+                <span className={`text-[10px] flex-shrink-0 tabular-nums ${
+                  selected.length > 0 && !selected.includes(dept.department)
+                    ? "text-slate-400 dark:text-slate-500"
+                    : "text-slate-500 dark:text-slate-400"
+                }`}>
                   {dept.count}
                 </span>
-                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 flex-shrink-0 tabular-nums w-16 text-right">
+                <span className={`text-[10px] font-medium flex-shrink-0 tabular-nums w-16 text-right ${
+                  selected.length > 0 && !selected.includes(dept.department)
+                    ? "text-slate-400 dark:text-slate-500"
+                    : "text-slate-600 dark:text-slate-400"
+                }`}>
                   {dept.total_value >= 1e9
                     ? `$${(dept.total_value / 1e9).toFixed(1)}B`
                     : dept.total_value >= 1e6

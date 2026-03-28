@@ -1,42 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import {
   TrendingUp,
-  TrendingDown,
   DollarSign,
   BarChart3,
   Loader2,
-  Info,
   ArrowRight,
-  Minus,
+  X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { fetchAPI } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
-import { useDepartments } from "@/hooks/use-contracts";
 import { VendorSelect } from "@/components/vendor-select";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { DepartmentChartFilter } from "@/components/chart-filter";
 import {
   LineChart,
   Line,
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
   ResponsiveContainer,
-  ReferenceLine,
   BarChart,
   Bar,
   CartesianGrid,
-  Cell,
 } from "recharts";
 
 // ---------------------------------------------------------------------------
@@ -73,135 +63,79 @@ interface CostComparisonData {
 }
 
 // ---------------------------------------------------------------------------
-// Tooltip components
-// ---------------------------------------------------------------------------
-
-function PriceTrendTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: Array<{
-    value: number;
-    payload: { contract_number: string; description: string };
-  }>;
-}) {
-  if (!active || !payload || payload.length === 0) return null;
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 shadow-md text-sm max-w-xs"
-    >
-      <p className="font-semibold text-slate-900 dark:text-slate-100">
-        {formatCurrency(payload[0].value)}
-      </p>
-      <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-        {payload[0].payload.contract_number}
-      </p>
-      {payload[0].payload.description && (
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-          {payload[0].payload.description}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function ComparisonTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: Array<{ value: number; payload: { supplier: string; count: number } }>;
-}) {
-  if (!active || !payload || payload.length === 0) return null;
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 shadow-md text-sm max-w-xs"
-    >
-      <p className="font-semibold text-slate-900 dark:text-slate-100">
-        {payload[0].payload.supplier}
-      </p>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
-        Avg: {formatCurrency(payload[0].value)} ({payload[0].payload.count}{" "}
-        contracts)
-      </p>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Main Page
 // ---------------------------------------------------------------------------
 
+const VENDOR_COLORS = [
+  "#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6",
+  "#ec4899", "#06b6d4", "#f97316",
+];
+
 export default function CostAnalysisPage() {
-  const [vendorName, setVendorName] = useState("");
-  const [selectedDept, setSelectedDept] = useState("");
+  const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
+  const [currentPicker, setCurrentPicker] = useState("");
+  const [selectedDepts, setSelectedDepts] = useState<string[]>([]);
 
-  const { data: departmentsData } = useDepartments();
-
-  // Vendor price trend
-  const {
-    data: trendData,
-    isLoading: trendLoading,
-    isError: trendError,
-  } = useQuery<PriceTrendData>({
-    queryKey: ["vendor-price-trend", vendorName],
-    queryFn: () =>
-      fetchAPI<PriceTrendData>(
-        `/api/analytics/vendor-price-trend/${encodeURIComponent(vendorName)}`
-      ),
-    enabled: vendorName.length > 0,
-    staleTime: 5 * 60 * 1000,
+  // Fetch trend data for ALL selected vendors in parallel
+  const trendQueries = useQueries({
+    queries: selectedVendors.map((vendor) => ({
+      queryKey: ["vendor-price-trend", vendor],
+      queryFn: () =>
+        fetchAPI<PriceTrendData>(
+          `/api/analytics/vendor-price-trend/${encodeURIComponent(vendor)}`
+        ),
+      staleTime: 5 * 60 * 1000,
+    })),
   });
 
-  // Department cost comparison
-  const {
-    data: compData,
-    isLoading: compLoading,
-  } = useQuery<CostComparisonData>({
-    queryKey: ["cost-comparison", selectedDept],
-    queryFn: () =>
-      fetchAPI<CostComparisonData>(
-        `/api/analytics/cost-comparison/${encodeURIComponent(selectedDept)}`
-      ),
-    enabled: selectedDept.length > 0,
-    staleTime: 5 * 60 * 1000,
+  const anyTrendLoading = trendQueries.some((q) => q.isLoading);
+
+  // Department cost comparison — parallel queries for all selected depts
+  const deptQueries = useQueries({
+    queries: selectedDepts.map((dept) => ({
+      queryKey: ["cost-comparison", dept],
+      queryFn: () =>
+        fetchAPI<CostComparisonData>(
+          `/api/analytics/cost-comparison/${encodeURIComponent(dept)}`
+        ),
+      staleTime: 5 * 60 * 1000,
+    })),
   });
 
-  const departmentList: string[] = Array.isArray(departmentsData)
-    ? departmentsData
-        .flatMap((d) => {
-          if (typeof d === "string") return [d];
-          if (d && typeof d === "object" && "department" in d)
-            return [(d as { department: string }).department];
-          return [];
-        })
-        .filter(Boolean)
-    : [];
+  const anyDeptLoading = deptQueries.some((q) => q.isLoading);
 
-  // Compute vendor's own price trend (not department average comparison)
-  let avgComparison: string | null = null;
-  if (trendData && trendData.total_contracts >= 2 && trendData.first_value && trendData.latest_value) {
-    const pctChange = trendData.price_change_pct;
-    if (pctChange > 10) {
-      avgComparison = `This vendor's prices increased ${pctChange}% from their first to latest contract. Consider negotiating or rebidding.`;
-    } else if (pctChange < -10) {
-      avgComparison = `This vendor's prices decreased ${Math.abs(pctChange)}% over time — good cost trend.`;
-    } else {
-      avgComparison = `This vendor's pricing has been stable (${pctChange > 0 ? "+" : ""}${pctChange}% change) across ${trendData.total_contracts} contracts.`;
+  function handleAddVendor(vendor: string) {
+    if (vendor && !selectedVendors.includes(vendor)) {
+      setSelectedVendors((prev) => [...prev, vendor]);
     }
+    setCurrentPicker("");
   }
 
-  const chartData = trendData?.contracts.map((c) => ({
-    date: c.start_date?.substring(0, 10) || "",
-    value: c.value,
-    contract_number: c.contract_number,
-    description: c.description,
-  }));
+  function handleRemoveVendor(vendor: string) {
+    setSelectedVendors((prev) => prev.filter((v) => v !== vendor));
+  }
+
+  // Build merged chart data: all dates on X axis, each vendor as a separate key
+  const mergedChart: Record<string, unknown>[] = [];
+  const dateMap = new Map<string, Record<string, unknown>>();
+
+  trendQueries.forEach((q, idx) => {
+    if (!q.data) return;
+    const vendor = selectedVendors[idx];
+    for (const c of q.data.contracts) {
+      const date = c.start_date?.substring(0, 10) || "";
+      if (!dateMap.has(date)) {
+        dateMap.set(date, { date });
+      }
+      dateMap.get(date)![vendor] = c.value;
+    }
+  });
+
+  // Sort by date
+  const sortedDates = Array.from(dateMap.keys()).sort();
+  for (const d of sortedDates) {
+    mergedChart.push(dateMap.get(d)!);
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -242,192 +176,125 @@ export default function CostAnalysisPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Vendor picker — adds to multi-select list */}
           <div className="max-w-sm">
             <VendorSelect
-              value={vendorName}
-              onChange={setVendorName}
-              label="Select Vendor"
+              value={currentPicker}
+              onChange={handleAddVendor}
+              label="Add Vendor to Compare"
             />
           </div>
 
-          {trendLoading && (
-            <div
-              className="flex items-center gap-2 py-8 justify-center text-sm text-slate-500 dark:text-slate-400"
-              aria-busy="true"
-            >
+          {/* Selected vendor chips */}
+          {selectedVendors.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedVendors.map((v, i) => (
+                <span
+                  key={v}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-white"
+                  style={{ backgroundColor: VENDOR_COLORS[i % VENDOR_COLORS.length] }}
+                >
+                  <span className="max-w-[180px] truncate">{v}</span>
+                  <button
+                    onClick={() => handleRemoveVendor(v)}
+                    className="hover:bg-white/20 rounded-full p-0.5"
+                    aria-label={`Remove ${v}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              {selectedVendors.length > 1 && (
+                <button
+                  onClick={() => setSelectedVendors([])}
+                  className="text-xs text-slate-500 hover:text-red-500 px-2"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+          )}
+
+          {anyTrendLoading && (
+            <div className="flex items-center gap-2 py-8 justify-center text-sm text-slate-500 dark:text-slate-400" aria-busy="true">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               Loading price data...
             </div>
           )}
 
-          {trendError && (
-            <div
-              role="alert"
-              className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-700 rounded-lg text-sm text-red-700 dark:text-red-400"
-            >
-              Could not load price data. Please check the vendor name and try
-              again.
-            </div>
-          )}
-
-          {trendData && (
+          {/* Per-vendor stat cards */}
+          {trendQueries.filter((q) => q.data).length > 0 && (
             <div className="space-y-4">
-              {/* Stats row */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Total Contracts
-                  </p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                    {trendData.total_contracts}
-                  </p>
-                </div>
-                <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    First Value
-                  </p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                    {formatCurrency(trendData.first_value)}
-                  </p>
-                </div>
-                <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Latest Value
-                  </p>
-                  <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                    {formatCurrency(trendData.latest_value)}
-                  </p>
-                </div>
-                <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Price Change
-                  </p>
-                  <div className="flex items-center justify-center gap-1">
-                    {trendData.price_change_pct > 0 ? (
-                      <TrendingUp
-                        className="h-4 w-4 text-red-500"
-                        aria-hidden="true"
-                      />
-                    ) : trendData.price_change_pct < 0 ? (
-                      <TrendingDown
-                        className="h-4 w-4 text-green-500"
-                        aria-hidden="true"
-                      />
-                    ) : (
-                      <Minus
-                        className="h-4 w-4 text-slate-400"
-                        aria-hidden="true"
-                      />
-                    )}
-                    <p
-                      className={`text-xl font-bold ${
-                        trendData.price_change_pct > 0
-                          ? "text-red-600 dark:text-red-400"
-                          : trendData.price_change_pct < 0
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-slate-600 dark:text-slate-400"
-                      }`}
-                    >
-                      {trendData.price_change_pct > 0 ? "+" : ""}
-                      {trendData.price_change_pct}%
-                    </p>
-                  </div>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {trendQueries.map((q, idx) => {
+                  if (!q.data) return null;
+                  const d = q.data;
+                  const color = VENDOR_COLORS[idx % VENDOR_COLORS.length];
+                  return (
+                    <div key={selectedVendors[idx]} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border-l-4" style={{ borderLeftColor: color }}>
+                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">{d.supplier}</p>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-sm text-slate-500 dark:text-slate-400">{d.total_contracts} contracts</span>
+                        <span className={`text-sm font-bold ${d.price_change_pct > 0 ? "text-red-600 dark:text-red-400" : d.price_change_pct < 0 ? "text-green-600 dark:text-green-400" : "text-slate-600 dark:text-slate-400"}`}>
+                          {d.price_change_pct > 0 ? "+" : ""}{d.price_change_pct}%
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between mt-1 text-xs text-slate-400 dark:text-slate-500">
+                        <span>{formatCurrency(d.first_value)} → {formatCurrency(d.latest_value)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              {/* Badge */}
-              {trendData.price_change_pct !== 0 && (
-                <Badge
-                  className={`gap-1 ${
-                    trendData.price_change_pct > 0
-                      ? "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 border-red-200 dark:border-red-700"
-                      : "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-green-200 dark:border-green-700"
-                  }`}
-                >
-                  {trendData.price_change_pct > 0 ? (
-                    <TrendingUp className="h-3 w-3" aria-hidden="true" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3" aria-hidden="true" />
-                  )}
-                  {trendData.price_change_pct > 0 ? "Costs increasing" : "Costs decreasing"}{" "}
-                  over time
-                </Badge>
-              )}
-
-              {/* Average comparison */}
-              {avgComparison && (
-                <div className="flex items-start gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <Info
-                    className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5"
-                    aria-hidden="true"
-                  />
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    {avgComparison}
-                  </p>
-                </div>
-              )}
-
-              {/* Chart */}
-              {chartData && chartData.length > 0 && (
-                <div className="h-72" aria-label="Vendor price trend chart">
+              {/* Overlaid multi-vendor chart */}
+              {mergedChart.length > 0 && (
+                <div className="h-80" aria-label="Multi-vendor price trend comparison chart">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="#e2e8f0"
-                        className="dark:opacity-20"
-                      />
-                      <XAxis
-                        dataKey="date"
-                        tick={{ fontSize: 11 }}
-                        tickLine={false}
-                        axisLine={false}
-                      />
+                    <LineChart data={mergedChart}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:opacity-20" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                       <YAxis
-                        tickFormatter={(v: number) =>
-                          v >= 1e6
-                            ? `$${(v / 1e6).toFixed(1)}M`
-                            : v >= 1e3
-                            ? `$${(v / 1e3).toFixed(0)}K`
-                            : `$${v}`
-                        }
+                        tickFormatter={(v: number) => v >= 1e6 ? `$${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `$${(v / 1e3).toFixed(0)}K` : `$${v}`}
                         tick={{ fontSize: 11 }}
                         tickLine={false}
                         axisLine={false}
-                        width={65}
+                        width={70}
                       />
-                      <Tooltip content={<PriceTrendTooltip />} />
-                      {trendData.department_average && (
-                        <ReferenceLine
-                          y={trendData.department_average}
-                          stroke="#94a3b8"
-                          strokeDasharray="6 3"
-                          label={{
-                            value: `Dept avg: ${formatCurrency(trendData.department_average)}`,
-                            position: "insideTopRight",
-                            fontSize: 11,
-                            fill: "#94a3b8",
-                          }}
+                      <Tooltip
+                        formatter={(value: unknown, name: unknown) => [formatCurrency(Number(value)), String(name)]}
+                        contentStyle={{ fontSize: 12 }}
+                      />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      {selectedVendors.map((vendor, idx) => (
+                        <Line
+                          key={vendor}
+                          type="monotone"
+                          dataKey={vendor}
+                          stroke={VENDOR_COLORS[idx % VENDOR_COLORS.length]}
+                          strokeWidth={2.5}
+                          dot={{ r: 4, fill: VENDOR_COLORS[idx % VENDOR_COLORS.length] }}
+                          activeDot={{ r: 6 }}
+                          connectNulls
                         />
-                      )}
-                      <Line
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#3b82f6"
-                        strokeWidth={2.5}
-                        dot={{ r: 5, fill: "#3b82f6", strokeWidth: 2 }}
-                        activeDot={{ r: 7, fill: "#2563eb" }}
-                      />
+                      ))}
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               )}
 
-              {chartData && chartData.length === 0 && (
-                <p className="text-sm text-slate-500 dark:text-slate-400 py-4">
-                  No price data available for this vendor.
+              {selectedVendors.length === 0 && (
+                <p className="text-sm text-slate-500 dark:text-slate-400 py-4 text-center">
+                  Select vendors above to compare their price trends.
                 </p>
               )}
+            </div>
+          )}
+
+          {selectedVendors.length === 0 && !anyTrendLoading && (
+            <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+              <DollarSign className="h-10 w-10 mx-auto mb-2 opacity-40" />
+              <p className="text-sm">Select one or more vendors to compare price trends over time</p>
             </div>
           )}
         </CardContent>
@@ -447,217 +314,174 @@ export default function CostAnalysisPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="max-w-sm">
-            <label htmlFor="dept-select" className="sr-only">
-              Select department
-            </label>
-            <Select
-              value={selectedDept}
-              onValueChange={(v) => setSelectedDept(v ?? "")}
-            >
-              <SelectTrigger
-                id="dept-select"
-                aria-label="Select department to compare"
-                className="h-11 text-base"
-              >
-                <SelectValue placeholder="Select a department..." />
-              </SelectTrigger>
-              <SelectContent>
-                {departmentList.map((d) => (
-                  <SelectItem key={d} value={d}>
-                    {d}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <DepartmentChartFilter
+            selected={selectedDepts}
+            onChange={setSelectedDepts}
+          />
 
-          {compLoading && (
-            <div
-              className="flex items-center gap-2 py-8 justify-center text-sm text-slate-500 dark:text-slate-400"
-              aria-busy="true"
-            >
+          {/* Selected department chips */}
+          {selectedDepts.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedDepts.map((d, i) => (
+                <span
+                  key={d}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-white"
+                  style={{ backgroundColor: VENDOR_COLORS[i % VENDOR_COLORS.length] }}
+                >
+                  <span className="max-w-[180px] truncate">{d}</span>
+                  <button
+                    onClick={() => setSelectedDepts((prev) => prev.filter((x) => x !== d))}
+                    className="hover:bg-white/20 rounded-full p-0.5"
+                    aria-label={`Remove ${d}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {anyDeptLoading && (
+            <div className="flex items-center gap-2 py-8 justify-center text-sm text-slate-500 dark:text-slate-400" aria-busy="true">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               Loading comparison data...
             </div>
           )}
 
-          {compData && compData.vendors.length > 0 && (
+          {/* Per-department stat cards */}
+          {deptQueries.filter((q) => q.data).length > 0 && (
             <div className="space-y-4">
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Showing vendors in <span className="font-medium">{compData.department}</span>{" "}
-                with 2+ contracts. Department average:{" "}
-                <span className="font-semibold text-slate-700 dark:text-slate-300">
-                  {formatCurrency(compData.department_average)}
-                </span>
-              </p>
-
-              <div className="h-80" aria-label="Vendor cost comparison chart">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={compData.vendors.map((v) => ({
-                      supplier:
-                        v.supplier.length > 20
-                          ? v.supplier.substring(0, 20) + "..."
-                          : v.supplier,
-                      avg_value: v.avg_value,
-                      count: v.count,
-                    }))}
-                    layout="vertical"
-                    margin={{ left: 10 }}
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="#e2e8f0"
-                      className="dark:opacity-20"
-                    />
-                    <XAxis
-                      type="number"
-                      tickFormatter={(v: number) =>
-                        v >= 1e6
-                          ? `$${(v / 1e6).toFixed(1)}M`
-                          : v >= 1e3
-                          ? `$${(v / 1e3).toFixed(0)}K`
-                          : `$${v}`
-                      }
-                      tick={{ fontSize: 11 }}
-                    />
-                    <YAxis
-                      dataKey="supplier"
-                      type="category"
-                      width={140}
-                      tick={{ fontSize: 11 }}
-                    />
-                    <Tooltip content={<ComparisonTooltip />} />
-                    {compData.department_average && (
-                      <ReferenceLine
-                        x={compData.department_average}
-                        stroke="#94a3b8"
-                        strokeDasharray="6 3"
-                        label={{
-                          value: "Dept avg",
-                          position: "top",
-                          fontSize: 10,
-                          fill: "#94a3b8",
-                        }}
-                      />
-                    )}
-                    <Bar dataKey="avg_value" radius={[0, 4, 4, 0]}>
-                      {compData.vendors.map((v, i) => (
-                        <Cell
-                          key={i}
-                          fill={
-                            v.avg_value > compData.department_average
-                              ? "#ef4444"
-                              : "#22c55e"
-                          }
-                          fillOpacity={0.75}
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {deptQueries.map((q, idx) => {
+                  if (!q.data) return null;
+                  const d = q.data;
+                  const color = VENDOR_COLORS[idx % VENDOR_COLORS.length];
+                  const totalVendors = d.vendors.length;
+                  const totalValue = d.vendors.reduce((s, v) => s + v.total_value, 0);
+                  return (
+                    <div key={selectedDepts[idx]} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border-l-4" style={{ borderLeftColor: color }}>
+                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">{d.department}</p>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-sm text-slate-500 dark:text-slate-400">{totalVendors} vendors</span>
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{formatCurrency(totalValue)}</span>
+                      </div>
+                      <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                        Avg: {formatCurrency(d.department_average)}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              {/* Table */}
+              {/* Grouped bar chart: vendors on Y-axis, one bar per department */}
+              {(() => {
+                // Collect all unique vendors across selected departments
+                const vendorSet = new Set<string>();
+                const deptVendorMap: Record<string, Record<string, number>> = {};
+                deptQueries.forEach((q, idx) => {
+                  if (!q.data) return;
+                  const dept = selectedDepts[idx];
+                  deptVendorMap[dept] = {};
+                  for (const v of q.data.vendors) {
+                    vendorSet.add(v.supplier);
+                    deptVendorMap[dept][v.supplier] = v.avg_value;
+                  }
+                });
+
+                const allVendors = Array.from(vendorSet).sort();
+                const barData = allVendors.map((vendor) => {
+                  const row: Record<string, unknown> = {
+                    supplier: vendor.length > 25 ? vendor.substring(0, 25) + "..." : vendor,
+                    fullName: vendor,
+                  };
+                  for (const dept of selectedDepts) {
+                    row[dept] = deptVendorMap[dept]?.[vendor] ?? 0;
+                  }
+                  return row;
+                });
+
+                // Only show top 15 vendors by max value across depts
+                const top = barData
+                  .map((row) => ({
+                    ...row,
+                    _max: Math.max(...selectedDepts.map((d) => Number(row[d]) || 0)),
+                  }))
+                  .sort((a, b) => b._max - a._max)
+                  .slice(0, 15);
+
+                if (top.length === 0) return null;
+
+                return (
+                  <div className="h-[500px]" aria-label="Multi-department vendor cost comparison">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={top} layout="vertical" margin={{ left: 10 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:opacity-20" />
+                        <XAxis
+                          type="number"
+                          tickFormatter={(v: number) => v >= 1e6 ? `$${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `$${(v / 1e3).toFixed(0)}K` : `$${v}`}
+                          tick={{ fontSize: 11 }}
+                        />
+                        <YAxis dataKey="supplier" type="category" width={160} tick={{ fontSize: 10 }} />
+                        <Tooltip formatter={(value: unknown, name: unknown) => [formatCurrency(Number(value)), String(name)]} />
+                        <Legend wrapperStyle={{ fontSize: 12 }} />
+                        {selectedDepts.map((dept, i) => (
+                          <Bar
+                            key={dept}
+                            dataKey={dept}
+                            fill={VENDOR_COLORS[i % VENDOR_COLORS.length]}
+                            fillOpacity={0.8}
+                            radius={[0, 4, 4, 0]}
+                          />
+                        ))}
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                );
+              })()}
+
+              {/* Combined table */}
               <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-auto">
-                <table
-                  className="w-full text-sm"
-                  role="table"
-                  aria-label="Vendor cost comparison"
-                >
+                <table className="w-full text-sm" role="table" aria-label="Department vendor comparison">
                   <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
                     <tr>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100"
-                      >
-                        Vendor
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100"
-                      >
-                        Contracts
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100"
-                      >
-                        Avg Value
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100"
-                      >
-                        Total
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100"
-                      >
-                        vs Avg
-                      </th>
+                      <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Department</th>
+                      <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Vendor</th>
+                      <th scope="col" className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">Contracts</th>
+                      <th scope="col" className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">Avg Value</th>
+                      <th scope="col" className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">Total</th>
+                      <th scope="col" className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">vs Avg</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {compData.vendors.map((v, i) => {
-                      const diff =
-                        compData.department_average > 0
-                          ? Math.round(
-                              ((v.avg_value - compData.department_average) /
-                                compData.department_average) *
-                                100
-                            )
+                    {deptQueries.flatMap((q, dIdx) => {
+                      if (!q.data) return [];
+                      const d = q.data;
+                      const color = VENDOR_COLORS[dIdx % VENDOR_COLORS.length];
+                      return d.vendors.map((v, vIdx) => {
+                        const diff = d.department_average > 0
+                          ? Math.round(((v.avg_value - d.department_average) / d.department_average) * 100)
                           : 0;
-                      return (
-                        <tr
-                          key={v.supplier}
-                          className={
-                            i % 2 === 0
-                              ? "bg-white dark:bg-slate-800"
-                              : "bg-slate-50 dark:bg-slate-900"
-                          }
-                        >
-                          <td className="px-4 py-3 text-slate-900 dark:text-slate-100 font-medium">
-                            {v.supplier}
-                          </td>
-                          <td className="px-4 py-3 text-right text-slate-500 dark:text-slate-400">
-                            {v.count}
-                          </td>
-                          <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
-                            {formatCurrency(v.avg_value)}
-                          </td>
-                          <td className="px-4 py-3 text-right text-slate-500 dark:text-slate-400">
-                            {formatCurrency(v.total_value)}
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <span
-                              className={`inline-flex items-center gap-1 text-sm font-medium ${
-                                diff > 0
-                                  ? "text-red-600 dark:text-red-400"
-                                  : diff < 0
-                                  ? "text-green-600 dark:text-green-400"
-                                  : "text-slate-500 dark:text-slate-400"
-                              }`}
-                            >
-                              {diff > 0 ? (
-                                <ArrowRight
-                                  className="h-3 w-3 rotate-[-45deg]"
-                                  aria-hidden="true"
-                                />
-                              ) : diff < 0 ? (
-                                <ArrowRight
-                                  className="h-3 w-3 rotate-[45deg]"
-                                  aria-hidden="true"
-                                />
-                              ) : null}
-                              {diff > 0 ? "+" : ""}
-                              {diff}%
-                            </span>
-                          </td>
-                        </tr>
-                      );
+                        return (
+                          <tr key={`${d.department}-${v.supplier}`} className={vIdx % 2 === 0 ? "bg-white dark:bg-slate-800" : "bg-slate-50 dark:bg-slate-900"}>
+                            <td className="px-4 py-2">
+                              <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+                                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                                <span className="text-slate-600 dark:text-slate-400">{d.department}</span>
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 text-slate-900 dark:text-slate-100 font-medium">{v.supplier}</td>
+                            <td className="px-4 py-2 text-right text-slate-500 dark:text-slate-400">{v.count}</td>
+                            <td className="px-4 py-2 text-right font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(v.avg_value)}</td>
+                            <td className="px-4 py-2 text-right text-slate-500 dark:text-slate-400">{formatCurrency(v.total_value)}</td>
+                            <td className="px-4 py-2 text-right">
+                              <span className={`inline-flex items-center gap-1 text-sm font-medium ${diff > 0 ? "text-red-600 dark:text-red-400" : diff < 0 ? "text-green-600 dark:text-green-400" : "text-slate-500 dark:text-slate-400"}`}>
+                                {diff > 0 ? <ArrowRight className="h-3 w-3 rotate-[-45deg]" aria-hidden="true" /> : diff < 0 ? <ArrowRight className="h-3 w-3 rotate-[45deg]" aria-hidden="true" /> : null}
+                                {diff > 0 ? "+" : ""}{diff}%
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      });
                     })}
                   </tbody>
                 </table>
@@ -665,10 +489,11 @@ export default function CostAnalysisPage() {
             </div>
           )}
 
-          {compData && compData.vendors.length === 0 && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 py-4">
-              No vendors with 2+ contracts found in this department.
-            </p>
+          {selectedDepts.length === 0 && !anyDeptLoading && (
+            <div className="text-center py-6 text-slate-400 dark:text-slate-500">
+              <BarChart3 className="h-10 w-10 mx-auto mb-2 opacity-40" />
+              <p className="text-sm">Select departments above to compare vendor costs across departments</p>
+            </div>
           )}
         </CardContent>
       </Card>

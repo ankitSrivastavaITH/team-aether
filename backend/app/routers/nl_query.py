@@ -1,11 +1,13 @@
 """Natural language to SQL query endpoint."""
 
+import asyncio
 import json
 import hashlib
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
 from app.services.groq_client import chat
 from app.db import query
+from app.rate_limit import limiter
 
 _query_cache: dict = {}
 
@@ -55,14 +57,16 @@ class NLQueryRequest(BaseModel):
 
 
 @router.post("")
-def nl_query(req: NLQueryRequest):
+@limiter.limit("10/minute")
+async def nl_query(request: Request, req: NLQueryRequest):
     """Convert natural language question to SQL, execute, and return results."""
     # Check cache
     cache_key = hashlib.md5(req.question.lower().strip().encode()).hexdigest()
     if cache_key in _query_cache:
         return _query_cache[cache_key]
 
-    raw = chat(NL_TO_SQL_PROMPT, req.question)
+    # Call 1: NL -> SQL (must complete first -- need the SQL to execute)
+    raw = await asyncio.to_thread(chat, NL_TO_SQL_PROMPT, req.question)
 
     try:
         cleaned = raw.strip()
@@ -87,37 +91,54 @@ def nl_query(req: NLQueryRequest):
                 return {"error": f"Query contains forbidden keyword: {forbidden}"}
 
         results = query(sql)
-        # Generate AI analysis of the results
+
+        # Calls 2 & 3: Run analysis and follow-up generation in parallel.
+        # Both depend only on results + original question, not on each other.
         analysis = ""
+        followups = []
+
         if results and len(results) > 0:
-            try:
-                analysis_data = json.dumps(results[:20], default=str)
-                analysis_prompt = """You are a procurement analyst. Given these query results, write a brief 3-4 sentence analysis in markdown.
+            async def _generate_analysis() -> str:
+                """Call 2: Generate AI analysis of the query results."""
+                try:
+                    analysis_data = json.dumps(results[:20], default=str)
+                    analysis_prompt = """You are a procurement analyst. Given these query results, write a brief 3-4 sentence analysis in markdown.
 Include: key takeaways, total value if applicable, any risks or patterns you notice.
 Be specific with numbers. Keep it concise. No headers, just a paragraph with **bold** for key figures.
 Return ONLY the markdown text, no JSON wrapping."""
-                analysis = chat(analysis_prompt, f"Question: {req.question}\nResults ({len(results)} rows):\n{analysis_data}")
-            except Exception:
-                analysis = ""
+                    return await asyncio.to_thread(
+                        chat, analysis_prompt,
+                        f"Question: {req.question}\nResults ({len(results)} rows):\n{analysis_data}"
+                    )
+                except Exception:
+                    return ""
 
-        # Generate follow-up questions
-        followups = []
-        if results and len(results) > 0:
-            try:
-                followup_prompt = """Given the user's question and the results, suggest exactly 3 follow-up questions they might want to ask next.
+            async def _generate_followups() -> list:
+                """Call 3: Generate follow-up question suggestions."""
+                try:
+                    followup_prompt = """Given the user's question and the results, suggest exactly 3 follow-up questions they might want to ask next.
 Each question should be a natural language query about Richmond city contracts.
 Return ONLY a JSON array of 3 strings. No markdown, no code fences. Example: ["question 1", "question 2", "question 3"]"""
-                followup_raw = chat(followup_prompt, f"Question: {req.question}\nResults: {len(results)} rows returned")
-                cleaned_f = followup_raw.strip()
-                if cleaned_f.startswith("```"):
-                    cleaned_f = cleaned_f.split("\n", 1)[1]
-                if cleaned_f.endswith("```"):
-                    cleaned_f = cleaned_f.rsplit("```", 1)[0]
-                followups = json.loads(cleaned_f.strip())
-                if not isinstance(followups, list):
-                    followups = []
-            except Exception:
-                followups = []
+                    followup_raw = await asyncio.to_thread(
+                        chat, followup_prompt,
+                        f"Question: {req.question}\nResults: {len(results)} rows returned"
+                    )
+                    cleaned_f = followup_raw.strip()
+                    if cleaned_f.startswith("```"):
+                        cleaned_f = cleaned_f.split("\n", 1)[1]
+                    if cleaned_f.endswith("```"):
+                        cleaned_f = cleaned_f.rsplit("```", 1)[0]
+                    parsed_f = json.loads(cleaned_f.strip())
+                    if not isinstance(parsed_f, list):
+                        return []
+                    return parsed_f
+                except Exception:
+                    return []
+
+            analysis, followups = await asyncio.gather(
+                _generate_analysis(),
+                _generate_followups(),
+            )
 
         result = {
             "sql": sql,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,12 +13,15 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Eye,
   LogOut,
   Menu,
   Users,
   AlertOctagon,
   Brain,
+  Zap,
   CalendarDays,
   LayoutGrid,
   GitCompare,
@@ -33,10 +36,21 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const COLLAPSE_KEY = "staff-sidebar-collapsed";
+const ANALYTICS_OPEN_KEY = "sidebar-analytics-open";
+const RISK_OPEN_KEY = "sidebar-risk-open";
+
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  exact?: boolean;
+}
 
 interface NavSection {
   title: string;
-  items: Array<{ href: string; label: string; icon: React.ElementType; exact?: boolean }>;
+  collapsible?: boolean;
+  storageKey?: string;
+  items: NavItem[];
 }
 
 const navSections: NavSection[] = [
@@ -49,15 +63,16 @@ const navSections: NavSection[] = [
   {
     title: "Procurement",
     items: [
-      { href: "/staff/review", label: "Review Workflow", icon: ClipboardCheck },
       { href: "/staff/contracts", label: "All Contracts", icon: Table },
+      { href: "/staff/review", label: "Review Workflow", icon: ClipboardCheck },
       { href: "/staff/renew", label: "Renew Contract", icon: RefreshCw },
       { href: "/staff/compliance", label: "Compliance Check", icon: ShieldCheck },
     ],
   },
   {
-    title: "AI Tools",
+    title: "AI & Intelligence",
     items: [
+      { href: "/staff/decision", label: "Decision Engine", icon: Zap },
       { href: "/staff/ask", label: "Ask Richmond", icon: MessageSquare },
       { href: "/staff/extract", label: "PDF Analyzer", icon: FileUp },
       { href: "/staff/parsed", label: "Contract Intel", icon: Brain },
@@ -65,17 +80,21 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: "Analytics",
+    title: "Analytics & Insights",
+    collapsible: true,
+    storageKey: ANALYTICS_OPEN_KEY,
     items: [
       { href: "/staff/analytics", label: "Charts & Trends", icon: BarChart3 },
-      { href: "/staff/cost-analysis", label: "Cost Analysis", icon: TrendingUp },
       { href: "/staff/scorecard", label: "Dept Scorecards", icon: LayoutGrid },
       { href: "/staff/timeline", label: "Timeline", icon: CalendarDays },
+      { href: "/staff/cost-analysis", label: "Cost Analysis", icon: TrendingUp },
       { href: "/staff/compare-vendors", label: "Compare Vendors", icon: GitCompare },
     ],
   },
   {
     title: "Risk & Equity",
+    collapsible: true,
+    storageKey: RISK_OPEN_KEY,
     items: [
       { href: "/staff/risk", label: "Vendor Risk (HHI)", icon: ShieldAlert },
       { href: "/staff/anomalies", label: "Anomalies", icon: AlertOctagon },
@@ -85,14 +104,16 @@ const navSections: NavSection[] = [
   },
 ];
 
-// navSections used directly in both desktop and mobile sidebar
-
 function isActive(pathname: string, href: string, exact?: boolean): boolean {
   if (exact) return pathname === href;
   return pathname.startsWith(href);
 }
 
-function NavItem({
+function sectionContainsActivePage(pathname: string, items: NavItem[]): boolean {
+  return items.some((item) => isActive(pathname, item.href, item.exact));
+}
+
+function NavItemLink({
   href,
   label,
   icon: Icon,
@@ -128,6 +149,105 @@ function NavItem({
   );
 }
 
+function CollapsibleSection({
+  section,
+  pathname,
+  collapsed: sidebarCollapsed,
+  onNavClick,
+}: {
+  section: NavSection;
+  pathname: string;
+  collapsed: boolean;
+  onNavClick?: () => void;
+}) {
+  const hasActivePage = sectionContainsActivePage(pathname, section.items);
+
+  const [isOpen, setIsOpen] = useState(() => {
+    if (typeof window !== "undefined" && section.storageKey) {
+      const stored = localStorage.getItem(section.storageKey);
+      if (stored !== null) return stored === "true";
+    }
+    return false;
+  });
+
+  // Auto-expand if user navigates to a page inside this section
+  useEffect(() => {
+    if (hasActivePage && !isOpen) {
+      setIsOpen(true);
+      if (typeof window !== "undefined" && section.storageKey) {
+        localStorage.setItem(section.storageKey, "true");
+      }
+    }
+  }, [hasActivePage]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggle = useCallback(() => {
+    setIsOpen((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined" && section.storageKey) {
+        localStorage.setItem(section.storageKey, String(next));
+      }
+      return next;
+    });
+  }, [section.storageKey]);
+
+  // In collapsed sidebar mode, show all items as flat icons
+  if (sidebarCollapsed) {
+    return (
+      <div className="mt-4">
+        <div className="mx-3 mb-2 border-t border-slate-200 dark:border-slate-700" />
+        {section.items.map((item) => (
+          <NavItemLink
+            key={item.href}
+            href={item.href}
+            label={item.label}
+            icon={item.icon}
+            active={isActive(pathname, item.href, item.exact)}
+            collapsed
+            onClick={onNavClick}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4">
+      <button
+        onClick={toggle}
+        className="flex items-center justify-between w-full px-3 mb-1 group focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md"
+        aria-expanded={isOpen}
+      >
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
+          {section.title}
+        </span>
+        {isOpen ? (
+          <ChevronUp className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+        ) : (
+          <ChevronDown className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+        )}
+      </button>
+      <div
+        className="grid transition-[grid-template-rows] duration-200 ease-out"
+        style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
+      >
+        <div className="overflow-hidden">
+          {section.items.map((item) => (
+            <NavItemLink
+              key={item.href}
+              href={item.href}
+              label={item.label}
+              icon={item.icon}
+              active={isActive(pathname, item.href, item.exact)}
+              collapsed={false}
+              onClick={onNavClick}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SidebarContent({
   collapsed,
   onToggle,
@@ -138,13 +258,6 @@ function SidebarContent({
   onNavClick?: () => void;
 }) {
   const pathname = usePathname();
-
-  function handleLogout() {
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem("staff_auth");
-      window.location.href = "/";
-    }
-  }
 
   return (
     <div className="flex flex-col h-full">
@@ -183,66 +296,49 @@ function SidebarContent({
         aria-label="Staff navigation"
         className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5"
       >
-        {navSections.map((section, si) => (
-          <div key={si} className={si > 0 ? "mt-4" : ""}>
-            {section.title && !collapsed && (
-              <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                {section.title}
-              </p>
-            )}
-            {collapsed && si > 0 && (
-              <div className="mx-3 mb-2 border-t border-slate-200 dark:border-slate-700" />
-            )}
-            {section.items.map((item) => (
-              <NavItem
-                key={item.href}
-                href={item.href}
-                label={item.label}
-                icon={item.icon}
-                active={isActive(pathname, item.href, item.exact)}
+        {navSections.map((section, si) => {
+          // Collapsible sections get their own component
+          if (section.collapsible) {
+            return (
+              <CollapsibleSection
+                key={si}
+                section={section}
+                pathname={pathname}
                 collapsed={collapsed}
-                onClick={onNavClick}
+                onNavClick={onNavClick}
               />
-            ))}
-          </div>
-        ))}
+            );
+          }
+
+          // Non-collapsible sections render inline
+          return (
+            <div key={si} className={si > 0 ? "mt-4" : ""}>
+              {section.title && !collapsed && (
+                <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  {section.title}
+                </p>
+              )}
+              {collapsed && si > 0 && (
+                <div className="mx-3 mb-2 border-t border-slate-200 dark:border-slate-700" />
+              )}
+              {section.items.map((item) => (
+                <NavItemLink
+                  key={item.href}
+                  href={item.href}
+                  label={item.label}
+                  icon={item.icon}
+                  active={isActive(pathname, item.href, item.exact)}
+                  collapsed={collapsed}
+                  onClick={onNavClick}
+                />
+              ))}
+            </div>
+          );
+        })}
       </nav>
 
-      {/* Bottom section */}
-      <div className="border-t border-slate-200 dark:border-slate-700 px-2 py-3 space-y-1 shrink-0">
-        {/* Public view link */}
-        <Link
-          href="/public"
-          className={`flex items-center gap-3 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
-            collapsed ? "justify-center px-2" : "px-3"
-          }`}
-          style={{ minHeight: 44 }}
-          title={collapsed ? "Public View" : undefined}
-        >
-          <Eye className="h-5 w-5 shrink-0" aria-hidden="true" />
-          {!collapsed && <span className="text-sm">Public View</span>}
-        </Link>
-
-        {/* Language toggle + Theme toggle */}
-        <div className={`flex items-center gap-1 ${collapsed ? "justify-center" : "px-1"}`}>
-          <LanguageToggle />
-          <ThemeToggle />
-        </div>
-
-        {/* Logout */}
-        <button
-          onClick={handleLogout}
-          className={`flex items-center gap-3 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
-            collapsed ? "justify-center px-2" : "px-3"
-          }`}
-          style={{ minHeight: 44 }}
-          title={collapsed ? "Logout" : undefined}
-        >
-          <LogOut className="h-5 w-5 shrink-0" aria-hidden="true" />
-          {!collapsed && <span className="text-sm">Logout</span>}
-        </button>
-
-        {/* Collapse toggle (desktop only) */}
+      {/* Bottom section — collapse toggle only */}
+      <div className="border-t border-slate-200 dark:border-slate-700 px-2 py-3 shrink-0">
         {onToggle && (
           <button
             onClick={onToggle}
@@ -331,7 +427,35 @@ export function StaffSidebar({ children }: { children: React.ReactNode }) {
       >
         {/* Top padding for mobile header */}
         <div className="md:hidden h-14" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+
+        {/* Top-right toolbar */}
+        <div className="flex items-center justify-end gap-1 px-4 sm:px-6 lg:px-8 pt-4 pb-0">
+          <Link
+            href="/public"
+            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            title="Public View"
+          >
+            <Eye className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Public View</span>
+          </Link>
+          <LanguageToggle />
+          <ThemeToggle />
+          <button
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                localStorage.removeItem("staff_auth");
+                window.location.href = "/";
+              }
+            }}
+            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            title="Logout"
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
+        </div>
+
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
           {children}
         </div>
       </main>
