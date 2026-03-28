@@ -1,9 +1,10 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { fetchAPI } from "@/lib/api";
 import { Disclaimer } from "@/components/disclaimer";
+import { ComplianceCheck } from "@/components/compliance-check";
 import { DataBadge } from "@/components/data-badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,9 +17,6 @@ import {
   DollarSign,
   FileText,
   Calendar,
-  ShieldCheck,
-  ShieldAlert,
-  Loader2,
   Heart,
   AlertTriangle,
   CheckCircle,
@@ -153,107 +151,6 @@ function VendorHealthCard({ data }: { data: VendorData }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Debarment Check
-// ---------------------------------------------------------------------------
-
-interface DebarmentResult {
-  supplier: string;
-  checked: boolean;
-  debarred: boolean;
-  matches?: number;
-  details: string;
-  source: string;
-  disclaimer: string;
-}
-
-function DebarmentCheck({ supplier }: { supplier: string }) {
-  const [checked, setChecked] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<DebarmentResult | null>(null);
-
-  async function runCheck() {
-    setLoading(true);
-    try {
-      const data = await fetchAPI<DebarmentResult>(
-        `/api/contracts/debarment-check/${encodeURIComponent(supplier)}`
-      );
-      setResult(data);
-      setChecked(true);
-    } catch {
-      setResult({
-        supplier,
-        checked: false,
-        debarred: false,
-        details: "Could not reach debarment check service.",
-        source: "SAM.gov",
-        disclaimer: "",
-      });
-      setChecked(true);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (!checked) {
-    return (
-      <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-        <CardContent className="pt-4 pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-slate-400 dark:text-slate-500" aria-hidden="true" />
-              <div>
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">SAM.gov Debarment Check</span>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Verify this vendor is not excluded from federal contracts.</p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              onClick={runCheck}
-              disabled={loading}
-              className="h-11 gap-2"
-              aria-label={`Check if ${supplier} is debarred on SAM.gov`}
-            >
-              {loading ? (
-                <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Checking...</>
-              ) : (
-                <><ShieldCheck className="h-4 w-4" aria-hidden="true" /> Run Check</>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className={`${result?.debarred ? "border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/50" : "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/50"}`}>
-      <CardContent className="pt-4 pb-4">
-        <div className="flex items-start gap-3">
-          {result?.debarred ? (
-            <ShieldAlert className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
-          ) : (
-            <ShieldCheck className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
-          )}
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`font-semibold ${result?.debarred ? "text-red-800 dark:text-red-300" : "text-green-800 dark:text-green-300"}`}>
-                {result?.debarred ? "Exclusion Records Found" : "No Exclusion Records Found"}
-              </span>
-              <Badge variant="outline" className="text-xs">SAM.gov</Badge>
-            </div>
-            <p className={`text-sm ${result?.debarred ? "text-red-700 dark:text-red-400" : "text-green-700 dark:text-green-400"}`}>
-              {result?.details}
-            </p>
-            {result?.disclaimer && (
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">{result.disclaimer}</p>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Price Trend
@@ -591,8 +488,8 @@ export default function VendorDetailPage() {
       {/* Price Trend */}
       <VendorPriceTrend supplier={decodedName} />
 
-      {/* SAM.gov Debarment Check */}
-      <DebarmentCheck supplier={decodedName} />
+      {/* Compliance Check */}
+      <ComplianceCheck supplier={decodedName} />
 
       {/* Contract list */}
       <section aria-labelledby="contracts-heading">

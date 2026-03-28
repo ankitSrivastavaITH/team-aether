@@ -1,17 +1,15 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Search,
   ShieldCheck,
-  ShieldAlert,
   FileText,
   CheckCircle,
   AlertTriangle,
   Clock,
   Loader2,
-  ExternalLink,
   Printer,
   ArrowRight,
   ArrowLeft,
@@ -29,6 +27,7 @@ import { fetchAPI } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { VendorSelect } from "@/components/vendor-select";
+import { ComplianceCheck } from "@/components/compliance-check";
 import {
   LineChart,
   Line,
@@ -57,15 +56,6 @@ interface Contract {
   [key: string]: unknown;
 }
 
-interface DebarmentResult {
-  supplier: string;
-  checked: boolean;
-  debarred: boolean;
-  matches?: number;
-  details: string;
-  source: string;
-  disclaimer: string;
-}
 
 interface ParsedFields {
   solicitation_number: string | null;
@@ -112,54 +102,6 @@ interface RiskInsight {
   [key: string]: unknown;
 }
 
-// ---------------------------------------------------------------------------
-// Compliance list data
-// ---------------------------------------------------------------------------
-
-const COMPLIANCE_LISTS = [
-  {
-    id: "sam",
-    name: "SAM.gov Exclusion Check",
-    auto: true,
-    url: "https://sam.gov/content/exclusions",
-  },
-  {
-    id: "fcc",
-    name: "FCC Covered List",
-    auto: false,
-    url: "https://www.fcc.gov/supplychain/coveredlist",
-  },
-  {
-    id: "ofac",
-    name: "OFAC SDN List",
-    auto: false,
-    url: "https://sanctionssearch.ofac.treas.gov/",
-  },
-  {
-    id: "csl",
-    name: "Consolidated Screening List",
-    auto: false,
-    url: "https://www.trade.gov/consolidated-screening-list",
-  },
-  {
-    id: "dhs",
-    name: "DHS BOD List",
-    auto: false,
-    url: "https://www.cisa.gov/binding-operational-directives",
-  },
-  {
-    id: "fbi",
-    name: "FBI InfraGard",
-    auto: false,
-    url: "https://www.infragard.org/",
-  },
-  {
-    id: "ftc",
-    name: "FTC Enforcement",
-    auto: false,
-    url: "https://www.ftc.gov/legal-library/browse/cases-proceedings",
-  },
-];
 
 // ---------------------------------------------------------------------------
 // Step Indicator
@@ -363,9 +305,6 @@ export default function ReviewPage() {
   const [vendorFilter, setVendorFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
-  const [samResult, setSamResult] = useState<DebarmentResult | null>(null);
-  const [samLoading, setSamLoading] = useState(false);
-  const [checkedLists, setCheckedLists] = useState<Record<string, boolean>>({});
   const [reviewed, setReviewed] = useState(false);
 
   // Search contracts (by vendor dropdown or keyword search)
@@ -416,56 +355,19 @@ export default function ReviewPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Auto-run SAM check when we enter compliance step
-  const runSamCheck = useCallback(async (supplier: string) => {
-    setSamLoading(true);
-    try {
-      const data = await fetchAPI<DebarmentResult>(
-        `/api/contracts/debarment-check/${encodeURIComponent(supplier)}`
-      );
-      setSamResult(data);
-    } catch {
-      setSamResult({
-        supplier,
-        checked: false,
-        debarred: false,
-        details: "Could not reach debarment check service.",
-        source: "SAM.gov",
-        disclaimer: "",
-      });
-    } finally {
-      setSamLoading(false);
-    }
-  }, []);
-
   function handleSelectContract(c: Contract) {
     setSelectedContract(c);
-    setSamResult(null);
-    setCheckedLists({});
     setReviewed(false);
     setStep(2);
   }
 
   function nextStep() {
-    if (step === 3 && selectedContract && !samResult) {
-      runSamCheck(selectedContract.supplier);
-    }
     setStep((s) => Math.min(5, s + 1));
   }
 
   function prevStep() {
     setStep((s) => Math.max(1, s - 1));
   }
-
-  function toggleCheck(id: string) {
-    setCheckedLists((prev) => ({ ...prev, [id]: !prev[id] }));
-  }
-
-  // Compute compliance count
-  const completedChecks =
-    (samResult && !samResult.debarred ? 1 : 0) +
-    Object.values(checkedLists).filter(Boolean).length;
-  const totalChecks = 7;
 
   // Risk styling
   function riskStyle(level: string) {
@@ -505,17 +407,6 @@ export default function ReviewPage() {
     const daysLeft =
       selectedContract?.days_to_expiry ?? riskData?.days_to_expiry ?? 999;
     const priceUp = priceTrend ? priceTrend.price_change_pct > 10 : false;
-    const debarred = samResult?.debarred || false;
-    const checksComplete = completedChecks === totalChecks;
-
-    if (debarred) {
-      reasons.push("Vendor has exclusion records on SAM.gov");
-      return {
-        action: "Escalate",
-        color: "text-red-700 dark:text-red-400",
-        reasoning: reasons,
-      };
-    }
 
     if (rl === "critical") {
       reasons.push(`Contract expires in ${daysLeft} days (critical)`);
@@ -524,9 +415,6 @@ export default function ReviewPage() {
       reasons.push(
         `Price increased ${priceTrend!.price_change_pct}% since first contract`
       );
-    }
-    if (!checksComplete) {
-      reasons.push(`${totalChecks - completedChecks} compliance checks still pending`);
     }
 
     if (rl === "critical" && priceUp) {
@@ -541,16 +429,8 @@ export default function ReviewPage() {
         reasoning: reasons,
       };
     }
-    if (!checksComplete) {
-      reasons.push("Complete all compliance checks before renewing");
-      return {
-        action: "Review with Legal",
-        color: "text-amber-700 dark:text-amber-400",
-        reasoning: reasons,
-      };
-    }
 
-    reasons.push("All checks passed, risk is acceptable");
+    reasons.push("Risk is acceptable — verify compliance step before proceeding");
     if (daysLeft < 90) reasons.push("Initiate renewal process promptly");
     return { action: "Renew", color: "text-green-700 dark:text-green-400", reasoning: reasons };
   }
@@ -955,174 +835,15 @@ export default function ReviewPage() {
       {step === 4 && selectedContract && (
         <section aria-label="Step 4: Compliance Verification">
           <div className="space-y-4">
-            {/* Progress */}
-            <Card className="border-slate-200 dark:border-slate-700">
-              <CardContent className="pt-5 pb-5">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    Compliance Checklist
-                  </h3>
-                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                    {completedChecks} of {totalChecks} complete
-                  </span>
-                </div>
-                <div
-                  className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2"
-                  role="progressbar"
-                  aria-valuenow={completedChecks}
-                  aria-valuemin={0}
-                  aria-valuemax={totalChecks}
-                  aria-label={`${completedChecks} of ${totalChecks} compliance checks complete`}
-                >
-                  <div
-                    className={`h-2 rounded-full transition-all duration-500 ${
-                      completedChecks === totalChecks
-                        ? "bg-green-500"
-                        : "bg-blue-500"
-                    }`}
-                    style={{
-                      width: `${(completedChecks / totalChecks) * 100}%`,
-                    }}
-                  />
-                </div>
-                {completedChecks === totalChecks && (
-                  <p className="mt-2 text-sm text-green-700 dark:text-green-400 font-medium flex items-center gap-1.5">
-                    <CheckCircle className="h-4 w-4" aria-hidden="true" />
-                    All 7 checks complete -- vendor cleared for procurement
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* SAM.gov auto-check */}
-            <Card
-              className={`${
-                samResult
-                  ? samResult.debarred
-                    ? "border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/50"
-                    : "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/50"
-                  : "border-slate-200 dark:border-slate-700"
-              }`}
-            >
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-5 text-right">
-                      1
-                    </span>
-                    {samResult ? (
-                      samResult.debarred ? (
-                        <ShieldAlert
-                          className="h-5 w-5 text-red-600 dark:text-red-400"
-                          aria-hidden="true"
-                        />
-                      ) : (
-                        <ShieldCheck
-                          className="h-5 w-5 text-green-600 dark:text-green-400"
-                          aria-hidden="true"
-                        />
-                      )
-                    ) : (
-                      <ShieldCheck
-                        className="h-5 w-5 text-slate-400"
-                        aria-hidden="true"
-                      />
-                    )}
-                    <div>
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        SAM.gov Exclusion Check
-                      </span>
-                      {samResult && (
-                        <p
-                          className={`text-xs ${
-                            samResult.debarred
-                              ? "text-red-600 dark:text-red-400"
-                              : "text-green-600 dark:text-green-400"
-                          }`}
-                        >
-                          {samResult.details}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  {!samResult && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => runSamCheck(selectedContract.supplier)}
-                      disabled={samLoading}
-                      className="h-9 gap-1.5"
-                    >
-                      {samLoading ? (
-                        <>
-                          <Loader2
-                            className="h-3.5 w-3.5 animate-spin"
-                            aria-hidden="true"
-                          />
-                          Checking...
-                        </>
-                      ) : (
-                        <>
-                          <ShieldCheck
-                            className="h-3.5 w-3.5"
-                            aria-hidden="true"
-                          />
-                          Auto-Check
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Manual checks */}
-            {COMPLIANCE_LISTS.filter((l) => !l.auto).map((list, idx) => (
-              <Card
-                key={list.id}
-                className={`${
-                  checkedLists[list.id]
-                    ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/50"
-                    : "border-slate-200 dark:border-slate-700"
-                }`}
-              >
-                <CardContent className="pt-4 pb-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-5 text-right">
-                        {idx + 2}
-                      </span>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={!!checkedLists[list.id]}
-                          onChange={() => toggleCheck(list.id)}
-                          className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-green-600 focus:ring-green-500"
-                          aria-label={`Mark ${list.name} as verified`}
-                        />
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          {list.name}
-                        </span>
-                      </label>
-                    </div>
-                    <a
-                      href={list.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-1"
-                      style={{ minHeight: 44 }}
-                      aria-label={`Open ${list.name} in a new tab`}
-                    >
-                      <ExternalLink
-                        className="h-3 w-3"
-                        aria-hidden="true"
-                      />
-                      Check
-                    </a>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                Compliance Verification
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+                Auto-checks run against 3 federal databases. Complete all 4 manual checks by visiting each link.
+              </p>
+            </div>
+            <ComplianceCheck supplier={selectedContract.supplier} />
           </div>
         </section>
       )}
@@ -1178,7 +899,7 @@ export default function ReviewPage() {
                       Compliance
                     </p>
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {completedChecks}/{totalChecks}
+                      Step 4
                     </p>
                   </div>
                 </div>
