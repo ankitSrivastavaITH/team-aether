@@ -28,6 +28,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AskRichmondPanel } from "@/components/ask-richmond-panel";
 
 const COLLAPSE_KEY = "staff-sidebar-collapsed";
 const ANALYTICS_OPEN_KEY = "sidebar-analytics-open";
@@ -418,6 +419,8 @@ export function StaffSidebar({ children }: { children: React.ReactNode }) {
 
         {/* Top-right toolbar */}
         <div className="flex items-center justify-end gap-1 px-4 sm:px-6 lg:px-8 pt-4 pb-0">
+          <AskRichmondPanel />
+          <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1" />
           <Link
             href="/public"
             className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"

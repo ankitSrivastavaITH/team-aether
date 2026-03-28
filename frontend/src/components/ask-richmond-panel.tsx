@@ -256,18 +256,17 @@ export function AskRichmondPanel() {
     toast.success("Chat cleared");
   }
 
-  // Toggle button when closed
+  // Toggle button when closed — rendered inline (placed in top toolbar by parent)
   if (!open) {
     return (
       <button
         ref={toggleButtonRef}
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all focus:outline-none focus:ring-3 focus:ring-blue-400 focus:ring-offset-2"
+        className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
         aria-label="Open Ask Richmond"
-        style={{ minHeight: 48 }}
       >
-        <MessageSquare className="h-5 w-5" aria-hidden="true" />
-        <span className="text-sm font-medium">Ask Richmond</span>
+        <MessageSquare className="h-4 w-4" aria-hidden="true" />
+        <span className="hidden sm:inline">Ask Richmond</span>
       </button>
     );
   }
