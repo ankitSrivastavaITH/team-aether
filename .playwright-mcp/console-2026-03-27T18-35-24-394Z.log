@@ -1,8 +1,0 @@
-[    1309ms] [ERROR] Access to fetch at 'http://localhost:8200/api/contracts/stats' from origin 'http://localhost:3200' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:3200/public:0
-[    1309ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8200/api/contracts/stats:0
-[    2337ms] [ERROR] Access to fetch at 'http://localhost:8200/api/contracts/stats' from origin 'http://localhost:3200' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:3200/public:0
-[    2338ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8200/api/contracts/stats:0
-[    4374ms] [ERROR] Access to fetch at 'http://localhost:8200/api/contracts/stats' from origin 'http://localhost:3200' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:3200/public:0
-[    4375ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8200/api/contracts/stats:0
-[    8398ms] [ERROR] Access to fetch at 'http://localhost:8200/api/contracts/stats' from origin 'http://localhost:3200' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:3200/public:0
-[    8398ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8200/api/contracts/stats:0

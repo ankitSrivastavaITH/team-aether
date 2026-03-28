@@ -1,9 +1,0 @@
-[  530118ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8200/api/insights/risk-narrative:0
-[  531123ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8200/api/insights/risk-narrative:0
-[  533130ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8200/api/insights/risk-narrative:0
-[  537136ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8200/api/insights/risk-narrative:0
-[  550457ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3200/staff?_rsc=r2ckx:0
-[  550712ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3200/_next/static/css/app/layout.css?v=1774637122073:0
-[  550743ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3200/_next/static/chunks/app/staff/page.js:0
-[  550743ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3200/_next/static/chunks/app-pages-internals.js:0
-[  550743ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3200/_next/static/chunks/main-app.js?v=1774637122073:0
