@@ -13,7 +13,10 @@ _query_cache: dict = {}
 
 router = APIRouter(prefix="/api/nl-query", tags=["nl-query"])
 
-NL_TO_SQL_PROMPT = """You are a SQL assistant for a Richmond City contracts database. Convert the user's natural language question into a DuckDB SQL query.
+def _get_nl_prompt():
+    from datetime import date
+    today = date.today().isoformat()
+    return f"""You are a SQL assistant for a Richmond City contracts database. Convert the user's natural language question into a DuckDB SQL query.
 
 The database has one table: city_contracts with these columns:
 - department (VARCHAR): City department name (e.g., "Public Utilities", "Public Works", "Information Technology")
@@ -28,28 +31,32 @@ The database has one table: city_contracts with these columns:
 - days_to_expiry (INTEGER): Days until contract expires (negative means already expired)
 - risk_level (VARCHAR): One of: critical (<=30 days), warning (31-60), attention (61-90), ok (>90), expired, unknown
 
-Today's date is 2026-03-27. There are 1,365 total contracts worth approximately $6.1 billion.
+Today's date is {today}. There are ~1,365 total contracts worth ~$6.1 billion.
 
-COMMON QUERY PATTERNS:
-- "contracts expiring in X days": SELECT * FROM city_contracts WHERE days_to_expiry BETWEEN 0 AND X ORDER BY days_to_expiry ASC LIMIT 100
-- "top vendors": SELECT supplier, COUNT(*) AS num_contracts, SUM(value) AS total_value FROM city_contracts GROUP BY supplier ORDER BY total_value DESC LIMIT N
-- "department spending": SELECT department, COUNT(*) AS contracts, SUM(value) AS total_value FROM city_contracts GROUP BY department ORDER BY total_value DESC
+COMMON QUERY PATTERNS (use these as templates):
+- "expiring this month": SELECT * FROM city_contracts WHERE end_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days' ORDER BY end_date ASC LIMIT 100
+- "expiring in X days": SELECT * FROM city_contracts WHERE days_to_expiry BETWEEN 0 AND X ORDER BY days_to_expiry ASC LIMIT 100
+- "expiring this quarter": SELECT * FROM city_contracts WHERE end_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '90 days' ORDER BY end_date ASC
+- "expired contracts": SELECT * FROM city_contracts WHERE days_to_expiry < 0 ORDER BY value DESC LIMIT 100
+- "top vendors": SELECT supplier, COUNT(*) AS num_contracts, SUM(value) AS total_value FROM city_contracts GROUP BY supplier ORDER BY total_value DESC LIMIT 10
+- "top departments": SELECT department, COUNT(*) AS contracts, SUM(value) AS total_value FROM city_contracts GROUP BY department ORDER BY total_value DESC
 - "contracts with [vendor]": SELECT * FROM city_contracts WHERE supplier ILIKE '%vendor%' ORDER BY value DESC
 - "contracts over $X": SELECT * FROM city_contracts WHERE value > X ORDER BY value DESC LIMIT 100
-- "show me all [department] contracts": SELECT * FROM city_contracts WHERE department ILIKE '%dept%' ORDER BY days_to_expiry ASC LIMIT 100
+- "[department] contracts": SELECT * FROM city_contracts WHERE department ILIKE '%dept%' ORDER BY days_to_expiry ASC LIMIT 100
+- "largest contracts": SELECT * FROM city_contracts ORDER BY value DESC LIMIT 20
+- "how many contracts": SELECT COUNT(*) as total, SUM(value) as total_value FROM city_contracts
+- "vendor with most contracts": SELECT supplier, COUNT(*) as contracts FROM city_contracts GROUP BY supplier ORDER BY contracts DESC LIMIT 10
 
 RULES:
-- Return ONLY a JSON object: {"sql": "SELECT ...", "explanation": "plain English explanation of what this query does"}
-- Only SELECT queries allowed — no INSERT, UPDATE, DELETE, DROP, ALTER
+- Return ONLY a JSON object: {{"sql": "SELECT ...", "explanation": "plain English explanation"}}
+- Only SELECT queries — no INSERT, UPDATE, DELETE, DROP, ALTER
 - Use ILIKE for text matching (case insensitive)
-- Limit results to 100 rows unless the user asks for more
-- Format currency values with value column (DOUBLE type)
-- For "expiring soon" queries, use days_to_expiry BETWEEN 0 AND N
-- For active/future contracts only, add: WHERE days_to_expiry >= 0
-- Always include ORDER BY for useful result ordering
-- Use SUM(value), COUNT(*), AVG(value) for aggregate questions
-- Do NOT wrap response in markdown code fences
-- Return raw JSON only"""
+- Limit to 100 rows unless user asks for more
+- For time-based queries ("this month", "next 30 days", "this year"), use end_date with INTERVAL or CURRENT_DATE
+- For "expiring soon", use days_to_expiry BETWEEN 0 AND N
+- Always include ORDER BY
+- Use SUM, COUNT, AVG for aggregate questions
+- Do NOT wrap in markdown code fences — raw JSON only"""
 
 
 class NLQueryRequest(BaseModel):
@@ -66,7 +73,7 @@ async def nl_query(request: Request, req: NLQueryRequest):
         return _query_cache[cache_key]
 
     # Call 1: NL -> SQL (must complete first -- need the SQL to execute)
-    raw = await asyncio.to_thread(chat, NL_TO_SQL_PROMPT, req.question)
+    raw = await asyncio.to_thread(chat, _get_nl_prompt(), req.question)
 
     try:
         cleaned = raw.strip()

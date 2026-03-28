@@ -29,9 +29,10 @@ interface ChatMessage {
 }
 
 const SUGGESTIONS = [
-  "Contracts expiring this month",
-  "Top 5 vendors by value",
-  "Public Works contracts over $1M",
+  "Which contracts expire in the next 30 days?",
+  "Top 10 vendors by total contract value",
+  "Show Public Utilities contracts over $5 million",
+  "How many contracts does ITRON INC have?",
 ];
 
 function formatVal(key: string, val: unknown): string {
