@@ -10,7 +10,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
 from app.db import query as db_query
-from app.services.groq_client import chat
+from app.services.groq_client import _get_client
 from app.rate_limit import limiter
 
 router = APIRouter(prefix="/api/decision", tags=["decision"])
@@ -229,9 +229,25 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
 
     user_prompt = f"Contract {contract_number}, {supplier}.\n{data_context}"
 
-    # ── 4. Call Groq LLM ────────────────────────────────────────────────────
+    # ── 4. Call Groq LLM (direct call, single attempt, no retry cascade) ────
+    def _call_groq():
+        client = _get_client()
+        if client is None:
+            raise RuntimeError("GROQ_API_KEY not configured")
+        resp = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.1,
+            max_tokens=1500,
+            timeout=20,
+        )
+        return resp.choices[0].message.content
+
     try:
-        raw = await asyncio.to_thread(chat, system_prompt, user_prompt, "llama-3.1-8b-instant")
+        raw = await asyncio.to_thread(_call_groq)
 
         # Parse JSON from LLM response — handle various wrapping formats
         cleaned = raw.strip()
