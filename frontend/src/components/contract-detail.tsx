@@ -372,9 +372,9 @@ function ComplianceTab({ supplier, enabled }: { supplier: string; enabled: boole
         {data.federal_lists?.map((list, i) => {
           // Each list may have its own result, or fall back to the top-level checks
           const r = list.result as Record<string, unknown> | undefined;
-          const fallback = list.name.includes("SAM") ? data.sam_check as Record<string, unknown> :
-            list.name.includes("FCC") ? data.fcc_check as Record<string, unknown> :
-            list.name.includes("Consolidated") ? data.csl_check as Record<string, unknown> : null;
+          const fallback = list.name.includes("SAM") ? data.sam_check as unknown as Record<string, unknown> :
+            list.name.includes("FCC") ? data.fcc_check as unknown as Record<string, unknown> :
+            list.name.includes("Consolidated") ? data.csl_check as unknown as Record<string, unknown> : null;
           const result = r || fallback;
           return (
             <ComplianceStatusCard
