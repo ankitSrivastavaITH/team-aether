@@ -367,29 +367,31 @@ function ComplianceTab({ supplier, enabled }: { supplier: string; enabled: boole
         </div>
       )}
 
-      {/* Check cards */}
+      {/* Check cards — render all 7 from federal_lists */}
       <div className="space-y-2">
-        <ComplianceStatusCard
-          title="SAM.gov Exclusions"
-          isLoading={false}
-          checked={data.sam_check?.checked ?? false}
-          flagged={data.sam_check?.debarred ?? false}
-          details={data.sam_check?.details}
-        />
-        <ComplianceStatusCard
-          title="FCC Covered List"
-          isLoading={false}
-          checked={data.fcc_check?.checked ?? false}
-          flagged={data.fcc_check?.flagged ?? false}
-          details={data.fcc_check?.details}
-        />
-        <ComplianceStatusCard
-          title="Consolidated Screening List (CSL)"
-          isLoading={false}
-          checked={data.csl_check?.checked ?? false}
-          flagged={data.csl_check?.flagged ?? false}
-          details={data.csl_check?.details}
-        />
+        {data.federal_lists?.map((list: { name: string; agency: string; result?: { checked?: boolean; flagged?: boolean; debarred?: boolean; details?: string } }, i: number) => {
+          const result = list.result || (
+            list.name.includes("SAM") ? data.sam_check :
+            list.name.includes("FCC") ? data.fcc_check :
+            list.name.includes("Consolidated") ? data.csl_check : null
+          );
+          return (
+            <ComplianceStatusCard
+              key={i}
+              title={`${list.name} (${list.agency})`}
+              isLoading={false}
+              checked={result?.checked ?? false}
+              flagged={result?.flagged ?? result?.debarred ?? false}
+              details={result?.details}
+            />
+          );
+        }) ?? (
+          <>
+            <ComplianceStatusCard title="SAM.gov Exclusions" isLoading={false} checked={data.sam_check?.checked ?? false} flagged={data.sam_check?.debarred ?? false} details={data.sam_check?.details} />
+            <ComplianceStatusCard title="FCC Covered List" isLoading={false} checked={data.fcc_check?.checked ?? false} flagged={data.fcc_check?.flagged ?? false} details={data.fcc_check?.details} />
+            <ComplianceStatusCard title="Consolidated Screening List" isLoading={false} checked={data.csl_check?.checked ?? false} flagged={data.csl_check?.flagged ?? false} details={data.csl_check?.details} />
+          </>
+        )}
       </div>
 
       {/* Summary stats */}
