@@ -4,7 +4,9 @@
 
 Built for [Hack for RVA 2026](https://rvahacks.org) | Pillar 1: A Thriving City Hall | Problem 2: Procurement Risk & Opportunity Review
 
-**Live Demo:** [hackrva.ithena.app](https://hackrva.ithena.app)
+**Live Demo:** [hackrva.ithena.app](https://hackrva.ithena.app) | **GitHub:** [team-aether](https://github.com/ankitSrivastavaITH/team-aether)
+
+![Landing Page](demo-screenshots/01-landing.png)
 
 ---
 
@@ -23,90 +25,162 @@ City of Richmond procurement staff manage **1,365 contracts worth $6.1 billion**
 
 **Result:** Missed renewals, expired contracts still in use, no visibility into vendor concentration risk, and millions in potential savings left on the table.
 
+---
+
 ## The Solution
 
-RVA Contract Lens transforms that 60-minute manual review into an **8-second AI-powered decision brief**. One platform serves two audiences:
+RVA Contract Lens transforms that 60-minute manual review into an **8-second AI-powered decision brief**. One platform, two audiences.
 
-### For City Procurement Staff
+---
 
-| Feature | What It Does |
+## Staff View: Procurement Intelligence
+
+### Decision-First Dashboard
+
+Staff see what needs action — not a data dump, but three urgency lanes: **Decide Today**, **Plan This Week**, **Review This Month**. Every card links directly to the AI Decision Engine.
+
+![Staff Dashboard](demo-screenshots/02-dashboard.png)
+
+### AI Decision Engine
+
+The core feature. Select a vendor and contract. The system aggregates **8 real data sources**, runs **3 federal compliance checks**, and delivers a **RENEW / REBID / ESCALATE** verdict with full transparency.
+
+![Decision Engine](demo-screenshots/03-decision-engine.png)
+
+**What the AI analyzes:**
+
+| Source | Type |
 |---|---|
-| **AI Decision Engine** | Select a vendor and contract. The system aggregates 8 data sources, runs 3 federal compliance checks, and delivers a RENEW/REBID/ESCALATE verdict with an exportable decision memo. |
-| **Decision-First Dashboard** | Shows what needs attention *today*, *this week*, and *this month* — not a data dump, but an action plan. |
-| **Contract Health Scanner** | Grades all 37 departments A through F based on contract risk. Identifies anomalies and expiring contracts at a glance. |
-| **What-If Savings Estimator** | Models the fiscal impact of rebidding concentrated contracts under conservative (5%), moderate (10%), and aggressive (15%) scenarios. Shows specific vendors to target and estimated savings per department. |
-| **Portfolio Strategy Advisor** | AI-generated procurement strategy per department: how many contracts to renew, rebid, or escalate — with projected savings and equity context. |
-| **Decision Audit Timeline** | Every AI decision is recorded. Builds institutional memory so the next procurement officer inherits data-driven context, not a blank slate. |
-| **PDF Analyzer** | Upload a scanned contract PDF. OCR extracts the full text, then AI identifies key terms: value, expiration, renewal clauses, and parties. |
-| **Ask Richmond** | Type a question in plain English ("Show me expiring IT contracts over $100K"). AI translates it to a database query and returns results instantly. |
-| **Vendor Concentration Risk** | HHI analysis identifies departments over-dependent on single vendors. Flags monopoly risk before it becomes a crisis. |
-| **MBE & Supplier Diversity** | Tracks vendor diversity ratios by department, small business participation, and competitive bidding rates. Equity context is embedded in every Decision Engine analysis. |
+| Contract details | DuckDB (value, dates, department, risk level) |
+| Vendor history | All contracts for this vendor across departments |
+| SAM.gov compliance | Live federal API — exclusions and opportunities |
+| FCC Covered List | Prohibited manufacturers (Huawei, ZTE, etc.) |
+| Consolidated Screening List | DHS, FBI, FTC sanctioned entities |
+| Vendor concentration risk | HHI index — monopoly risk by department |
+| PDF contract terms | OCR-extracted clauses via semantic search (ChromaDB) |
+| Vendor web intelligence | DuckDuckGo public reviews, news, reputation |
 
-### For Richmond Residents
+**What staff get back:**
+1. Traffic light verdict (RENEW / REBID / ESCALATE) with confidence score
+2. Evidence grid — pros and cons with cited data sources
+3. Confidence breakdown — signed impact factors (+20 Compliance Clear, -15 Price Increasing)
+4. Equity & MBE context — department vendor diversity score
+5. Alternative vendors in the same department
+6. Exportable decision memo (copy/print)
 
-| Page | What Residents See |
+**The AI recommends. Humans decide.** Every verdict is saved to an audit trail.
+
+### Contract Health Scanner
+
+Grades all 37 departments **A through F** based on contract risk. Collapsible sections for expiry forecast, risk distribution, top anomalies, and department grades.
+
+![Health Scanner](demo-screenshots/04-health-scanner.png)
+
+### What-If Savings Estimator
+
+Models the fiscal impact of rebidding concentrated contracts. Three scenarios (5% / 10% / 15%) with **specific vendors to target**, projected savings per department, and **actionable buttons** that link directly to the Decision Engine.
+
+![What-If Savings](demo-screenshots/05-what-if.png)
+
+### Portfolio Strategy Advisor
+
+AI-generated procurement strategy **per department**: how many contracts to renew, rebid, or escalate — with projected savings, equity context, and specific action items with links.
+
+![Portfolio Strategy](demo-screenshots/06-portfolio.png)
+
+### Decision Audit Timeline
+
+Every AI decision is recorded. Builds **institutional memory** so the next procurement officer inherits data-driven context, not a blank slate. Pattern analysis surfaces trends across the portfolio.
+
+![Decision Audit](demo-screenshots/07-audit.png)
+
+### Vendor Concentration Risk (HHI)
+
+Herfindahl-Hirschman Index analysis identifies departments over-dependent on single vendors. Flags monopoly risk before it becomes a crisis.
+
+![Vendor Risk](demo-screenshots/08-risk.png)
+
+### MBE & Supplier Diversity
+
+Tracks vendor diversity ratios by department, small business participation, and competitive bidding rates. Equity context is embedded in every Decision Engine analysis — not isolated on a separate page.
+
+![MBE Analysis](demo-screenshots/09-mbe.png)
+
+### PDF Analyzer (OCR)
+
+Upload a scanned contract PDF. OCR extracts the full text (176K+ chars from a single document), then AI identifies key terms: value, expiration, renewal clauses, and parties.
+
+![PDF Analyzer](demo-screenshots/10-pdf-analyzer.png)
+
+### Ask Richmond (Natural Language Query)
+
+Type a question in plain English: *"Show me expiring IT contracts over $100K."* AI translates it to a database query and returns results instantly.
+
+![Ask Richmond](demo-screenshots/11-ask-richmond.png)
+
+### Anomaly Detection
+
+Risk matrix maps anomalies by severity and likelihood. Each anomaly includes remediation steps and links to the relevant analysis tool.
+
+![Anomalies](demo-screenshots/14-anomalies.png)
+
+### All Contracts Table
+
+Searchable, sortable, filterable table of all 1,365 contracts. Mobile-responsive card layout. Click any contract to analyze in the Decision Engine.
+
+![Contracts](demo-screenshots/15-contracts.png)
+
+---
+
+## Public View: Fiscal Transparency
+
+### Where Do Your Tax Dollars Go?
+
+Residents can explore **$6.1 billion** in city spending by department, vendor, or service — **without filing a FOIA request**.
+
+![Public Overview](demo-screenshots/12-public-overview.png)
+
+### Spending Breakdown
+
+Interactive charts showing spending by department. Click any department or vendor to drill into their full contract portfolio.
+
+![Public Spending](demo-screenshots/13-public-spending.png)
+
+**Additional public pages:** Vendor directory, department detail, Find a Service (20+ categories), and Data Sources (transparency trust signal).
+
+---
+
+## Accessibility & Equity
+
+RVA Contract Lens is designed to work for **everyone**, not just the easiest users:
+
+- **Bilingual EN/ES** across all staff pages (30+ translated strings)
+- **Atkinson Hyperlegible** font — designed for low-vision and dyslexia accessibility
+- **Font size toggle** (A, A+, A++) and **high-contrast mode** on both staff and public pages
+- **Skip links** on every page (bilingual) for keyboard and screen reader users
+- **44px minimum touch targets** throughout, with `prefers-reduced-motion` support
+- **MBE/equity context** embedded in the AI Decision Engine — not a separate page, but part of every analysis
+- **Public transparency view** so residents with any level of digital literacy can explore city spending
+
+---
+
+## By the Numbers
+
+| Metric | Value |
 |---|---|
-| **Overview** | Plain-language introduction to how Richmond spends public money. |
-| **Spending** | Interactive breakdown of $6.1B in contracts by department, with charts. |
-| **Vendors** | Who gets city contracts, how much, and how often. Click any vendor for detail. |
-| **Department Detail** | Drill into any department's contract portfolio. |
-| **Find a Service** | Routes questions to the right City department (20+ categories). |
-| **Data Sources** | Where the data comes from — a transparency and trust signal. |
+| Real contracts analyzed | **1,365** ($6.1B) |
+| Data sources in Decision Engine | **8** |
+| Federal compliance checks | **3** automated (SAM.gov, FCC, CSL) |
+| Staff pages | **23** |
+| Public transparency pages | **7** |
+| API endpoints | **40+** |
+| Backend routers | **12** |
+| Commits | **155+** |
+| Team size | **4 members**, 48 hours |
+| Manual review time saved | **60 min → 8 sec** per contract |
+| OCR extraction capacity | **176K+** chars from a single scanned PDF |
 
-> Residents can see where $6.1B in contracts goes — by vendor, department, or service — without filing a FOIA request.
-
-## How the AI Decision Engine Works
-
-```
-Staff selects vendor + contract
-         |
-         v
-    +-----------+
-    | 8 Sources |
-    +-----------+
-    | 1. Contract details (DuckDB)
-    | 2. Vendor history (all contracts for this vendor)
-    | 3. SAM.gov compliance (live federal API)
-    | 4. FCC Covered List (prohibited manufacturers)
-    | 5. Consolidated Screening List (DHS/FBI/FTC)
-    | 6. Vendor concentration risk (HHI by department)
-    | 7. PDF contract terms (OCR + semantic search)
-    | 8. Vendor web intelligence (DuckDuckGo public info)
-         |
-         v
-    +------------------+
-    | Groq LLM Analysis|
-    | (llama-3.3-70b)  |
-    +------------------+
-         |
-         v
-    +---------------------------+
-    | 3-Layer Output            |
-    | 1. Traffic light verdict  |
-    |    (RENEW/REBID/ESCALATE) |
-    | 2. Evidence grid          |
-    |    (pros + cons + sources)|
-    | 3. Exportable memo        |
-    |    (copy/print ready)     |
-    +---------------------------+
-         |
-         v
-    +----------------------------+
-    | AI Transparency Layers     |
-    | - Data Analyzed (all 8)    |
-    | - Confidence Breakdown     |
-    |   (+20 Compliance Clear,   |
-    |    -15 Price Increasing)   |
-    | - Similar Contracts        |
-    | - Web Intelligence         |
-    | - Equity & MBE Context     |
-    +----------------------------+
-         |
-         v
-    Decision saved to audit trail (DuckDB)
-```
-
-**The AI recommends. Humans decide.** Every verdict includes full transparency into what the AI saw and why, so staff can verify before acting.
+---
 
 ## Data Sources (All Real, Zero Synthetic)
 
@@ -121,17 +195,7 @@ Staff selects vendor + contract
 | Hackathon PDFs | 10 contracts (206 chunks) | OCR via `unstructured` | On upload |
 | DuckDuckGo Web Intel | Live search | HTML scraping | Real-time |
 
-## Accessibility & Equity
-
-RVA Contract Lens is designed to work for **everyone**, not just the easiest users:
-
-- **Bilingual EN/ES** across all staff pages (30+ translated strings)
-- **Atkinson Hyperlegible** font — designed for low-vision and dyslexia accessibility
-- **Font size toggle** (A, A+, A++) and **high-contrast mode** on both staff and public pages
-- **Skip links** on every page (bilingual) for keyboard and screen reader users
-- **44px minimum touch targets** throughout, with `prefers-reduced-motion` support
-- **MBE/equity context** embedded in the AI Decision Engine — not a separate page, but part of every analysis
-- **Public transparency view** so residents with any level of digital literacy can explore city spending
+---
 
 ## Quick Start
 
@@ -155,21 +219,6 @@ npm run dev -- -p 3200
 - Frontend: http://localhost:3200
 - Backend API docs: http://localhost:8200/docs
 - Get a free Groq API key at [console.groq.com](https://console.groq.com)
-
-## By the Numbers
-
-| Metric | Value |
-|---|---|
-| Real contracts analyzed | 1,365 ($6.1B) |
-| Data sources in Decision Engine | 8 |
-| Federal compliance checks | 3 automated (SAM.gov, FCC, CSL) |
-| Staff pages | 23 |
-| Public transparency pages | 7 |
-| API endpoints | 40+ |
-| Commits | 152+ |
-| Total codebase | Built by a team of 4 in 48 hours |
-| Manual review time saved | 60 min → 8 sec per contract |
-| OCR extraction capacity | 176K+ chars from a single scanned PDF |
 
 ---
 
@@ -200,7 +249,6 @@ npm run dev -- -p 3200
 │  └────────┬─────────┘  │  Chunking +      │  └──────────┬───────────┘  │
 │           │            │  Embedding        │             │              │
 │           │            └────────┬──────────┘             │              │
-│           │                     │                        │              │
 └───────────┼─────────────────────┼────────────────────────┼──────────────┘
             │                     │                        │
             v                     v                        v
@@ -216,105 +264,57 @@ npm run dev -- -p 3200
 │  │  vita_contracts          │    │  used by Decision Engine for    │  │
 │  │  extracted_terms (9)     │    │  contract term cross-reference  │  │
 │  │  decisions (audit trail) │    │                                  │  │
-│  │                          │    │                                  │  │
 │  └──────────────────────────┘    └──────────────────────────────────┘  │
-│                                                                        │
 └───────────────────────────┬────────────────────────────────────────────┘
                             │
                             v
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                     FastAPI BACKEND (12 Routers)                       │
 │                                                                        │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────────┐ │
-│  │  /contracts  │ │  /decision  │ │  /strategy  │ │  /health-scan   │ │
-│  │  CRUD,search │ │  8-source   │ │  What-If    │ │  Portfolio      │ │
-│  │  filter,dept │ │  AI engine  │ │  Portfolio   │ │  grades A-F    │ │
-│  │  vendor API  │ │  + verdicts │ │  Audit trail│ │  risk dist      │ │
-│  └─────────────┘ └──────┬──────┘ └─────────────┘ └─────────────────┘ │
-│  ┌─────────────┐        │        ┌─────────────┐ ┌─────────────────┐ │
-│  │  /nl-query   │        │        │  /extract   │ │  /mbe           │ │
-│  │  NL → SQL   │        │        │  PDF upload  │ │  Diversity      │ │
-│  │  plain Eng  │        │        │  OCR + AI    │ │  analysis       │ │
-│  │  to DuckDB  │        │        │  extraction  │ │  + anomalies    │ │
-│  └─────────────┘        │        └─────────────┘ └─────────────────┘ │
-│  ┌─────────────┐        │        ┌─────────────┐ ┌─────────────────┐ │
-│  │  /analytics  │        │        │  /insights  │ │  /services      │ │
-│  │  charts,     │        │        │  AI risk    │ │  Service        │ │
-│  │  trends      │        │        │  summaries  │ │  navigator      │ │
-│  └─────────────┘        │        └─────────────┘ └─────────────────┘ │
-│                          │                                            │
-└──────────────────────────┼────────────────────────────────────────────┘
-                           │
-                           v
+│  /contracts  /decision  /strategy    /health-scan  /analytics          │
+│  /nl-query   /extract   /insights    /mbe          /services           │
+│  /parser                                                               │
+│                                                                        │
+│  Key: async parallel compliance checks, rate limiting (slowapi),       │
+│       decision persistence, robust JSON fallback parsing               │
+└───────────────────────────┬────────────────────────────────────────────┘
+                            │
+                            v
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                      AI / LLM LAYER (Groq)                             │
 │                                                                        │
-│  ┌────────────────────────────────────────────────────────────────────┐│
-│  │                    Groq Cloud API                                  ││
-│  │              llama-3.3-70b-versatile                               ││
-│  │                                                                    ││
-│  │  Input: 8-source data context (JSON)                              ││
-│  │  Output: Structured JSON verdict                                  ││
-│  │    {                                                              ││
-│  │      verdict: "RENEW" | "REBID" | "ESCALATE",                    ││
-│  │      confidence: "HIGH" | "MEDIUM" | "LOW",                      ││
-│  │      pros: [{point, evidence, source}],                          ││
-│  │      cons: [{point, evidence, source}],                          ││
-│  │      memo: "## Executive Summary ..."                            ││
-│  │    }                                                              ││
-│  │                                                                    ││
-│  │  Also used for: NL-to-SQL, risk summaries, contract extraction   ││
-│  └────────────────────────────────────────────────────────────────────┘│
+│  Model: llama-3.3-70b-versatile (primary)                             │
+│  Fallback: llama-3.1-8b-instant (rate limit cascade)                  │
+│  Recovery: Regex extraction from malformed JSON                       │
 │                                                                        │
-│  Fallback: Regex extraction from malformed JSON                       │
-│  Model cascade: 70b → 8b-instant if rate limited                     │
-│                                                                        │
+│  Used for:                                                             │
+│  - Decision Engine (8-source → RENEW/REBID/ESCALATE verdict)          │
+│  - NL-to-SQL translation (plain English → DuckDB query)               │
+│  - Contract term extraction (PDF → structured fields)                 │
+│  - Risk summaries (portfolio-level AI insights)                       │
 └───────────────────────────┬────────────────────────────────────────────┘
                             │
                             v
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                     FRONTEND (Next.js 14)                              │
 │                                                                        │
-│  ┌──────────────────────┐       ┌──────────────────────────────────┐  │
-│  │   STAFF VIEW (23pg)  │       │    PUBLIC VIEW (7 pages)         │  │
-│  │                      │       │                                  │  │
-│  │  Dashboard           │       │  Overview (spending summary)     │  │
-│  │  Decision Engine     │       │  Spending (dept breakdown)       │  │
-│  │  Health Scanner      │       │  Vendors (top vendors list)      │  │
-│  │  What-If Savings     │       │  Vendor Detail (drill-down)      │  │
-│  │  Portfolio Strategy  │       │  Department Detail               │  │
-│  │  Decision Audit      │       │  Find a Service (navigator)     │  │
-│  │  Contracts Table     │       │  Data Sources (trust signal)     │  │
-│  │  PDF Analyzer (OCR)  │       │                                  │  │
-│  │  Ask Richmond (NL)   │       │  Accessibility:                  │  │
-│  │  Vendor Risk (HHI)   │       │  - Font size toggle              │  │
-│  │  MBE Analysis        │       │  - High contrast mode            │  │
-│  │  Analytics/Charts    │       │  - Bilingual EN/ES               │  │
-│  │  Cost Analysis       │       │  - Skip links                    │  │
-│  │  + 10 more pages     │       │  - 44px touch targets            │  │
-│  │                      │       │                                  │  │
-│  │  UI: shadcn/ui       │       │  Font: Atkinson Hyperlegible     │  │
-│  │  Data: TanStack Query│       │  Charts: Recharts                │  │
-│  │  i18n: EN/ES         │       │                                  │  │
-│  └──────────────────────┘       └──────────────────────────────────┘  │
+│  STAFF (23 pages)                  PUBLIC (7 pages)                    │
+│  Dashboard, Decision Engine,       Overview, Spending,                 │
+│  Health Scanner, What-If,          Vendors, Vendor Detail,             │
+│  Portfolio Strategy, Audit,        Department Detail,                  │
+│  Risk, MBE, PDF, Ask Richmond,    Find a Service, Sources             │
+│  Contracts, Analytics, + more                                          │
 │                                                                        │
+│  UI: shadcn/ui + Tailwind + Recharts + TanStack Query/Table           │
+│  a11y: Atkinson Hyperlegible, i18n EN/ES, skip links, 44px targets    │
 └───────────────────────────┬────────────────────────────────────────────┘
                             │
                             v
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                      DEPLOYMENT                                        │
-│                                                                        │
-│  Docker Compose (backend:8200 + frontend:3200)                        │
-│          │                                                             │
-│          v                                                             │
-│  Cloudflare Tunnel                                                    │
-│    hackrva.ithena.app     → frontend (Next.js)                        │
-│    api-hackrva.ithena.app → backend  (FastAPI)                        │
-│                                                                        │
+│  DEPLOYMENT: Docker Compose → Cloudflare Tunnel                       │
+│  hackrva.ithena.app (frontend) + api-hackrva.ithena.app (backend)     │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
-
-## Technical Architecture
 
 ### Stack
 
@@ -328,28 +328,6 @@ npm run dev -- -p 3200
 | OCR | `unstructured` library | Handles scanned PDFs, images, and mixed-format documents |
 | Deployment | Docker Compose + Cloudflare Tunnel | Zero-infrastructure demo deployment |
 
-### Backend Routers (12)
-
-| Router | Prefix | Purpose |
-|---|---|---|
-| `contracts` | `/api/contracts` | CRUD, search, filter, department/vendor detail |
-| `decision` | `/api/decision` | 8-source AI Decision Engine + verdict persistence |
-| `strategy` | `/api/strategy` | What-If, Portfolio Strategy, Decision Audit Timeline |
-| `health_scan` | `/api/health-scan` | Portfolio-wide health scoring and dept grades |
-| `analytics` | `/api/analytics` | Spending trends, expiry forecasts, procurement types |
-| `insights` | `/api/insights` | AI-generated risk summaries |
-| `nl_query` | `/api/nl-query` | Natural language to SQL translation |
-| `extract` | `/api/extract` | PDF upload, OCR, and AI term extraction |
-| `parser` | `/api/parser` | Contract document parsing and ChromaDB ingestion |
-| `mbe` | `/api/mbe` | MBE/supplier diversity analysis + anomaly detection |
-| `services` | `/api/services` | Service category routing (20+ categories) |
-
-### Frontend Pages (30)
-
-**Staff (23 pages):** Dashboard, Health Scanner, All Contracts, Decision Engine, What-If Savings, Portfolio Strategy, Decision Audit, Vendor Risk (HHI), Anomalies, MBE Analysis, PDF Analyzer, Contract Intel, Charts & Trends, Dept Scorecards, Cost Analysis, Timeline, Ask Richmond, Compliance, Renewals, Review, Report, Compare Vendors, Alerts
-
-**Public (7 pages):** Overview, Spending, Vendors, Vendor Detail, Department Detail, Find a Service, Data Sources
-
 ### Key Technical Decisions
 
 | Decision | Rationale |
@@ -360,6 +338,8 @@ npm run dev -- -p 3200
 | FastAPI over Flask | Async support critical for parallel compliance checks (SAM.gov + FCC + CSL concurrent) |
 | shadcn/ui over Material | Accessible by default, composable, Tailwind-native, small bundle size |
 | DuckDuckGo Lite over Google | Google blocks HTML scraping; DDG Lite returns parseable HTML results |
+
+---
 
 ## Known Limitations
 
