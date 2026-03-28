@@ -229,19 +229,9 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
 
     user_prompt = f"Contract {contract_number}, {supplier}.\n{data_context}"
 
-    # ── 4. Call Groq LLM (with retry on rate limit) ─────────────────────────
+    # ── 4. Call Groq LLM ────────────────────────────────────────────────────
     try:
-        raw = None
-        for _attempt in range(3):
-            try:
-                raw = await asyncio.to_thread(chat, system_prompt, user_prompt, "llama-3.1-8b-instant")
-                break
-            except Exception:
-                if _attempt < 2:
-                    await asyncio.sleep(3)  # Wait for rate limit to reset
-        if raw is None:
-            raise RuntimeError("All retry attempts failed")
-        print(f"[DECISION] Raw LLM response ({len(raw)} chars): {raw[:200]}")
+        raw = await asyncio.to_thread(chat, system_prompt, user_prompt, "llama-3.1-8b-instant")
 
         # Parse JSON from LLM response — handle various wrapping formats
         cleaned = raw.strip()

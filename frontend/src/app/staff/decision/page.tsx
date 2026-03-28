@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchAPI, postAPI } from "@/lib/api";
+import { fetchAPI } from "@/lib/api";
 import { formatCurrency, formatDate, riskColor } from "@/lib/utils";
 import { VendorSelect } from "@/components/vendor-select";
 import { Card, CardContent } from "@/components/ui/card";
@@ -558,13 +558,23 @@ export default function DecisionPage() {
     setError(null);
 
     try {
-      const raw = await postAPI<{ decision: DecisionResult } & DecisionResult>("/api/decision", {
-        contract_number: selectedContract.contract_number,
-        supplier: selectedVendor,
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8200"}/api/decision`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contract_number: selectedContract.contract_number,
+          supplier: selectedVendor,
+        }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const raw = await res.json();
       // API wraps result in { decision: { ... } } — unwrap it
       const data = (raw as { decision: DecisionResult }).decision ?? raw;
-      setResult({
+      const decision = {
         ...data,
         pros: data.pros ?? [],
         cons: data.cons ?? [],
@@ -573,7 +583,37 @@ export default function DecisionPage() {
         supplier: selectedVendor,
         contract_value: selectedContract.value ?? 0,
         department: selectedContract.department ?? "",
-      });
+      };
+      // If AI returned fallback (unavailable), auto-retry once after 3s
+      if (data.confidence === "LOW" && data.summary?.includes("unavailable")) {
+        await new Promise(r => setTimeout(r, 3000));
+        const res2 = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8200"}/api/decision`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contract_number: selectedContract.contract_number,
+            supplier: selectedVendor,
+          }),
+        });
+        if (res2.ok) {
+          const raw2 = await res2.json();
+          const retry = (raw2 as { decision: DecisionResult }).decision ?? raw2;
+          if (retry.confidence !== "LOW" || !retry.summary?.includes("unavailable")) {
+            setResult({
+              ...retry,
+              pros: retry.pros ?? [],
+              cons: retry.cons ?? [],
+              memo: retry.memo ?? "",
+              contract_number: selectedContract.contract_number ?? "",
+              supplier: selectedVendor,
+              contract_value: selectedContract.value ?? 0,
+              department: selectedContract.department ?? "",
+            });
+            return;
+          }
+        }
+      }
+      setResult(decision);
     } catch (err) {
       setError(
         err instanceof Error
