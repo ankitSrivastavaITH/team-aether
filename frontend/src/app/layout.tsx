@@ -7,6 +7,7 @@ import { SkipLink } from "@/components/skip-link";
 import { ErrorBoundary } from "@/components/error-boundary";
 // AskRichmondPanel moved to staff/public layouts — not shown on landing/about/compare
 import { Toaster } from "sonner";
+import { GuidedTour } from "@/components/guided-tour";
 
 const atkinson = Atkinson_Hyperlegible({
   subsets: ["latin"],
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {children}
             </ErrorBoundary>
             {/* AskRichmondPanel moved to staff/public layouts only — not on landing/about/compare */}
+            <GuidedTour />
             <Toaster position="bottom-right" richColors closeButton />
           </QueryProvider>
         </ThemeProvider>

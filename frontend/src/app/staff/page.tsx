@@ -160,7 +160,7 @@ function StaffDashboardContent() {
       {/* ----------------------------------------------------------------- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* TODAY: Critical */}
-        <Card className="border-t-4 border-t-red-500">
+        <Card className="border-t-4 border-t-red-500" data-tour="decide-today">
           <CardContent className="py-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -207,7 +207,7 @@ function StaffDashboardContent() {
         </Card>
 
         {/* THIS WEEK: Warning */}
-        <Card className="border-t-4 border-t-amber-500">
+        <Card className="border-t-4 border-t-amber-500" data-tour="plan-week">
           <CardContent className="py-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -254,7 +254,7 @@ function StaffDashboardContent() {
         </Card>
 
         {/* THIS MONTH: Attention */}
-        <Card className="border-t-4 border-t-blue-500">
+        <Card className="border-t-4 border-t-blue-500" data-tour="review-month">
           <CardContent className="py-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

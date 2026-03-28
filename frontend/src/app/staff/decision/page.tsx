@@ -1628,7 +1628,7 @@ function DecisionPageInner() {
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
               Select a Contract to Analyze
             </h2>
-            <div className="max-w-md">
+            <div className="max-w-md" data-tour="vendor-select">
               <VendorSelect
                 value={selectedVendor}
                 onChange={setSelectedVendor}

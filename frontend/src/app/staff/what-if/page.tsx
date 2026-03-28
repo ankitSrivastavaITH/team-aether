@@ -125,7 +125,7 @@ export default function WhatIfPage() {
       </div>
 
       {/* Scenario Selector */}
-      <Card>
+      <Card data-tour="scenarios">
         <CardContent className="pt-4">
           <div className="flex items-center gap-2 mb-4">
             <Lightbulb
@@ -215,6 +215,7 @@ export default function WhatIfPage() {
 
       {/* AI Recommendations */}
       {data.recommendations && data.recommendations.length > 0 && (
+        <div data-tour="recommendations">
         <CollapsibleSection
           title="AI Recommendations — What To Do Next"
           icon={Lightbulb}
@@ -274,6 +275,7 @@ export default function WhatIfPage() {
             ))}
           </div>
         </CollapsibleSection>
+        </div>
       )}
 
       {/* Concentrated + Expiring */}

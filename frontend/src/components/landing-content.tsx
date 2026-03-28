@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { WelcomeModal } from "@/components/welcome-modal";
+import { StartTourButton } from "@/components/guided-tour";
 
 const stats = [
   {
@@ -162,6 +163,11 @@ export function LandingContent() {
             Public Transparency
             <ArrowRight className="h-5 w-5 opacity-70" aria-hidden="true" />
           </Link>
+        </div>
+
+        {/* Guided Tour for Judges */}
+        <div className="mt-6 flex justify-center">
+          <StartTourButton />
         </div>
       </section>
 
