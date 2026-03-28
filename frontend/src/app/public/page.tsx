@@ -74,62 +74,7 @@ function useExpiringContracts() {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function AtAGlanceChip({
-  label,
-  value,
-  icon: Icon,
-  color = "text-slate-900 dark:text-slate-100",
-}: {
-  label: string;
-  value: string;
-  icon: React.ElementType;
-  color?: string;
-}) {
-  return (
-    <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
-      <Icon className={`h-4 w-4 ${color} flex-shrink-0`} aria-hidden="true" />
-      <div className="min-w-0">
-        <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight">{label}</p>
-        <p className={`text-base font-bold leading-tight ${color}`}>{value}</p>
-      </div>
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  icon,
-  bgClass,
-  textClass,
-  subtext,
-}: {
-  label: string;
-  value: string;
-  icon?: React.ReactNode;
-  bgClass: string;
-  textClass: string;
-  subtext?: string;
-}) {
-  return (
-    <Card className={`${bgClass} border-0 shadow-sm`}>
-      <CardContent className="pt-6 pb-6 flex flex-col items-center text-center gap-2">
-        {icon && (
-          <div className={`${textClass} mb-1`} aria-hidden="true">
-            {icon}
-          </div>
-        )}
-        <p className="text-base font-medium text-slate-900 dark:text-slate-100 leading-snug">{label}</p>
-        <p className={`text-4xl font-bold leading-none tracking-tight ${textClass}`}>
-          {value}
-        </p>
-        {subtext && (
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{subtext}</p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+// StatCard and AtAGlanceChip removed — replaced by inline metric cards
 
 function QuickLink({
   href,
@@ -204,26 +149,7 @@ function TrendingItem({
   return content;
 }
 
-function QuickFactCard({
-  icon: Icon,
-  iconBg,
-  fact,
-}: {
-  icon: React.ElementType;
-  iconBg: string;
-  fact: string;
-}) {
-  return (
-    <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
-      <CardContent className="pt-5 pb-5 flex items-start gap-3">
-        <div className={`p-2 rounded-lg ${iconBg} flex-shrink-0`}>
-          <Icon className="h-5 w-5" aria-hidden="true" />
-        </div>
-        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{fact}</p>
-      </CardContent>
-    </Card>
-  );
-}
+// QuickFactCard removed — consolidated into "Did You Know?" section
 
 function LoadingSkeleton() {
   return (
@@ -319,7 +245,7 @@ export default function PublicOverviewPage() {
   }, [expiringData]);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       {/* Hero header */}
       <section aria-labelledby="hero-heading" className="text-center space-y-4 py-4">
         <h1
@@ -363,71 +289,43 @@ export default function PublicOverviewPage() {
 
       {data && derived && (
         <>
-          {/* At-a-glance stats row */}
-          <section aria-label="At a glance statistics">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
-              At a Glance
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-              A snapshot of Richmond&apos;s contract portfolio right now.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <AtAGlanceChip
-                label="Total Value"
-                value={formatCurrency(data.total_value)}
-                icon={DollarSign}
-                color="text-blue-600 dark:text-blue-400"
-              />
-              <AtAGlanceChip
-                label="Active Contracts"
-                value={totalContracts.toLocaleString()}
-                icon={FileText}
-              />
-              <AtAGlanceChip
-                label="Expiring in 30 Days"
-                value={expiring30.toLocaleString()}
-                icon={AlertCircle}
-                color={expiring30 > 0 ? "text-red-600 dark:text-red-400" : "text-slate-900 dark:text-slate-100"}
-              />
-              <AtAGlanceChip
-                label="Departments"
-                value={derived.uniqueDepts.toLocaleString()}
-                icon={Building2}
-              />
-              <AtAGlanceChip
-                label="Unique Vendors"
-                value={derived.uniqueVendors.toLocaleString()}
-                icon={Users}
-              />
-            </div>
-          </section>
-
-          {/* Hero stat cards */}
-          <section aria-label="Key spending figures">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <StatCard
-                label={t("public.totalValue", locale)}
-                value={formatCurrency(data.total_value)}
-                bgClass="bg-blue-50 dark:bg-blue-950/50"
-                textClass="text-[#2563EB] dark:text-blue-400"
-                subtext={t("public.totalValueDesc", locale)}
-              />
-              <StatCard
-                label={t("public.activeContracts", locale)}
-                value={totalContracts.toLocaleString()}
-                bgClass="bg-purple-50 dark:bg-purple-950/50"
-                textClass="text-[#7c3aed] dark:text-purple-400"
-                subtext={t("public.activeDesc", locale)}
-              />
-              <StatCard
-                label={t("public.expiring30", locale)}
-                value={expiring30.toLocaleString()}
-                bgClass="bg-red-50 dark:bg-red-950/50"
-                textClass="text-[#dc2626] dark:text-red-400"
-                icon={<AlertCircle className="h-6 w-6" />}
-                subtext={t("public.expiringDesc", locale)}
-              />
-            </div>
+          {/* Key metrics — single row, no duplication */}
+          <section aria-label="Key metrics" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <Card className="bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                <span className="text-xs text-slate-500 dark:text-slate-400">Total Value</span>
+              </div>
+              <p className="text-xl font-bold text-blue-700 dark:text-blue-400">{formatCurrency(data.total_value)}</p>
+            </Card>
+            <Card className="bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800 p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" aria-hidden="true" />
+                <span className="text-xs text-slate-500 dark:text-slate-400">Contracts</span>
+              </div>
+              <p className="text-xl font-bold text-purple-700 dark:text-purple-400">{totalContracts.toLocaleString()}</p>
+            </Card>
+            <Card className={`${expiring30 > 0 ? "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800" : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"} p-4`}>
+              <div className="flex items-center gap-2 mb-1">
+                <AlertCircle className={`h-4 w-4 ${expiring30 > 0 ? "text-red-600 dark:text-red-400" : "text-slate-500"}`} aria-hidden="true" />
+                <span className="text-xs text-slate-500 dark:text-slate-400">Expiring 30d</span>
+              </div>
+              <p className={`text-xl font-bold ${expiring30 > 0 ? "text-red-700 dark:text-red-400" : "text-slate-700 dark:text-slate-300"}`}>{expiring30}</p>
+            </Card>
+            <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Building2 className="h-4 w-4 text-slate-500 dark:text-slate-400" aria-hidden="true" />
+                <span className="text-xs text-slate-500 dark:text-slate-400">Departments</span>
+              </div>
+              <p className="text-xl font-bold text-slate-700 dark:text-slate-300">{derived.uniqueDepts}</p>
+            </Card>
+            <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Users className="h-4 w-4 text-slate-500 dark:text-slate-400" aria-hidden="true" />
+                <span className="text-xs text-slate-500 dark:text-slate-400">Vendors</span>
+              </div>
+              <p className="text-xl font-bold text-slate-700 dark:text-slate-300">{derived.uniqueVendors}</p>
+            </Card>
           </section>
 
           {/* Trending section: What's happening now */}
@@ -493,42 +391,6 @@ export default function PublicOverviewPage() {
 
           {/* AI Spending Insights */}
           <SpendingInsights />
-
-          {/* Quick facts grid */}
-          <section aria-labelledby="facts-heading">
-            <h2 id="facts-heading" className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
-              Quick Facts
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-              Key numbers that tell the story of Richmond&apos;s contracts.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <QuickFactCard
-                icon={DollarSign}
-                iconBg="bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400"
-                fact={`Average contract value: ${formatCurrency(derived.avgValue)}`}
-              />
-              {derived.mostContractsDept && (
-                <QuickFactCard
-                  icon={FileText}
-                  iconBg="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
-                  fact={`Most contracts: ${derived.mostContractsDept.department} (${derived.mostContractsDept.count.toLocaleString()})`}
-                />
-              )}
-              {derived.topVendor && (
-                <QuickFactCard
-                  icon={Building2}
-                  iconBg="bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400"
-                  fact={`Largest vendor: ${derived.topVendor.supplier} (${formatCurrency(derived.topVendor.total_value)})`}
-                />
-              )}
-              <QuickFactCard
-                icon={AlertCircle}
-                iconBg="bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400"
-                fact={`Contracts expiring within 90 days: ${(data.expiring_90 ?? 0).toLocaleString()}`}
-              />
-            </div>
-          </section>
 
           {/* Did you know? */}
           <section aria-labelledby="didyouknow-heading">
