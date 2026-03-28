@@ -66,7 +66,6 @@ const navSections: NavSection[] = [
   {
     title: "AI Tools",
     items: [
-      { href: "/staff/ask", label: "Ask Richmond", icon: MessageSquare },
       { href: "/staff/extract", label: "PDF Analyzer", icon: FileUp },
       { href: "/staff/parsed", label: "Contract Intel", icon: Brain },
       { href: "/staff/health", label: "Health Scanner", icon: Activity },
