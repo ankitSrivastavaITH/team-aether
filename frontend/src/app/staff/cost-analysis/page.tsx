@@ -224,6 +224,14 @@ export default function CostAnalysisPage() {
           Analyze vendor pricing trends, compare costs within departments, and
           identify cost-effective procurement opportunities.
         </p>
+        <a
+          href="/staff/compare-vendors"
+          className="inline-flex items-center gap-2 mt-3 px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+          style={{ minHeight: 44 }}
+        >
+          <BarChart3 className="h-4 w-4" aria-hidden="true" />
+          Compare Two Vendors Side-by-Side →
+        </a>
       </div>
 
       {/* Vendor Price Trend Section */}
