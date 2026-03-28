@@ -34,6 +34,14 @@ import {
   GitCompare,
   ClipboardCheck,
   ShieldCheck,
+  Database,
+  BarChart3,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus,
+  XCircle,
+  FileText,
+  Building2,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -84,6 +92,52 @@ interface DepartmentDetailResponse {
   yearly_spending: { year: number; count: number; total_value: number }[];
 }
 
+interface DataCollected {
+  contract: {
+    number: string;
+    value: number | null;
+    department: string | null;
+    days_to_expiry: number | null;
+    risk_level: string | null;
+  };
+  vendor: {
+    total_contracts: number;
+    total_value: number;
+    departments_served: string[];
+  };
+  compliance: {
+    sam_clear: boolean;
+    fcc_clear: boolean;
+    csl_clear: boolean;
+    any_flagged: boolean;
+  };
+  price_trend: {
+    data_points: number;
+    values: (number | null)[];
+    trend: string;
+  };
+  concentration: {
+    vendor_rank: number | null;
+    vendor_share_in_dept: number;
+    total_vendors_in_dept: number;
+  };
+  pdf_intel: string;
+}
+
+interface ConfidenceFactor {
+  factor: string;
+  impact: string;
+  detail: string;
+}
+
+interface SimilarContract {
+  contract_number: string;
+  supplier: string;
+  value: number;
+  risk_level: string;
+  days_to_expiry: number;
+}
+
 interface DecisionResult {
   verdict: "RENEW" | "REBID" | "ESCALATE";
   confidence: "HIGH" | "MEDIUM" | "LOW";
@@ -95,6 +149,9 @@ interface DecisionResult {
   supplier: string;
   contract_value: number;
   department: string;
+  data_collected?: DataCollected;
+  confidence_factors?: ConfidenceFactor[];
+  similar_contracts?: SimilarContract[];
 }
 
 // ---------------------------------------------------------------------------
@@ -430,6 +487,362 @@ function EvidenceGrid({ pros, cons }: { pros: EvidenceItem[]; cons: EvidenceItem
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Data Analyzed Section
+// ---------------------------------------------------------------------------
+
+function DataAnalyzedSection({ data }: { data: DataCollected }) {
+  const complianceIcon = (clear: boolean) =>
+    clear ? (
+      <CheckCircle className="h-4 w-4 text-emerald-500" aria-hidden="true" />
+    ) : (
+      <XCircle className="h-4 w-4 text-red-500" aria-hidden="true" />
+    );
+
+  const trendIcon =
+    data.price_trend.trend === "increasing" ? (
+      <ArrowUpRight className="h-4 w-4 text-red-500" aria-hidden="true" />
+    ) : (
+      <ArrowDownRight className="h-4 w-4 text-emerald-500" aria-hidden="true" />
+    );
+
+  return (
+    <Card>
+      <CardContent className="pt-2">
+        <div className="flex items-center gap-2 mb-4">
+          <Database
+            className="h-5 w-5 text-blue-600 dark:text-blue-400"
+            aria-hidden="true"
+          />
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+            Data Analyzed
+          </h3>
+          <Badge variant="outline" className="text-[10px] text-slate-400 dark:text-slate-500 ml-auto">
+            What the AI saw
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {/* Contract */}
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+              Contract
+            </p>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Value</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  {data.contract.value ? formatCurrency(data.contract.value) : "N/A"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Department</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100 text-right truncate max-w-[120px]">
+                  {data.contract.department || "N/A"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Days Left</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  {data.contract.days_to_expiry ?? "N/A"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Risk</span>
+                <Badge className={`text-[10px] ${riskColor(data.contract.risk_level || "unknown")}`}>
+                  {data.contract.risk_level || "unknown"}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          {/* Vendor */}
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+              Vendor
+            </p>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Contracts</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  {data.vendor.total_contracts}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Total Value</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  {formatCurrency(data.vendor.total_value)}
+                </span>
+              </div>
+              <div className="flex justify-between items-start">
+                <span className="text-slate-500 dark:text-slate-400">Depts</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100 text-right max-w-[140px] truncate">
+                  {data.vendor.departments_served.length > 0
+                    ? data.vendor.departments_served.slice(0, 3).join(", ")
+                    : "N/A"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Compliance */}
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+              Compliance
+            </p>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400">SAM.gov</span>
+                <div className="flex items-center gap-1.5">
+                  {complianceIcon(data.compliance.sam_clear)}
+                  <span className={`font-medium ${data.compliance.sam_clear ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                    {data.compliance.sam_clear ? "Clear" : "Flagged"}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400">FCC</span>
+                <div className="flex items-center gap-1.5">
+                  {complianceIcon(data.compliance.fcc_clear)}
+                  <span className={`font-medium ${data.compliance.fcc_clear ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                    {data.compliance.fcc_clear ? "Clear" : "Flagged"}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400">CSL</span>
+                <div className="flex items-center gap-1.5">
+                  {complianceIcon(data.compliance.csl_clear)}
+                  <span className={`font-medium ${data.compliance.csl_clear ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                    {data.compliance.csl_clear ? "Clear" : "Flagged"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Price Trend */}
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+              Price Trend
+            </p>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Direction</span>
+                <div className="flex items-center gap-1.5">
+                  {trendIcon}
+                  <span className="font-medium text-slate-900 dark:text-slate-100 capitalize">
+                    {data.price_trend.trend.replace("_", " ")}
+                  </span>
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Data Points</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  {data.price_trend.data_points}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Concentration */}
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+              Concentration
+            </p>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Rank in Dept</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  {data.concentration.vendor_rank ? `#${data.concentration.vendor_rank}` : "N/A"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Dept Share</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  {formatCurrency(data.concentration.vendor_share_in_dept)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Total Vendors</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  {data.concentration.total_vendors_in_dept}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* PDF Intel */}
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+              PDF Intel
+            </p>
+            <div className="flex items-center gap-2 text-sm">
+              {data.pdf_intel === "found" ? (
+                <>
+                  <FileText className="h-4 w-4 text-emerald-500" aria-hidden="true" />
+                  <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                    Document terms found
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Minus className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                  <span className="font-medium text-slate-400 dark:text-slate-500">
+                    No documents ingested
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Confidence Breakdown Section
+// ---------------------------------------------------------------------------
+
+function ConfidenceBreakdown({ factors }: { factors: ConfidenceFactor[] }) {
+  if (factors.length === 0) return null;
+
+  return (
+    <Card>
+      <CardContent className="pt-2">
+        <div className="flex items-center gap-2 mb-4">
+          <BarChart3
+            className="h-5 w-5 text-blue-600 dark:text-blue-400"
+            aria-hidden="true"
+          />
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+            Confidence Breakdown
+          </h3>
+          <Badge variant="outline" className="text-[10px] text-slate-400 dark:text-slate-500 ml-auto">
+            How confidence was computed
+          </Badge>
+        </div>
+
+        <div className="space-y-2" role="list" aria-label="Confidence factors">
+          {factors.map((f, i) => {
+            const isPositive = f.impact.startsWith("+");
+            return (
+              <div
+                key={i}
+                role="listitem"
+                className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60"
+              >
+                {/* Impact badge */}
+                <Badge
+                  className={`shrink-0 text-xs font-bold min-w-[48px] justify-center ${
+                    isPositive
+                      ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700"
+                      : "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700"
+                  }`}
+                >
+                  {f.impact}
+                </Badge>
+
+                {/* Factor name + detail */}
+                <div className="min-w-0 flex-1">
+                  <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    {f.factor}
+                  </span>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {f.detail}
+                  </p>
+                </div>
+
+                {/* Icon */}
+                {isPositive ? (
+                  <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" aria-hidden="true" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" aria-hidden="true" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Similar Contracts Section
+// ---------------------------------------------------------------------------
+
+function SimilarContractsSection({ contracts }: { contracts: SimilarContract[] }) {
+  if (contracts.length === 0) return null;
+
+  return (
+    <Card>
+      <CardContent className="pt-2">
+        <div className="flex items-center gap-2 mb-4">
+          <Building2
+            className="h-5 w-5 text-blue-600 dark:text-blue-400"
+            aria-hidden="true"
+          />
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+            Similar Contracts
+          </h3>
+          <Badge variant="outline" className="text-[10px] text-slate-400 dark:text-slate-500 ml-auto">
+            Same department, similar value
+          </Badge>
+        </div>
+
+        <div
+          className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+          role="list"
+          aria-label="Similar contracts"
+        >
+          {contracts.map((c) => (
+            <div
+              key={c.contract_number}
+              role="listitem"
+              className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-4 transition-colors hover:border-blue-300 dark:hover:border-blue-600"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-slate-900 dark:text-slate-100 text-sm truncate">
+                    {c.supplier}
+                  </p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                    #{c.contract_number}
+                  </p>
+                </div>
+                {c.risk_level && (
+                  <Badge className={`shrink-0 text-[10px] ${riskColor(c.risk_level)}`}>
+                    {c.risk_level}
+                  </Badge>
+                )}
+              </div>
+              <div className="mt-2.5 flex items-center justify-between text-sm">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  {formatCurrency(c.value)}
+                </span>
+                {c.days_to_expiry != null && (
+                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                    {c.days_to_expiry}d left
+                  </span>
+                )}
+              </div>
+              <Link
+                href={`/staff/decision?supplier=${encodeURIComponent(c.supplier)}&contract=${encodeURIComponent(c.contract_number)}`}
+                className="mt-2.5 inline-flex items-center text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                aria-label={`Compare with contract ${c.contract_number}`}
+              >
+                Compare with this contract &rarr;
+              </Link>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -798,10 +1211,11 @@ function DecisionPageInner() {
       });
       clearTimeout(timeout);
       if (!res.ok) throw new Error(`API error: ${res.status}`);
-      const raw = await res.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const raw: any = await res.json();
       // API wraps result in { decision: { ... } } — unwrap it
-      const data = (raw as { decision: DecisionResult }).decision ?? raw;
-      const decision = {
+      const data = raw.decision ?? raw;
+      const decision: DecisionResult = {
         ...data,
         pros: data.pros ?? [],
         cons: data.cons ?? [],
@@ -810,6 +1224,9 @@ function DecisionPageInner() {
         supplier: selectedVendor,
         contract_value: selectedContract.value ?? 0,
         department: selectedContract.department ?? "",
+        data_collected: raw.data_collected ?? undefined,
+        confidence_factors: raw.confidence_factors ?? undefined,
+        similar_contracts: raw.similar_contracts ?? undefined,
       };
       // If AI returned fallback (unavailable), auto-retry once after 3s
       if (data.confidence === "LOW" && data.summary?.includes("unavailable")) {
@@ -823,8 +1240,9 @@ function DecisionPageInner() {
           }),
         });
         if (res2.ok) {
-          const raw2 = await res2.json();
-          const retry = (raw2 as { decision: DecisionResult }).decision ?? raw2;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const raw2: any = await res2.json();
+          const retry = raw2.decision ?? raw2;
           if (retry.confidence !== "LOW" || !retry.summary?.includes("unavailable")) {
             setResult({
               ...retry,
@@ -835,6 +1253,9 @@ function DecisionPageInner() {
               supplier: selectedVendor,
               contract_value: selectedContract.value ?? 0,
               department: selectedContract.department ?? "",
+              data_collected: raw2.data_collected ?? undefined,
+              confidence_factors: raw2.confidence_factors ?? undefined,
+              similar_contracts: raw2.similar_contracts ?? undefined,
             });
             return;
           }
@@ -1027,6 +1448,21 @@ function DecisionPageInner() {
         <div ref={resultRef} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           {/* Layer 1: Traffic Light Verdict */}
           <VerdictSection result={result} />
+
+          {/* AI Transparency: Data Analyzed */}
+          {result.data_collected && (
+            <DataAnalyzedSection data={result.data_collected} />
+          )}
+
+          {/* AI Transparency: Confidence Breakdown */}
+          {result.confidence_factors && result.confidence_factors.length > 0 && (
+            <ConfidenceBreakdown factors={result.confidence_factors} />
+          )}
+
+          {/* AI Transparency: Similar Contracts */}
+          {result.similar_contracts && result.similar_contracts.length > 0 && (
+            <SimilarContractsSection contracts={result.similar_contracts} />
+          )}
 
           {/* Layer 2: Evidence Grid */}
           <EvidenceGrid pros={result.pros} cons={result.cons} />

@@ -1,4 +1,4 @@
-"""AI Decision Engine — aggregates 6 data sources and calls Groq LLM for procurement recommendations."""
+"""AI Decision Engine — aggregates 8 data sources and calls Groq LLM for procurement recommendations."""
 
 from __future__ import annotations
 
@@ -158,18 +158,49 @@ def _gather_compliance(supplier: str) -> list[dict]:
     ]
 
 
+def _search_vendor_web(supplier: str) -> dict | None:
+    """Search the web for vendor public information and reviews via DuckDuckGo."""
+    try:
+        import re
+        query = f"{supplier} government contracts reviews"
+        resp = httpx.get(
+            "https://html.duckduckgo.com/html/",
+            params={"q": query},
+            headers={"User-Agent": "Mozilla/5.0 (compatible; RVAContractLens/1.0)"},
+            timeout=10,
+            follow_redirects=True,
+        )
+        if resp.status_code != 200:
+            return None
+        html = resp.text
+        results = []
+        # Extract titles, snippets, and URLs from DuckDuckGo HTML results
+        titles = re.findall(r'<a[^>]*class="result__a"[^>]*>(.*?)</a>', html, re.DOTALL)
+        snippets = re.findall(r'class="result__snippet"[^>]*>(.*?)</(?:a|span|div)', html, re.DOTALL)
+        urls = re.findall(r'<a[^>]*class="result__url"[^>]*href="([^"]*)"', html)
+        for i in range(min(3, len(titles))):
+            title = re.sub(r'<[^>]+>', '', titles[i]).strip()
+            snippet = re.sub(r'<[^>]+>', '', snippets[i]).strip()[:200] if i < len(snippets) else ""
+            url = urls[i] if i < len(urls) else ""
+            if title:
+                results.append({"title": title, "snippet": snippet, "url": url})
+        return {"results": results, "query": supplier} if results else None
+    except Exception:
+        return None
+
+
 # ---------------------------------------------------------------------------
 # POST /api/decision
 # ---------------------------------------------------------------------------
 
 @router.post("")
 async def procurement_decision(request: Request, payload: DecisionRequest):
-    """Aggregate 6 data sources and generate an AI-powered procurement decision recommendation."""
+    """Aggregate 8 data sources and generate an AI-powered procurement decision recommendation."""
 
     contract_number = payload.contract_number
     supplier = payload.supplier
 
-    # ── 1. Gather data from all 7 sources ───────────────────────────────────
+    # ── 1. Gather data from all 8 sources ───────────────────────────────────
     contract_details = _gather_contract_details(contract_number)
     vendor_history = _gather_vendor_history(supplier)
     compliance_results = _gather_compliance(supplier)
@@ -203,6 +234,25 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
             }
     except Exception:
         pass
+
+    # Source 8: Vendor web intelligence (public reviews/news)
+    web_intel = await asyncio.to_thread(_search_vendor_web, supplier)
+
+    # ── 1b. Find similar contracts in same department ────────────────────────
+    similar = []
+    if contract_details:
+        _sim_dept = contract_details.get("department", "")
+        _sim_val = contract_details.get("value", 0)
+        if _sim_dept and _sim_val:
+            similar = db_query(
+                """SELECT contract_number, supplier, value, risk_level, days_to_expiry
+                   FROM city_contracts
+                   WHERE department = ? AND contract_number != ?
+                   AND value BETWEEN ? AND ?
+                   ORDER BY ABS(value - ?)
+                   LIMIT 3""",
+                [_sim_dept, contract_number, _sim_val * 0.5, _sim_val * 1.5, _sim_val]
+            )
 
     # ── 2. Build the data context (trimmed to fit LLM token limits) ─────────
     # Keep vendor history lean: only key fields, max 5 contracts
@@ -266,6 +316,7 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
             "vendor_dept_contracts": vendor_concentration_entry.get("count") if vendor_concentration_entry else 0,
             "total_vendors_in_dept": len(all_concentration),
             "pdf_document_intelligence": pdf_intel,
+            "web_intelligence": [{"title": r["title"], "snippet": r["snippet"]} for r in (web_intel or {}).get("results", [])[:2]],
         },
         default=str,
     )
@@ -380,6 +431,75 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
             ),
         }
 
+    # ── 5. Compute AI transparency layers ──────────────────────────────────
+
+    # Data collected — the raw data the AI saw, formatted for display
+    data_collected = {
+        "contract": {
+            "number": contract_number,
+            "value": contract_details.get("value") if contract_details else None,
+            "department": contract_details.get("department") if contract_details else None,
+            "days_to_expiry": contract_details.get("days_to_expiry") if contract_details else None,
+            "risk_level": contract_details.get("risk_level") if contract_details else None,
+        },
+        "vendor": {
+            "total_contracts": len(vendor_history or []),
+            "total_value": sum(h.get("value", 0) for h in (vendor_history or [])),
+            "departments_served": list(set(h.get("department", "") for h in (vendor_history or []) if h.get("department"))),
+        },
+        "compliance": {
+            "sam_clear": not any(c.get("debarred") for c in compliance_results),
+            "fcc_clear": not any(c.get("flagged") for c in compliance_results if "fcc" in str(c.get("details", "")).lower()),
+            "csl_clear": not any(c.get("flagged") for c in compliance_results if "screening" in str(c.get("details", "")).lower()),
+            "any_flagged": any(c.get("flagged") or c.get("debarred") for c in compliance_results),
+        },
+        "price_trend": {
+            "data_points": len(price_trend or []),
+            "values": [p.get("value") for p in (price_trend or [])[:5]],
+            "trend": "increasing" if len(price_trend or []) >= 2 and (price_trend or [])[-1].get("value", 0) > (price_trend or [])[0].get("value", 0) else "stable_or_decreasing",
+        },
+        "concentration": {
+            "vendor_rank": vendor_position,
+            "vendor_share_in_dept": vendor_concentration_entry.get("total") if vendor_concentration_entry else 0,
+            "total_vendors_in_dept": len(all_concentration),
+        },
+        "pdf_intel": "found" if pdf_intel else "none",
+    }
+
+    # Confidence factors — break down what influenced confidence
+    confidence_factors = []
+    # Compliance
+    if not any(c.get("flagged") or c.get("debarred") for c in compliance_results):
+        confidence_factors.append({"factor": "Compliance Clear", "impact": "+20", "detail": "All 3 federal checks passed"})
+    else:
+        confidence_factors.append({"factor": "Compliance Flag", "impact": "-30", "detail": "One or more compliance checks flagged"})
+    # Vendor history
+    vh_count = len(vendor_history or [])
+    if vh_count >= 3:
+        confidence_factors.append({"factor": "Strong History", "impact": "+15", "detail": f"{vh_count} prior contracts provide good baseline"})
+    elif vh_count == 0:
+        confidence_factors.append({"factor": "No History", "impact": "-20", "detail": "No prior contracts — limited data for analysis"})
+    else:
+        confidence_factors.append({"factor": "Limited History", "impact": "+5", "detail": f"Only {vh_count} prior contract(s)"})
+    # Price trend
+    if len(price_trend or []) >= 2:
+        first_val = (price_trend or [])[0].get("value", 0)
+        last_val = (price_trend or [])[-1].get("value", 0)
+        if first_val > 0:
+            change_pct = ((last_val - first_val) / first_val) * 100
+            if change_pct > 20:
+                confidence_factors.append({"factor": "Price Increasing", "impact": "-15", "detail": f"Prices up {change_pct:.0f}% — consider rebid"})
+            elif change_pct < -10:
+                confidence_factors.append({"factor": "Price Decreasing", "impact": "+10", "detail": f"Prices down {abs(change_pct):.0f}% — good trend"})
+            else:
+                confidence_factors.append({"factor": "Price Stable", "impact": "+10", "detail": f"Prices within {abs(change_pct):.0f}%"})
+    # PDF intel
+    if pdf_intel:
+        confidence_factors.append({"factor": "Document Intelligence", "impact": "+10", "detail": "PDF contract terms available for cross-reference"})
+    # Concentration
+    if vendor_position and vendor_position <= 3:
+        confidence_factors.append({"factor": "Concentration Risk", "impact": "-10", "detail": f"Vendor is #{vendor_position} in department — high concentration"})
+
     return {
         "decision": result,
         "sources_checked": [
@@ -390,8 +510,13 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
             "concentration-risk",
             "contract-description",
             "pdf-document-intelligence",
+            "web-intelligence",
         ],
         "pdf_intel_found": pdf_intel is not None,
+        "data_collected": data_collected,
+        "similar_contracts": similar,
+        "confidence_factors": confidence_factors,
+        "web_intel": web_intel,
         "contract_number": contract_number,
         "supplier": supplier,
         "disclaimer": "AI-generated recommendation for advisory purposes only. All procurement decisions require human review and approval.",
