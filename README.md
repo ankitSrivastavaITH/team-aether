@@ -2,7 +2,7 @@
 
 **AI-powered procurement intelligence for the City of Richmond.**
 
-Built for [Hack for RVA 2026](https://hackrva.org) | Pillar 1: A Thriving City Hall | Problem 2: Procurement Risk & Opportunity Review
+Built for [Hack for RVA 2026](https://rvahacks.org) | Pillar 1: A Thriving City Hall | Problem 2: Procurement Risk & Opportunity Review
 
 **Live Demo:** [hackrva.ithena.app](https://hackrva.ithena.app)
 
