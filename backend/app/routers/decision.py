@@ -224,53 +224,35 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
         default=str,
     )
 
-    # ── 3. Build the LLM prompt ─────────────────────────────────────────────
-    system_prompt = """You are a senior procurement analyst for the City of Richmond, VA.
-You are given data from 6 sources about a specific contract and vendor. Analyze ALL the data and produce a structured procurement decision recommendation.
+    # ── 3. Build compact LLM prompt (fits within Groq token limits) ─────────
+    system_prompt = """You are a procurement analyst. Return ONLY valid JSON (no markdown fences): {"verdict":"RENEW or REBID or ESCALATE","confidence":"HIGH or MEDIUM or LOW","summary":"one sentence","pros":[{"point":"title","evidence":"data","source":"source-name"}],"cons":[{"point":"title","evidence":"data","source":"source-name"}],"memo":"markdown with ## Executive Summary, ## Vendor Profile, ## Compliance Status, ## Price Analysis, ## Recommendation"}. Use real numbers. Min 2 pros, 2 cons. Memo 200-400 words. Advisory only."""
 
-You MUST return ONLY valid JSON (no markdown, no code fences) with this exact structure:
-{
-  "verdict": "RENEW" or "REBID" or "ESCALATE",
-  "confidence": "HIGH" or "MEDIUM" or "LOW",
-  "summary": "One sentence summary of your recommendation",
-  "pros": [
-    { "point": "Short title", "evidence": "Specific data supporting this point", "source": "which data source" }
-  ],
-  "cons": [
-    { "point": "Short title", "evidence": "Specific data supporting this concern", "source": "which data source" }
-  ],
-  "memo": "Full markdown decision memo with sections: ## Executive Summary, ## Vendor Profile, ## Compliance Status, ## Price Analysis, ## Risk Assessment, ## Recommendation"
-}
-
-Rules for your analysis:
-- Use ACTUAL numbers from the data (dollar amounts, dates, counts) — do not make up figures.
-- "source" field must be one of: contract-details, vendor-history, compliance-check, price-trend, concentration-risk, contract-description.
-- verdict RENEW = vendor is performing well, pricing is fair, no compliance flags.
-- verdict REBID = concerns about price increases, concentration risk, or minor compliance issues warrant competitive bidding.
-- verdict ESCALATE = serious compliance flags, debarment matches, or insufficient data require human review.
-- Include at least 2 pros and 2 cons when data supports them.
-- The memo should be comprehensive (300-500 words) and reference specific data points.
-- Do NOT make legal determinations. Label all analysis as advisory."""
-
-    user_prompt = f"""Analyze this procurement data and generate a decision recommendation.
-
-Contract Number: {contract_number}
-Supplier: {supplier}
-
-Data from 6 sources:
-{data_context}"""
+    user_prompt = f"Contract {contract_number}, {supplier}.\n{data_context}"
 
     # ── 4. Call Groq LLM ────────────────────────────────────────────────────
     try:
-        raw = await asyncio.to_thread(chat, system_prompt, user_prompt)
+        raw = await asyncio.to_thread(chat, system_prompt, user_prompt, "llama-3.1-8b-instant")
+        print(f"[DECISION] Raw LLM response ({len(raw)} chars): {raw[:200]}")
 
-        # Parse JSON from LLM response
+        # Parse JSON from LLM response — handle various wrapping formats
         cleaned = raw.strip()
+        # Remove markdown code fences if present
         if cleaned.startswith("```"):
-            cleaned = cleaned.split("\n", 1)[1]
+            # Remove opening fence (with optional language hint)
+            cleaned = cleaned.split("\n", 1)[-1]
         if cleaned.endswith("```"):
             cleaned = cleaned.rsplit("```", 1)[0]
-        result = json.loads(cleaned.strip())
+        # Also handle ```json prefix
+        if cleaned.startswith("json\n"):
+            cleaned = cleaned[5:]
+        cleaned = cleaned.strip()
+        # Find JSON object boundaries
+        start = cleaned.find("{")
+        end = cleaned.rfind("}") + 1
+        if start >= 0 and end > start:
+            cleaned = cleaned[start:end]
+        # strict=False allows control characters (newlines) inside JSON strings
+        result = json.loads(cleaned, strict=False)
 
         # Validate required fields
         for field in ("verdict", "confidence", "summary", "pros", "cons", "memo"):
@@ -285,7 +267,8 @@ Data from 6 sources:
         if result["confidence"] not in ("HIGH", "MEDIUM", "LOW"):
             result["confidence"] = "LOW"
 
-    except Exception:
+    except Exception as _e:
+        print(f"[DECISION] Groq failed: {type(_e).__name__}: {_e}")
         # Fallback when Groq is unavailable or returns bad data
         any_flagged = any(c.get("flagged", False) for c in compliance_results)
         result = {
