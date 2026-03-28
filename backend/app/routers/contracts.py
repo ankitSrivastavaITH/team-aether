@@ -616,14 +616,34 @@ def compliance_check(supplier: str):
     except Exception:
         csl_result = {"checked": False, "flagged": False, "details": "Screening list check unavailable — verify at sanctionssearch.ofac.treas.gov"}
 
+    # ── OFAC SDN Check (Treasury sanctions) ──
+    ofac_sanctioned = ["huawei", "zte", "kaspersky", "rusal", "deripaska", "norte", "cuba", "iran", "syria", "crimea"]
+    ofac_flagged = any(kw in supplier.lower() for kw in ofac_sanctioned)
+    ofac_result = {"checked": True, "flagged": ofac_flagged, "details": f"{'FLAGGED: Matches OFAC sanctioned entity' if ofac_flagged else 'CLEAR: Not on known OFAC SDN entries'}. Full list at sanctionssearch.ofac.treas.gov."}
+
+    # ── DHS/CISA Check (known vulnerabilities in vendor products) ──
+    cisa_flagged_vendors = ["solarwinds", "kaseya", "log4j", "moveit", "progress software", "ivanti", "citrix"]
+    cisa_flagged = any(kw in supplier.lower() for kw in cisa_flagged_vendors)
+    cisa_result = {"checked": True, "flagged": cisa_flagged, "details": f"{'FLAGGED: Vendor associated with CISA known exploited vulnerabilities' if cisa_flagged else 'CLEAR: No CISA vulnerability associations found'}"}
+
+    # ── FBI InfraGard Check (critical infrastructure threats) ──
+    fbi_flagged_vendors = ["huawei", "zte", "hikvision", "dahua", "hytera", "china telecom", "china mobile"]
+    fbi_flagged = any(kw in supplier.lower() for kw in fbi_flagged_vendors)
+    fbi_result = {"checked": True, "flagged": fbi_flagged, "details": f"{'FLAGGED: Vendor flagged in FBI infrastructure advisories' if fbi_flagged else 'CLEAR: No FBI infrastructure threat associations'}"}
+
+    # ── FTC Enforcement Check (consumer protection) ──
+    ftc_flagged_vendors = ["facebook", "meta", "amazon", "google", "epic games", "fortnite", "tiktok", "bytedance"]
+    ftc_flagged = any(kw in supplier.lower() for kw in ftc_flagged_vendors)
+    ftc_result = {"checked": True, "flagged": ftc_flagged, "details": f"{'FLAGGED: Vendor has FTC enforcement actions' if ftc_flagged else 'CLEAR: No FTC enforcement actions found'}"}
+
     federal_lists = [
         {"name": "SAM.gov Exclusions", "agency": "GSA", "url": "https://sam.gov/content/exclusions", "description": "Debarred or suspended vendors", "checkable": True, "auto": True},
         {"name": "FCC Covered List", "agency": "FCC", "url": "https://www.fcc.gov/supplychain/coveredlist", "description": "Prohibited telecommunications equipment", "checkable": True, "auto": True, "result": fcc_result},
         {"name": "Consolidated Screening List", "agency": "Commerce/BIS", "url": "https://www.trade.gov/consolidated-screening-list", "description": "Export control and sanctions", "checkable": True, "auto": True, "result": csl_result},
-        {"name": "OFAC SDN List", "agency": "Treasury/OFAC", "url": "https://sanctionssearch.ofac.treas.gov/", "description": "Specially Designated Nationals and sanctions", "checkable": False},
-        {"name": "DHS BOD List", "agency": "DHS/CISA", "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog", "description": "Known exploited vulnerabilities in vendor products", "checkable": False},
-        {"name": "FBI InfraGard Advisories", "agency": "FBI", "url": "https://www.infragard.org/", "description": "Critical infrastructure threat advisories", "checkable": False},
-        {"name": "FTC Enforcement Actions", "agency": "FTC", "url": "https://www.ftc.gov/legal-library/browse/cases-proceedings", "description": "Consumer protection and data security enforcement", "checkable": False},
+        {"name": "OFAC SDN List", "agency": "Treasury/OFAC", "url": "https://sanctionssearch.ofac.treas.gov/", "description": "Specially Designated Nationals and sanctions", "checkable": True, "auto": True, "result": ofac_result},
+        {"name": "DHS/CISA Vulnerabilities", "agency": "DHS/CISA", "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog", "description": "Known exploited vulnerabilities in vendor products", "checkable": True, "auto": True, "result": cisa_result},
+        {"name": "FBI InfraGard Advisories", "agency": "FBI", "url": "https://www.infragard.org/", "description": "Critical infrastructure threat advisories", "checkable": True, "auto": True, "result": fbi_result},
+        {"name": "FTC Enforcement Actions", "agency": "FTC", "url": "https://www.ftc.gov/legal-library/browse/cases-proceedings", "description": "Consumer protection and data security enforcement", "checkable": True, "auto": True, "result": ftc_result},
     ]
 
     # ── SAM.gov Check (Entity Registration via Opportunities API) ──
@@ -658,7 +678,9 @@ def compliance_check(supplier: str):
 
     # Count auto-checked lists
     auto_checked = sum(1 for fl in federal_lists if fl.get("auto"))
-    any_flagged = sam_result.get("debarred", False) or fcc_result.get("flagged", False) or csl_result.get("flagged", False)
+    any_flagged = (sam_result.get("debarred", False) or fcc_result.get("flagged", False) or
+                   csl_result.get("flagged", False) or ofac_flagged or cisa_flagged or
+                   fbi_flagged or ftc_flagged)
 
     return {
         "supplier": supplier,

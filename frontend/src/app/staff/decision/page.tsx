@@ -42,6 +42,7 @@ import {
   XCircle,
   FileText,
   Building2,
+  Globe,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -1125,6 +1126,7 @@ function DecisionPageInner() {
   const [selectedVendor, setSelectedVendor] = useState("");
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [result, setResult] = useState<DecisionResult | null>(null);
+  const [webIntel, setWebIntel] = useState<{ results: { title: string; snippet: string; url: string }[]; query: string } | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
@@ -1228,6 +1230,8 @@ function DecisionPageInner() {
         confidence_factors: raw.confidence_factors ?? undefined,
         similar_contracts: raw.similar_contracts ?? undefined,
       };
+      // Extract web intel
+      setWebIntel(raw.web_intel ?? null);
       // If AI returned fallback (unavailable), auto-retry once after 3s
       if (data.confidence === "LOW" && data.summary?.includes("unavailable")) {
         await new Promise(r => setTimeout(r, 3000));
@@ -1466,6 +1470,35 @@ function DecisionPageInner() {
 
           {/* Layer 2: Evidence Grid */}
           <EvidenceGrid pros={result.pros} cons={result.cons} />
+
+          {/* Web Intelligence */}
+          {webIntel && webIntel.results && webIntel.results.length > 0 && (
+            <Card>
+              <CardContent className="pt-4 space-y-3">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-blue-500" aria-hidden="true" />
+                  Vendor Web Intelligence
+                  <Badge className="text-[10px] bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
+                    {webIntel.results.length} sources
+                  </Badge>
+                </h3>
+                <div className="space-y-2">
+                  {webIntel.results.map((r: { title: string; snippet: string; url: string }, i: number) => (
+                    <div key={i} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{r.title}</p>
+                      {r.snippet && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{r.snippet}</p>}
+                      {r.url && (
+                        <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1 inline-block">
+                          View source →
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">Source: DuckDuckGo web search. Results are informational — verify independently.</p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Alternative Vendors */}
           {result.department && (

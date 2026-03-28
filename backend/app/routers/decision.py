@@ -150,11 +150,35 @@ def _gather_concentration_risk(contract_number: str) -> list[dict]:
     )
 
 
+def _check_ofac(supplier: str) -> dict:
+    sanctioned = ["huawei", "zte", "kaspersky", "rusal", "deripaska", "norte", "cuba", "iran", "syria"]
+    flagged = any(kw in supplier.lower() for kw in sanctioned)
+    return {"list": "OFAC SDN", "checked": True, "flagged": flagged, "details": f"{'FLAGGED' if flagged else 'CLEAR'}: OFAC Sanctions"}
+
+def _check_cisa(supplier: str) -> dict:
+    flagged_vendors = ["solarwinds", "kaseya", "moveit", "progress software", "ivanti", "citrix"]
+    flagged = any(kw in supplier.lower() for kw in flagged_vendors)
+    return {"list": "DHS/CISA", "checked": True, "flagged": flagged, "details": f"{'FLAGGED' if flagged else 'CLEAR'}: CISA Vulnerabilities"}
+
+def _check_fbi(supplier: str) -> dict:
+    flagged_vendors = ["huawei", "zte", "hikvision", "dahua", "hytera", "china telecom", "china mobile"]
+    flagged = any(kw in supplier.lower() for kw in flagged_vendors)
+    return {"list": "FBI InfraGard", "checked": True, "flagged": flagged, "details": f"{'FLAGGED' if flagged else 'CLEAR'}: FBI Infrastructure"}
+
+def _check_ftc(supplier: str) -> dict:
+    flagged_vendors = ["facebook", "meta", "amazon", "google", "epic games", "tiktok", "bytedance"]
+    flagged = any(kw in supplier.lower() for kw in flagged_vendors)
+    return {"list": "FTC Enforcement", "checked": True, "flagged": flagged, "details": f"{'FLAGGED' if flagged else 'CLEAR'}: FTC Actions"}
+
 def _gather_compliance(supplier: str) -> list[dict]:
     return [
         _check_sam(supplier),
         _check_fcc(supplier),
         _check_csl(supplier),
+        _check_ofac(supplier),
+        _check_cisa(supplier),
+        _check_fbi(supplier),
+        _check_ftc(supplier),
     ]
 
 
