@@ -569,22 +569,59 @@ def get_contract(contract_number: str) -> Contract:
 @router.get("/compliance-check/{supplier}")
 def compliance_check(supplier: str):
     """Check vendor against known federal exclusion and compliance lists.
-    References the 7 federal lists required by Virginia State Code since 2022."""
+    References the 7 federal lists required by Virginia State Code since 2022.
+    Auto-checks SAM.gov, FCC Covered List, and Consolidated Screening List."""
+    import httpx
+
+    # ── FCC Covered List (static — known prohibited manufacturers) ──
+    FCC_COVERED_ENTITIES = [
+        "huawei", "zte", "hytera", "hikvision", "dahua",
+        "china mobile", "china telecom", "china unicom",
+        "kaspersky", "pacific network", "comnet",
+    ]
+    supplier_lower = supplier.lower()
+    fcc_match = any(entity in supplier_lower for entity in FCC_COVERED_ENTITIES)
+    fcc_result = {
+        "checked": True,
+        "flagged": fcc_match,
+        "details": f"MATCH: {supplier} matches FCC Covered List prohibited manufacturer" if fcc_match else f"CLEAR: {supplier} not found on FCC Covered List",
+    }
+
+    # ── Consolidated Screening List (Commerce/BIS) ──
+    csl_result = {"checked": False, "flagged": False, "details": "Not checked"}
+    try:
+        csl_resp = httpx.get(
+            "https://api.trade.gov/consolidated_screening_list/v1/search",
+            params={"api_key": "II3L3IFmlbnMEJagCG4bV0F2", "q": supplier, "limit": 5},
+            timeout=10,
+        )
+        if csl_resp.status_code == 200:
+            csl_data = csl_resp.json()
+            csl_total = csl_data.get("total", 0)
+            csl_result = {
+                "checked": True,
+                "flagged": csl_total > 0,
+                "matches": csl_total,
+                "details": f"MATCH: {csl_total} record(s) found on Consolidated Screening List" if csl_total > 0 else f"CLEAR: No records found for {supplier}",
+            }
+        else:
+            csl_result = {"checked": False, "flagged": False, "details": "Could not reach Commerce Screening List API"}
+    except Exception:
+        csl_result = {"checked": False, "flagged": False, "details": "Could not reach Commerce Screening List API"}
 
     federal_lists = [
-        {"name": "SAM.gov Exclusions", "agency": "GSA", "url": "https://sam.gov/content/exclusions", "description": "Debarred or suspended vendors", "checkable": True},
-        {"name": "Consolidated Screening List", "agency": "Commerce/BIS", "url": "https://www.trade.gov/consolidated-screening-list", "description": "Export control and sanctions", "checkable": False},
+        {"name": "SAM.gov Exclusions", "agency": "GSA", "url": "https://sam.gov/content/exclusions", "description": "Debarred or suspended vendors", "checkable": True, "auto": True},
+        {"name": "FCC Covered List", "agency": "FCC", "url": "https://www.fcc.gov/supplychain/coveredlist", "description": "Prohibited telecommunications equipment", "checkable": True, "auto": True, "result": fcc_result},
+        {"name": "Consolidated Screening List", "agency": "Commerce/BIS", "url": "https://www.trade.gov/consolidated-screening-list", "description": "Export control and sanctions", "checkable": True, "auto": True, "result": csl_result},
         {"name": "OFAC SDN List", "agency": "Treasury/OFAC", "url": "https://sanctionssearch.ofac.treas.gov/", "description": "Specially Designated Nationals and sanctions", "checkable": False},
-        {"name": "FCC Covered List", "agency": "FCC", "url": "https://www.fcc.gov/supplychain/coveredlist", "description": "Prohibited telecommunications equipment (Huawei, ZTE, etc.)", "checkable": False},
         {"name": "DHS BOD List", "agency": "DHS/CISA", "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog", "description": "Known exploited vulnerabilities in vendor products", "checkable": False},
         {"name": "FBI InfraGard Advisories", "agency": "FBI", "url": "https://www.infragard.org/", "description": "Critical infrastructure threat advisories", "checkable": False},
         {"name": "FTC Enforcement Actions", "agency": "FTC", "url": "https://www.ftc.gov/legal-library/browse/cases-proceedings", "description": "Consumer protection and data security enforcement", "checkable": False},
     ]
 
-    # Check SAM.gov (the one we can actually query)
+    # ── SAM.gov Exclusions ──
     sam_result = {"checked": False, "debarred": False, "details": "Not checked"}
     try:
-        import httpx
         resp = httpx.get(
             "https://api.sam.gov/entity-information/v3/exclusions",
             params={"api_key": "DEMO_KEY", "q": supplier, "limit": 5},
@@ -604,14 +641,21 @@ def compliance_check(supplier: str):
     except Exception:
         sam_result = {"checked": False, "details": "Could not reach SAM.gov API"}
 
+    # Count auto-checked lists
+    auto_checked = sum(1 for fl in federal_lists if fl.get("auto"))
+    any_flagged = sam_result.get("debarred", False) or fcc_result.get("flagged", False) or csl_result.get("flagged", False)
+
     return {
         "supplier": supplier,
         "sam_check": sam_result,
+        "fcc_check": fcc_result,
+        "csl_check": csl_result,
         "federal_lists": federal_lists,
         "total_lists": len(federal_lists),
-        "auto_checked": 1,
-        "manual_review_needed": len(federal_lists) - 1,
-        "recommendation": f"SAM.gov checked automatically. {len(federal_lists) - 1} additional lists require manual review before procurement. Links provided below.",
+        "auto_checked": auto_checked,
+        "manual_review_needed": len(federal_lists) - auto_checked,
+        "any_flagged": any_flagged,
+        "recommendation": f"{auto_checked} of {len(federal_lists)} lists checked automatically. {'⚠ FLAGGED on one or more lists — review required before procurement.' if any_flagged else f'{len(federal_lists) - auto_checked} additional lists require manual verification.'}",
         "virginia_code_reference": "Virginia State Code requires checking all federal exclusion lists before procurement since 2022.",
         "disclaimer": "Automated checks are advisory only. Complete all required compliance reviews before making procurement decisions.",
     }
