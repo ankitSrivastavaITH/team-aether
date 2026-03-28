@@ -245,7 +245,7 @@ function CompactAutoCard({
 // ---------------------------------------------------------------------------
 
 export function ComplianceCheck({ supplier }: { supplier: string }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [manualChecked, setManualChecked] = useState<Record<string, boolean>>(
     {}
   );
