@@ -72,8 +72,20 @@ export default function ExtractPage() {
 
   const files = filesData?.files ?? [];
 
+  // Also fetch extracted contract terms
+  const { data: extractedData } = useQuery({
+    queryKey: ["extracted-contracts"],
+    queryFn: () => fetchAPI<Array<{
+      id: string; filename: string; uploaded_at: string;
+      expiration_date: string | null; renewal_option: string | null;
+      contract_value: string | null; summary: string | null;
+      parties: string | null; key_conditions: string | null;
+    }>>("/api/extract/extracted"),
+  });
+  const extracted = extractedData ?? [];
+
   return (
-    <div className="mx-auto max-w-7xl space-y-10">
+    <div className="space-y-6">
       {/* ------------------------------------------------------------------ */}
       {/* Header                                                              */}
       {/* ------------------------------------------------------------------ */}
@@ -132,7 +144,7 @@ export default function ExtractPage() {
       {/* ------------------------------------------------------------------ */}
       {/* Two-column layout                                                   */}
       {/* ------------------------------------------------------------------ */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Left column: Upload + Extraction results */}
         <section className="space-y-6" aria-label="Upload and extraction">
           <Card>
@@ -227,6 +239,52 @@ export default function ExtractPage() {
           </Card>
         </section>
       </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Extracted Contract Intelligence                                     */}
+      {/* ------------------------------------------------------------------ */}
+      {extracted.length > 0 && (
+        <section aria-labelledby="extracted-heading">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <BrainCircuit className="h-5 w-5 text-violet-600 dark:text-violet-400" aria-hidden="true" />
+                Extracted Contract Intelligence
+                <Badge variant="secondary" className="ml-1 text-xs">{extracted.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {extracted.map((e) => (
+                  <div
+                    key={e.id}
+                    className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 space-y-2"
+                  >
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate" title={e.filename}>
+                      <FileText className="h-3 w-3 inline mr-1 text-blue-500" aria-hidden="true" />
+                      {e.filename}
+                    </p>
+                    {e.summary && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{e.summary}</p>
+                    )}
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
+                      {e.contract_value && e.contract_value !== "null" && (
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">{e.contract_value}</span>
+                      )}
+                      {e.expiration_date && e.expiration_date !== "null" && (
+                        <span className="text-slate-500 dark:text-slate-400">Expires: {e.expiration_date}</span>
+                      )}
+                      {e.parties && e.parties !== "null" && (
+                        <span className="text-slate-400 dark:text-slate-500 truncate max-w-[200px]">{e.parties}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* How It Works                                                        */}
