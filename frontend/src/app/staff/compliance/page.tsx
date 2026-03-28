@@ -14,9 +14,9 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fetchAPI } from "@/lib/api";
+import { VendorSelect } from "@/components/vendor-select";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -107,7 +107,6 @@ const COMPLIANCE_LISTS = [
 // ---------------------------------------------------------------------------
 
 export default function CompliancePage() {
-  const [vendorInput, setVendorInput] = useState("");
   const [vendorName, setVendorName] = useState("");
   const [samResult, setSamResult] = useState<DebarmentResult | null>(null);
   const [samLoading, setSamLoading] = useState(false);
@@ -134,14 +133,12 @@ export default function CompliancePage() {
     }
   }, []);
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = vendorInput.trim();
-    if (trimmed) {
-      setVendorName(trimmed);
-      setSamResult(null);
-      setCheckedLists({});
-      runSamCheck(trimmed);
+  function handleVendorChange(vendor: string) {
+    setVendorName(vendor);
+    setSamResult(null);
+    setCheckedLists({});
+    if (vendor.trim()) {
+      runSamCheck(vendor.trim());
     }
   }
 
@@ -162,7 +159,6 @@ export default function CompliancePage() {
   }
 
   function resetForm() {
-    setVendorInput("");
     setVendorName("");
     setSamResult(null);
     setCheckedLists({});
@@ -220,38 +216,12 @@ export default function CompliancePage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form
-            onSubmit={handleSearch}
-            className="flex gap-2"
-            aria-label="Vendor compliance search"
-          >
-            <label htmlFor="compliance-vendor-input" className="sr-only">
-              Vendor name
-            </label>
-            <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none"
-                aria-hidden="true"
-              />
-              <Input
-                id="compliance-vendor-input"
-                type="search"
-                value={vendorInput}
-                onChange={(e) => setVendorInput(e.target.value)}
-                placeholder="Enter vendor name..."
-                className="pl-9 h-12 text-base"
-              />
-            </div>
-            <Button
-              type="submit"
-              disabled={!vendorInput.trim()}
-              className="h-12 gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-              aria-label="Start compliance check"
-            >
-              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-              Check
-            </Button>
-          </form>
+          <VendorSelect
+            value={vendorName}
+            onChange={handleVendorChange}
+            label="Vendor to Check"
+            placeholder="Select a vendor to check..."
+          />
         </CardContent>
       </Card>
 

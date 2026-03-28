@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   GitCompare,
-  Search,
   Building2,
   DollarSign,
   FileText,
@@ -13,10 +12,9 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { fetchAPI } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
+import { VendorSelect } from "@/components/vendor-select";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -70,72 +68,6 @@ function getRiskProfile(contracts: Array<Record<string, unknown>>): {
 function getAvgValue(totalValue: number, count: number): number {
   if (count === 0) return 0;
   return totalValue / count;
-}
-
-// ---------------------------------------------------------------------------
-// VendorSearchInput
-// ---------------------------------------------------------------------------
-
-function VendorSearchInput({
-  id,
-  label,
-  value,
-  onChange,
-  onSearch,
-  isLoading,
-  error,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  onSearch: () => void;
-  isLoading: boolean;
-  error: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <label
-        htmlFor={id}
-        className="text-sm font-semibold text-slate-700 dark:text-slate-300"
-      >
-        {label}
-      </label>
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none"
-            aria-hidden="true"
-          />
-          <Input
-            id={id}
-            type="search"
-            placeholder="Enter vendor name…"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") onSearch();
-            }}
-            className="pl-9 h-11 text-base focus:ring-2 focus:ring-blue-500"
-            aria-label={label}
-          />
-        </div>
-        <Button
-          onClick={onSearch}
-          disabled={!value.trim() || isLoading}
-          className="h-11 px-5 bg-blue-600 hover:bg-blue-700 text-white focus:ring-2 focus:ring-blue-500"
-          aria-label={`Search for ${label}`}
-        >
-          {isLoading ? "Loading…" : "Search"}
-        </Button>
-      </div>
-      {error && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-          Vendor not found or error loading data.
-        </p>
-      )}
-    </div>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -361,20 +293,18 @@ function ComparisonTable({
 // ---------------------------------------------------------------------------
 
 export default function CompareVendorsPage() {
-  const [vendor1Input, setVendor1Input] = useState("");
-  const [vendor2Input, setVendor2Input] = useState("");
-  const [vendor1Query, setVendor1Query] = useState("");
-  const [vendor2Query, setVendor2Query] = useState("");
+  const [vendor1, setVendor1] = useState("");
+  const [vendor2, setVendor2] = useState("");
 
   const {
     data: vendor1Data,
     isLoading: loading1,
     isError: error1,
   } = useQuery<VendorData>({
-    queryKey: ["vendor-compare", vendor1Query],
+    queryKey: ["vendor-compare", vendor1],
     queryFn: () =>
-      fetchAPI<VendorData>(`/api/contracts/vendor/${encodeURIComponent(vendor1Query)}`),
-    enabled: !!vendor1Query,
+      fetchAPI<VendorData>(`/api/contracts/vendor/${encodeURIComponent(vendor1)}`),
+    enabled: !!vendor1,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -383,10 +313,10 @@ export default function CompareVendorsPage() {
     isLoading: loading2,
     isError: error2,
   } = useQuery<VendorData>({
-    queryKey: ["vendor-compare", vendor2Query],
+    queryKey: ["vendor-compare", vendor2],
     queryFn: () =>
-      fetchAPI<VendorData>(`/api/contracts/vendor/${encodeURIComponent(vendor2Query)}`),
-    enabled: !!vendor2Query,
+      fetchAPI<VendorData>(`/api/contracts/vendor/${encodeURIComponent(vendor2)}`),
+    enabled: !!vendor2,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -405,30 +335,36 @@ export default function CompareVendorsPage() {
         </p>
       </div>
 
-      {/* Search inputs */}
+      {/* Vendor selectors */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <VendorSearchInput
-          id="vendor1-input"
-          label="Vendor A"
-          value={vendor1Input}
-          onChange={setVendor1Input}
-          onSearch={() => setVendor1Query(vendor1Input.trim())}
-          isLoading={loading1}
-          error={!!error1 && !!vendor1Query}
-        />
-        <VendorSearchInput
-          id="vendor2-input"
-          label="Vendor B"
-          value={vendor2Input}
-          onChange={setVendor2Input}
-          onSearch={() => setVendor2Query(vendor2Input.trim())}
-          isLoading={loading2}
-          error={!!error2 && !!vendor2Query}
-        />
+        <div className="flex flex-col gap-1">
+          <VendorSelect
+            value={vendor1}
+            onChange={setVendor1}
+            label="Vendor A"
+            placeholder="Select Vendor A..."
+          />
+          {loading1 && <p className="text-xs text-slate-400 pl-1">Loading…</p>}
+          {!!error1 && !!vendor1 && (
+            <p className="text-sm text-red-600 dark:text-red-400" role="alert">Vendor not found or error loading data.</p>
+          )}
+        </div>
+        <div className="flex flex-col gap-1">
+          <VendorSelect
+            value={vendor2}
+            onChange={setVendor2}
+            label="Vendor B"
+            placeholder="Select Vendor B..."
+          />
+          {loading2 && <p className="text-xs text-slate-400 pl-1">Loading…</p>}
+          {!!error2 && !!vendor2 && (
+            <p className="text-sm text-red-600 dark:text-red-400" role="alert">Vendor not found or error loading data.</p>
+          )}
+        </div>
       </div>
 
       {/* Placeholder when nothing searched yet */}
-      {!vendor1Query && !vendor2Query && (
+      {!vendor1 && !vendor2 && (
         <div className="text-center py-12 text-slate-400 dark:text-slate-600">
           <GitCompare className="h-12 w-12 mx-auto mb-3 opacity-30" aria-hidden="true" />
           <p className="text-sm">Enter two vendor names above to start comparing.</p>
@@ -443,7 +379,7 @@ export default function CompareVendorsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {vendor1Data ? (
               <VendorCard vendor={vendor1Data} side="left" />
-            ) : vendor1Query && !loading1 ? (
+            ) : vendor1 && !loading1 ? (
               <div className="flex items-center justify-center h-40 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 dark:text-slate-500 text-sm">
                 No data for this vendor
               </div>
@@ -453,7 +389,7 @@ export default function CompareVendorsPage() {
 
             {vendor2Data ? (
               <VendorCard vendor={vendor2Data} side="right" />
-            ) : vendor2Query && !loading2 ? (
+            ) : vendor2 && !loading2 ? (
               <div className="flex items-center justify-center h-40 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 dark:text-slate-500 text-sm">
                 No data for this vendor
               </div>

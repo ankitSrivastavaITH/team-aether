@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Search,
   TrendingUp,
   TrendingDown,
   DollarSign,
@@ -14,12 +13,11 @@ import {
   Minus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fetchAPI } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 import { useDepartments } from "@/hooks/use-contracts";
+import { VendorSelect } from "@/components/vendor-select";
 import {
   Select,
   SelectContent,
@@ -140,7 +138,6 @@ function ComparisonTooltip({
 // ---------------------------------------------------------------------------
 
 export default function CostAnalysisPage() {
-  const [vendorInput, setVendorInput] = useState("");
   const [vendorName, setVendorName] = useState("");
   const [selectedDept, setSelectedDept] = useState("");
 
@@ -185,12 +182,6 @@ export default function CostAnalysisPage() {
         })
         .filter(Boolean)
     : [];
-
-  function handleVendorSearch(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = vendorInput.trim();
-    if (trimmed) setVendorName(trimmed);
-  }
 
   // Compute average comparison text
   let avgComparison: string | null = null;
@@ -249,38 +240,13 @@ export default function CostAnalysisPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <form
-            onSubmit={handleVendorSearch}
-            className="flex gap-2"
-            aria-label="Vendor name search"
-          >
-            <label htmlFor="vendor-input" className="sr-only">
-              Vendor name
-            </label>
-            <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none"
-                aria-hidden="true"
-              />
-              <Input
-                id="vendor-input"
-                type="search"
-                value={vendorInput}
-                onChange={(e) => setVendorInput(e.target.value)}
-                placeholder="Enter vendor name (e.g. ACME Corp)"
-                className="pl-9 h-11 text-base"
-              />
-            </div>
-            <Button
-              type="submit"
-              disabled={!vendorInput.trim()}
-              className="h-11 gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-              aria-label="Search vendor price trend"
-            >
-              <Search className="h-4 w-4" aria-hidden="true" />
-              Analyze
-            </Button>
-          </form>
+          <div className="max-w-sm">
+            <VendorSelect
+              value={vendorName}
+              onChange={setVendorName}
+              label="Select Vendor"
+            />
+          </div>
 
           {trendLoading && (
             <div

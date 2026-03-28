@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { fetchAPI } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
+import { VendorSelect } from "@/components/vendor-select";
 import {
   LineChart,
   Line,
@@ -359,6 +360,7 @@ function PriceTrendMini({ data }: { data: PriceTrendData }) {
 
 export default function ReviewPage() {
   const [step, setStep] = useState(1);
+  const [vendorFilter, setVendorFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [samResult, setSamResult] = useState<DebarmentResult | null>(null);
@@ -366,18 +368,19 @@ export default function ReviewPage() {
   const [checkedLists, setCheckedLists] = useState<Record<string, boolean>>({});
   const [reviewed, setReviewed] = useState(false);
 
-  // Search contracts
+  // Search contracts (by vendor dropdown or keyword search)
+  const activeSearch = vendorFilter || searchQuery;
   const {
     data: searchData,
     isLoading: searchLoading,
   } = useQuery({
-    queryKey: ["review-search", searchQuery],
+    queryKey: ["review-search", vendorFilter, searchQuery],
     queryFn: () =>
       fetchAPI<{ contracts: Contract[]; total: number }>("/api/contracts", {
-        search: searchQuery,
-        limit: 10,
+        search: activeSearch,
+        limit: 20,
       }),
-    enabled: searchQuery.length >= 2,
+    enabled: activeSearch.length >= 2,
   });
 
   // Parsed contract data (step 3)
@@ -595,9 +598,15 @@ export default function ReviewPage() {
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 Search for a contract
               </h2>
+              <VendorSelect
+                value={vendorFilter}
+                onChange={(v) => { setVendorFilter(v); setSearchQuery(""); }}
+                label="Filter by Vendor"
+                placeholder="Pick a vendor to see their contracts..."
+              />
               <div className="relative">
                 <label htmlFor="review-search" className="sr-only">
-                  Search by vendor, contract number, or keyword
+                  Search by contract number or keyword
                 </label>
                 <Search
                   className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none"
@@ -606,9 +615,9 @@ export default function ReviewPage() {
                 <Input
                   id="review-search"
                   type="search"
-                  placeholder="Search by vendor, contract number, or keyword..."
+                  placeholder="Or search by contract number or keyword..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => { setSearchQuery(e.target.value); if (e.target.value) setVendorFilter(""); }}
                   className="pl-9 h-12 text-base"
                 />
               </div>
@@ -657,9 +666,9 @@ export default function ReviewPage() {
                 </div>
               )}
 
-              {searchData?.contracts?.length === 0 && searchQuery.length >= 2 && (
+              {searchData?.contracts?.length === 0 && activeSearch.length >= 2 && (
                 <p className="text-sm text-slate-500 dark:text-slate-400 py-4">
-                  No contracts found matching &quot;{searchQuery}&quot;.
+                  No contracts found matching &quot;{activeSearch}&quot;.
                 </p>
               )}
             </CardContent>

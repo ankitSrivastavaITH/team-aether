@@ -174,6 +174,23 @@ def get_stats() -> StatsResponse:
 
 
 # ---------------------------------------------------------------------------
+# GET /api/contracts/vendors
+# ---------------------------------------------------------------------------
+
+@router.get("/vendors")
+def list_vendors():
+    """List all unique vendors with contract counts."""
+    rows = query("""
+        SELECT supplier, COUNT(*) AS count, SUM(value) AS total_value
+        FROM city_contracts
+        WHERE supplier IS NOT NULL AND supplier != ''
+        GROUP BY supplier
+        ORDER BY supplier ASC
+    """)
+    return rows
+
+
+# ---------------------------------------------------------------------------
 # GET /api/contracts/departments
 # ---------------------------------------------------------------------------
 
