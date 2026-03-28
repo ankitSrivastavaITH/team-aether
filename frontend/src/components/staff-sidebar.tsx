@@ -80,7 +80,6 @@ const navSections: NavSection[] = [
       { href: "/staff/scorecard", label: "Dept Scorecards", icon: LayoutGrid },
       { href: "/staff/cost-analysis", label: "Cost Analysis", icon: TrendingUp },
       { href: "/staff/timeline", label: "Timeline", icon: CalendarDays },
-      { href: "/staff/compare-vendors", label: "Compare Vendors", icon: GitCompare },
     ],
   },
   {
