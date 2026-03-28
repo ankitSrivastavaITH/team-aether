@@ -108,6 +108,7 @@ function AutoCheckCard({
   flagged,
   detailText,
   extraNote,
+  url,
 }: {
   title: string;
   description: string;
@@ -116,6 +117,7 @@ function AutoCheckCard({
   flagged: boolean;
   detailText?: string;
   extraNote?: string;
+  url?: string;
 }) {
   let cardClass =
     "flex flex-col gap-2 rounded-lg border p-4 transition-colors duration-300 ";
@@ -136,15 +138,15 @@ function AutoCheckCard({
     statusClass = "text-slate-500 dark:text-slate-400";
   } else if (!checked) {
     cardClass +=
-      "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900";
+      "border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30";
     iconEl = (
-      <ShieldCheck
-        className="h-5 w-5 text-slate-400 shrink-0"
+      <AlertTriangle
+        className="h-5 w-5 text-amber-500 shrink-0"
         aria-hidden="true"
       />
     );
-    statusText = "Not yet checked";
-    statusClass = "text-slate-400";
+    statusText = "API unavailable — verify manually";
+    statusClass = "text-amber-600 dark:text-amber-400";
   } else if (flagged) {
     cardClass +=
       "border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/40";
@@ -189,13 +191,22 @@ function AutoCheckCard({
           {extraNote}
         </p>
       )}
-      {(checked || loading) && (
-        <p className={`text-xs mt-1 ${statusClass}`}>{statusText}</p>
-      )}
+      <p className={`text-xs mt-1 ${statusClass}`}>{statusText}</p>
       {detailText && checked && (
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           {detailText}
         </p>
+      )}
+      {!checked && !loading && url && (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 hover:underline mt-1"
+        >
+          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+          Check manually →
+        </a>
       )}
     </div>
   );
@@ -560,6 +571,7 @@ export default function CompliancePage() {
                 checked={result?.sam_check?.checked ?? false}
                 flagged={result?.sam_check?.debarred ?? false}
                 detailText={result?.sam_check?.details}
+                url="https://sam.gov/content/exclusions"
               />
 
               {/* FCC Covered List */}
@@ -571,6 +583,7 @@ export default function CompliancePage() {
                 flagged={result?.fcc_check?.flagged ?? false}
                 detailText={result?.fcc_check?.details}
                 extraNote="Checks against prohibited manufacturers: Huawei, ZTE, Hytera, Hikvision, Dahua"
+                url="https://www.fcc.gov/supplychain/coveredlist"
               />
 
               {/* Consolidated Screening List */}
@@ -581,6 +594,7 @@ export default function CompliancePage() {
                 checked={result?.csl_check?.checked ?? false}
                 flagged={result?.csl_check?.flagged ?? false}
                 detailText={result?.csl_check?.details}
+                url="https://www.trade.gov/consolidated-screening-list"
               />
             </div>
           </section>
