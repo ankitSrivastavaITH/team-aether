@@ -558,11 +558,22 @@ export default function DecisionPage() {
     setError(null);
 
     try {
-      const data = await postAPI<DecisionResult>("/api/decision", {
+      const raw = await postAPI<{ decision: DecisionResult } & DecisionResult>("/api/decision", {
         contract_number: selectedContract.contract_number,
         supplier: selectedVendor,
       });
-      setResult(data);
+      // API wraps result in { decision: { ... } } — unwrap it
+      const data = (raw as { decision: DecisionResult }).decision ?? raw;
+      setResult({
+        ...data,
+        pros: data.pros ?? [],
+        cons: data.cons ?? [],
+        memo: data.memo ?? "",
+        contract_number: selectedContract.contract_number ?? "",
+        supplier: selectedVendor,
+        contract_value: selectedContract.value ?? 0,
+        department: selectedContract.department ?? "",
+      });
     } catch (err) {
       setError(
         err instanceof Error
