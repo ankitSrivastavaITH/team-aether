@@ -616,6 +616,94 @@ function DecisionMemo({ memo }: { memo: string }) {
 }
 
 // ---------------------------------------------------------------------------
+// Suggested Contracts (shown when no vendor selected)
+// ---------------------------------------------------------------------------
+
+interface SuggestedContract {
+  contract_number: string;
+  supplier: string;
+  department: string;
+  value: number;
+  days_to_expiry: number;
+  risk_level: string;
+}
+
+function SuggestedContracts({ onSelect }: { onSelect: (supplier: string, contract: string) => void }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["suggested-decisions"],
+    queryFn: () => fetchAPI<{ contracts: SuggestedContract[] }>("/api/contracts", { max_days: 90, limit: 8 }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const contracts = (data?.contracts ?? []).sort(
+    (a, b) => (a.days_to_expiry ?? 999) - (b.days_to_expiry ?? 999)
+  );
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Loading suggestions...</p>
+        {[1, 2, 3].map(i => <div key={i} className="h-16 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse" />)}
+      </div>
+    );
+  }
+
+  if (contracts.length === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-amber-500" aria-hidden="true" />
+          Suggested — contracts needing decisions soonest
+        </p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Click to analyze with AI</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {contracts.map((c) => {
+          const isRed = c.risk_level === "critical";
+          const isAmber = c.risk_level === "warning";
+          return (
+            <button
+              key={c.contract_number}
+              onClick={() => onSelect(c.supplier, c.contract_number)}
+              className={`text-left p-3 rounded-lg border transition-all hover:shadow-md group ${
+                isRed
+                  ? "border-red-200 dark:border-red-800 hover:border-red-400 bg-red-50/50 dark:bg-red-950/20"
+                  : isAmber
+                  ? "border-amber-200 dark:border-amber-800 hover:border-amber-400 bg-amber-50/50 dark:bg-amber-950/20"
+                  : "border-slate-200 dark:border-slate-700 hover:border-blue-400"
+              }`}
+              style={{ minHeight: 44 }}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{c.supplier}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{c.department} · #{c.contract_number}</p>
+                </div>
+                <Badge className={`shrink-0 text-[10px] ${
+                  isRed ? "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700"
+                  : isAmber ? "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700"
+                  : "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700"
+                }`}>
+                  {c.days_to_expiry}d
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{formatCurrency(c.value)}</span>
+                <span className="text-xs font-medium text-blue-600 dark:text-blue-400 group-hover:underline">
+                  Analyze →
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Page
 // ---------------------------------------------------------------------------
 
@@ -818,6 +906,19 @@ function DecisionPageInner() {
               />
             </div>
           </div>
+
+          {/* Suggested contracts when no vendor selected */}
+          {!selectedVendor && <SuggestedContracts onSelect={(supplier, contractNum) => {
+            setSelectedVendor(supplier);
+            // Auto-trigger after vendor data loads will handle the rest via URL params logic
+            setTimeout(() => {
+              const url = new URL(window.location.href);
+              url.searchParams.set("supplier", supplier);
+              url.searchParams.set("contract", contractNum);
+              window.history.replaceState({}, "", url.toString());
+              window.location.reload();
+            }, 100);
+          }} />}
 
           {/* Vendor loading state */}
           {selectedVendor && vendorLoading && (
