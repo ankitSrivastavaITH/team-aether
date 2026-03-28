@@ -99,7 +99,7 @@ function HeatmapGrid({
       </h3>
       <div className="overflow-x-auto">
         <table
-          className="border-collapse text-xs"
+          className="border-collapse text-xs w-full"
           role="table"
           aria-label={title}
         >
@@ -116,7 +116,7 @@ function HeatmapGrid({
                 <th
                   key={m}
                   scope="col"
-                  className="w-10 text-center text-slate-500 dark:text-slate-400 font-normal pb-1"
+                  className="text-center text-slate-500 dark:text-slate-400 font-normal pb-1"
                 >
                   {m}
                 </th>
