@@ -109,15 +109,21 @@ async def nl_query(request: Request, req: NLQueryRequest):
                 """Call 2: Generate AI analysis of the query results."""
                 try:
                     analysis_data = json.dumps(results[:20], default=str)
-                    total_val = sum(r.get("value", 0) for r in results if isinstance(r.get("value"), (int, float)))
+                    # Sum all numeric value-like fields (value, total_value, sum, etc.)
+                    total_val = 0
+                    for r in results:
+                        for k, v in r.items():
+                            if isinstance(v, (int, float)) and any(vk in k.lower() for vk in ["value", "total", "sum", "amount"]):
+                                total_val += v
+                                break  # Only count one value field per row
                     analysis_prompt = f"""You are a procurement analyst. Write a 3-4 sentence analysis of these query results.
 
 FACTS (use these exact numbers, do NOT make up different numbers):
-- Total results: {len(results)} contracts
-- Total value: ${total_val:,.2f}
+- Total results: {len(results)} row(s)
+- Combined value from results: ${total_val:,.2f}
 - Question asked: {req.question}
 
-Include key takeaways, risks, and patterns. Use **bold** for key figures. Be concise. Return ONLY markdown text."""
+Analyze the data shown in the results. Use **bold** for key figures. Be concise. Return ONLY markdown text."""
                     return await asyncio.to_thread(
                         chat, analysis_prompt,
                         f"Results ({len(results)} rows, ${total_val:,.2f} total):\n{analysis_data}"
