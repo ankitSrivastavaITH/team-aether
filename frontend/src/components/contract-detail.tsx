@@ -87,7 +87,7 @@ interface ComplianceResult {
   sam_check: SamCheck;
   fcc_check: FccCheck;
   csl_check: CslCheck;
-  federal_lists: string[];
+  federal_lists: Array<{ name: string; agency: string; result?: { checked?: boolean; flagged?: boolean; debarred?: boolean; details?: string } }>;
   total_lists: number;
   auto_checked: number;
   manual_review_needed: number;
@@ -369,20 +369,21 @@ function ComplianceTab({ supplier, enabled }: { supplier: string; enabled: boole
 
       {/* Check cards — render all 7 from federal_lists */}
       <div className="space-y-2">
-        {data.federal_lists?.map((list: { name: string; agency: string; result?: { checked?: boolean; flagged?: boolean; debarred?: boolean; details?: string } }, i: number) => {
-          const result = list.result || (
-            list.name.includes("SAM") ? data.sam_check :
-            list.name.includes("FCC") ? data.fcc_check :
-            list.name.includes("Consolidated") ? data.csl_check : null
-          );
+        {data.federal_lists?.map((list, i) => {
+          // Each list may have its own result, or fall back to the top-level checks
+          const r = list.result as Record<string, unknown> | undefined;
+          const fallback = list.name.includes("SAM") ? data.sam_check as Record<string, unknown> :
+            list.name.includes("FCC") ? data.fcc_check as Record<string, unknown> :
+            list.name.includes("Consolidated") ? data.csl_check as Record<string, unknown> : null;
+          const result = r || fallback;
           return (
             <ComplianceStatusCard
               key={i}
               title={`${list.name} (${list.agency})`}
               isLoading={false}
-              checked={result?.checked ?? false}
-              flagged={result?.flagged ?? result?.debarred ?? false}
-              details={result?.details}
+              checked={Boolean(result?.checked)}
+              flagged={Boolean(result?.flagged || result?.debarred)}
+              details={String(result?.details || "")}
             />
           );
         }) ?? (
@@ -600,16 +601,16 @@ export function ContractDetail({ contract, open, onClose }: ContractDetailProps)
 
         <div className="px-5 pb-6">
           <Tabs defaultValue="details" onValueChange={setActiveTab}>
-            <TabsList className="w-full sticky top-0 z-10 bg-white dark:bg-slate-900">
-              <TabsTrigger value="details">
+            <TabsList className="w-full sticky top-0 z-10 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+              <TabsTrigger value="details" className="data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-700 rounded-md">
                 <FileText className="h-3.5 w-3.5" aria-hidden="true" />
                 Details
               </TabsTrigger>
-              <TabsTrigger value="compliance">
+              <TabsTrigger value="compliance" className="data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-700 rounded-md">
                 <Scale className="h-3.5 w-3.5" aria-hidden="true" />
                 Compliance
               </TabsTrigger>
-              <TabsTrigger value="ai-analysis">
+              <TabsTrigger value="ai-analysis" className="data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-700 rounded-md">
                 <Brain className="h-3.5 w-3.5" aria-hidden="true" />
                 AI Analysis
               </TabsTrigger>
