@@ -57,29 +57,30 @@ function StatCard({
   of,
   colorClass,
   searchTerm,
+  active,
+  onClick,
 }: {
   value: number;
   label: string;
   of: number;
   colorClass: string;
   searchTerm?: string;
+  active?: boolean;
+  onClick?: () => void;
 }) {
   const pct = of > 0 ? Math.round((value / of) * 100) : 0;
 
-  function handleClick() {
-    if (searchTerm) {
-      window.open(`/staff/contracts?search=${encodeURIComponent(searchTerm)}`, "_blank");
-    }
-  }
-
   return (
     <button
-      onClick={handleClick}
+      onClick={onClick}
       disabled={!searchTerm}
-      className={`flex flex-col gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-left transition-all ${
-        searchTerm ? "cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-sm" : ""
-      }`}
+      className={`flex flex-col gap-1 rounded-xl p-4 text-left transition-all ${
+        active
+          ? "bg-blue-50 dark:bg-blue-950/40 border-2 border-blue-400 dark:border-blue-600 shadow-sm"
+          : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+      } ${searchTerm ? "cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-sm" : ""}`}
       aria-label={`${value} contracts ${label}. ${searchTerm ? "Click to view." : ""}`}
+      aria-pressed={active}
     >
       <span className={`text-2xl font-bold ${colorClass}`}>{value.toLocaleString()}</span>
       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
@@ -93,8 +94,8 @@ function StatCard({
         <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">{pct}%</span>
       </div>
       {searchTerm && (
-        <span className="text-[10px] text-blue-500 dark:text-blue-400 mt-1 flex items-center gap-1">
-          <ArrowRight className="h-2.5 w-2.5" aria-hidden="true" /> View contracts
+        <span className={`text-[10px] mt-1 flex items-center gap-1 ${active ? "text-blue-600 dark:text-blue-400 font-medium" : "text-blue-500 dark:text-blue-400"}`}>
+          <ArrowRight className="h-2.5 w-2.5" aria-hidden="true" /> {active ? "Showing below ↓" : "Click to view"}
         </span>
       )}
     </button>
@@ -328,6 +329,15 @@ function ParseResult({ contractNumber }: { contractNumber: string }) {
 export default function ParsedPage() {
   const [vendor, setVendor] = useState("");
   const [contractNumber, setContractNumber] = useState("");
+  const [filterTerm, setFilterTerm] = useState<string | null>(null);
+
+  // Fetch contracts matching the selected stat card filter
+  const { data: filteredContracts } = useQuery({
+    queryKey: ["filtered-parsed", filterTerm],
+    queryFn: () => fetchAPI<{ contracts: Array<Record<string, unknown>>; total: number }>("/api/contracts", { search: filterTerm!, limit: 10 }),
+    enabled: Boolean(filterTerm),
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Fetch contracts for selected vendor
   const { data: vendorContracts } = useQuery({
@@ -407,49 +417,52 @@ export default function ParsedPage() {
 
         {!statsLoading && stats && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <StatCard
-              value={stats.ifb_count}
-              label="Have IFB numbers"
-              of={total}
-              colorClass="text-violet-600 dark:text-violet-400"
-              searchTerm="IFB"
-            />
-            <StatCard
-              value={stats.rfp_count}
-              label="Have RFP references"
-              of={total}
-              colorClass="text-blue-600 dark:text-blue-400"
-              searchTerm="RFP"
-            />
-            <StatCard
-              value={stats.cooperative_count}
-              label="Cooperative agreements"
-              of={total}
-              colorClass="text-emerald-600 dark:text-emerald-400"
-              searchTerm="cooperative"
-            />
-            <StatCard
-              value={stats.has_renewal_info}
-              label="Have renewal info"
-              of={total}
-              colorClass="text-amber-600 dark:text-amber-400"
-              searchTerm="renewal"
-            />
-            <StatCard
-              value={stats.has_term_info}
-              label="Have term info"
-              of={total}
-              colorClass="text-cyan-600 dark:text-cyan-400"
-              searchTerm="year"
-            />
-            <StatCard
-              value={stats.has_requisition}
-              label="Have requisition refs"
-              of={total}
-              colorClass="text-rose-600 dark:text-rose-400"
-              searchTerm="requisition"
-            />
+            <StatCard value={stats.ifb_count} label="Have IFB numbers" of={total} colorClass="text-violet-600 dark:text-violet-400" searchTerm="IFB" active={filterTerm === "IFB"} onClick={() => setFilterTerm(filterTerm === "IFB" ? null : "IFB")} />
+            <StatCard value={stats.rfp_count} label="Have RFP references" of={total} colorClass="text-blue-600 dark:text-blue-400" searchTerm="RFP" active={filterTerm === "RFP"} onClick={() => setFilterTerm(filterTerm === "RFP" ? null : "RFP")} />
+            <StatCard value={stats.cooperative_count} label="Cooperative agreements" of={total} colorClass="text-emerald-600 dark:text-emerald-400" searchTerm="cooperative" active={filterTerm === "cooperative"} onClick={() => setFilterTerm(filterTerm === "cooperative" ? null : "cooperative")} />
+            <StatCard value={stats.has_renewal_info} label="Have renewal info" of={total} colorClass="text-amber-600 dark:text-amber-400" searchTerm="renewal" active={filterTerm === "renewal"} onClick={() => setFilterTerm(filterTerm === "renewal" ? null : "renewal")} />
+            <StatCard value={stats.has_term_info} label="Have term info" of={total} colorClass="text-cyan-600 dark:text-cyan-400" searchTerm="year" active={filterTerm === "year"} onClick={() => setFilterTerm(filterTerm === "year" ? null : "year")} />
+            <StatCard value={stats.has_requisition} label="Have requisition refs" of={total} colorClass="text-rose-600 dark:text-rose-400" searchTerm="requisition" active={filterTerm === "requisition"} onClick={() => setFilterTerm(filterTerm === "requisition" ? null : "requisition")} />
           </div>
+        )}
+
+        {/* Inline filtered contracts from stat card click */}
+        {filterTerm && filteredContracts?.contracts && (
+          <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/30 dark:bg-blue-950/20 mt-4">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+                  Contracts matching &ldquo;{filterTerm}&rdquo; ({filteredContracts.total} found)
+                </h3>
+                <button onClick={() => setFilterTerm(null)} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                  Close
+                </button>
+              </div>
+              <div className="space-y-1.5 max-h-[300px] overflow-y-auto">
+                {filteredContracts.contracts.slice(0, 10).map((c, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setContractNumber(String(c.contract_number)); setFilterTerm(null); }}
+                    className="w-full text-left px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 transition-all text-sm"
+                    style={{ minHeight: 40 }}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="font-medium text-slate-800 dark:text-slate-200">{String(c.supplier || "Unknown")}</span>
+                        <span className="text-slate-400 mx-1">·</span>
+                        <span className="font-mono text-xs text-slate-500">#{String(c.contract_number)}</span>
+                      </div>
+                      <span className="font-bold text-blue-700 dark:text-blue-400 flex-shrink-0">{formatCurrency(c.value as number)}</span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{String(c.description || "").slice(0, 100)}</p>
+                  </button>
+                ))}
+              </div>
+              {filteredContracts.total > 10 && (
+                <p className="text-xs text-slate-400 mt-2 text-center">Showing 10 of {filteredContracts.total}. Click a contract to parse it.</p>
+              )}
+            </CardContent>
+          </Card>
         )}
       </section>
 
