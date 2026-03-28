@@ -34,26 +34,58 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 const COLLAPSE_KEY = "staff-sidebar-collapsed";
 
-const navItems = [
-  { href: "/staff", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/staff/review", label: "Review", icon: ClipboardCheck },
-  { href: "/staff/contracts", label: "Contracts", icon: Table },
-  { href: "/staff/ask", label: "Ask Richmond", icon: MessageSquare },
-  { href: "/staff/cost-analysis", label: "Cost Analysis", icon: TrendingUp },
-  { href: "/staff/compliance", label: "Compliance", icon: ShieldCheck },
-  { href: "/staff/renew", label: "Renew", icon: RefreshCw },
-  { href: "/staff/extract", label: "PDF Analyzer", icon: FileUp },
-  { href: "/staff/risk", label: "Risk Analysis", icon: ShieldAlert },
-  { href: "/staff/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/staff/report", label: "AI Report", icon: FileText },
-  { href: "/staff/mbe", label: "MBE Analysis", icon: Users },
-  { href: "/staff/anomalies", label: "Anomalies", icon: AlertOctagon },
-  { href: "/staff/parsed", label: "Contract Intel", icon: Brain },
-  { href: "/staff/timeline", label: "Timeline", icon: CalendarDays },
-  { href: "/staff/scorecard", label: "Scorecards", icon: LayoutGrid },
-  { href: "/staff/compare-vendors", label: "Compare", icon: GitCompare },
-  { href: "/staff/alerts", label: "Alerts", icon: Bell },
+interface NavSection {
+  title: string;
+  items: Array<{ href: string; label: string; icon: React.ElementType; exact?: boolean }>;
+}
+
+const navSections: NavSection[] = [
+  {
+    title: "",
+    items: [
+      { href: "/staff", label: "Dashboard", icon: LayoutDashboard, exact: true },
+    ],
+  },
+  {
+    title: "Procurement",
+    items: [
+      { href: "/staff/review", label: "Review Workflow", icon: ClipboardCheck },
+      { href: "/staff/contracts", label: "All Contracts", icon: Table },
+      { href: "/staff/renew", label: "Renew Contract", icon: RefreshCw },
+      { href: "/staff/compliance", label: "Compliance Check", icon: ShieldCheck },
+    ],
+  },
+  {
+    title: "AI Tools",
+    items: [
+      { href: "/staff/ask", label: "Ask Richmond", icon: MessageSquare },
+      { href: "/staff/extract", label: "PDF Analyzer", icon: FileUp },
+      { href: "/staff/parsed", label: "Contract Intel", icon: Brain },
+      { href: "/staff/report", label: "AI Report", icon: FileText },
+    ],
+  },
+  {
+    title: "Analytics",
+    items: [
+      { href: "/staff/analytics", label: "Charts & Trends", icon: BarChart3 },
+      { href: "/staff/cost-analysis", label: "Cost Analysis", icon: TrendingUp },
+      { href: "/staff/scorecard", label: "Dept Scorecards", icon: LayoutGrid },
+      { href: "/staff/timeline", label: "Timeline", icon: CalendarDays },
+      { href: "/staff/compare-vendors", label: "Compare Vendors", icon: GitCompare },
+    ],
+  },
+  {
+    title: "Risk & Equity",
+    items: [
+      { href: "/staff/risk", label: "Vendor Risk (HHI)", icon: ShieldAlert },
+      { href: "/staff/anomalies", label: "Anomalies", icon: AlertOctagon },
+      { href: "/staff/mbe", label: "MBE Analysis", icon: Users },
+      { href: "/staff/alerts", label: "Alert Digest", icon: Bell },
+    ],
+  },
 ];
+
+// navSections used directly in both desktop and mobile sidebar
 
 function isActive(pathname: string, href: string, exact?: boolean): boolean {
   if (exact) return pathname === href;
@@ -149,18 +181,30 @@ function SidebarContent({
       {/* Navigation */}
       <nav
         aria-label="Staff navigation"
-        className="flex-1 overflow-y-auto px-2 py-4 space-y-1"
+        className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5"
       >
-        {navItems.map((item) => (
-          <NavItem
-            key={item.href}
-            href={item.href}
-            label={item.label}
-            icon={item.icon}
-            active={isActive(pathname, item.href, item.exact)}
-            collapsed={collapsed}
-            onClick={onNavClick}
-          />
+        {navSections.map((section, si) => (
+          <div key={si} className={si > 0 ? "mt-4" : ""}>
+            {section.title && !collapsed && (
+              <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                {section.title}
+              </p>
+            )}
+            {collapsed && si > 0 && (
+              <div className="mx-3 mb-2 border-t border-slate-200 dark:border-slate-700" />
+            )}
+            {section.items.map((item) => (
+              <NavItem
+                key={item.href}
+                href={item.href}
+                label={item.label}
+                icon={item.icon}
+                active={isActive(pathname, item.href, item.exact)}
+                collapsed={collapsed}
+                onClick={onNavClick}
+              />
+            ))}
+          </div>
         ))}
       </nav>
 
