@@ -1,4 +1,11 @@
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8200";
+function getApiBase() {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
+    return `https://api-hackrva.ithena.app`;
+  }
+  return "http://localhost:8200";
+}
+export const API_BASE = getApiBase();
 
 export async function fetchAPI<T>(path: string, params?: Record<string, string | number>): Promise<T> {
   const url = new URL(`${API_BASE}${path}`);
