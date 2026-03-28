@@ -3,6 +3,7 @@
 from typing import Any, Dict, List
 from fastapi import APIRouter
 from app.db import query
+from app.services.groq_client import chat
 
 router = APIRouter(prefix="/api/mbe", tags=["mbe"])
 
@@ -94,6 +95,12 @@ def contract_anomalies() -> Dict[str, Any]:
         SELECT COUNT(*) AS count FROM city_contracts WHERE value = 0 OR value IS NULL
     """)
     if zero_value and zero_value[0]["count"] > 0:
+        # Sample contract numbers for related_contracts
+        zero_sample = query("""
+            SELECT contract_number FROM city_contracts
+            WHERE (value = 0 OR value IS NULL) AND contract_number IS NOT NULL
+            LIMIT 3
+        """)
         anomalies.append({
             "type": "zero_value",
             "severity": "medium",
@@ -101,6 +108,8 @@ def contract_anomalies() -> Dict[str, Any]:
             "count": zero_value[0]["count"],
             "description": f"{zero_value[0]['count']} contracts have zero or missing dollar values, making spending analysis incomplete.",
             "recommendation": "Review these contracts to determine if values are missing or if they are zero-cost agreements.",
+            "related_contracts": [r["contract_number"] for r in zero_sample if r.get("contract_number")],
+            "financial_impact": 0,
         })
 
     # 2. Expired contracts still in active data
@@ -109,6 +118,15 @@ def contract_anomalies() -> Dict[str, Any]:
         FROM city_contracts WHERE days_to_expiry < -365
     """)
     if long_expired and long_expired[0]["count"] > 0:
+        expired_sample = query("""
+            SELECT contract_number FROM city_contracts
+            WHERE days_to_expiry < -365 AND contract_number IS NOT NULL
+            LIMIT 3
+        """)
+        expired_value = query("""
+            SELECT COALESCE(SUM(value), 0) AS total FROM city_contracts
+            WHERE days_to_expiry < -365 AND value > 0
+        """)
         anomalies.append({
             "type": "long_expired",
             "severity": "high",
@@ -116,6 +134,8 @@ def contract_anomalies() -> Dict[str, Any]:
             "count": long_expired[0]["count"],
             "description": f"{long_expired[0]['count']} contracts expired more than a year ago but remain in the registry. The oldest expired {abs(long_expired[0]['oldest'])} days ago.",
             "recommendation": "Archive or close these contracts. Verify no active spending against expired terms.",
+            "related_contracts": [r["contract_number"] for r in expired_sample if r.get("contract_number")],
+            "financial_impact": int(expired_value[0]["total"]) if expired_value else 0,
         })
 
     # 3. High-concentration vendors across departments
@@ -134,6 +154,11 @@ def contract_anomalies() -> Dict[str, Any]:
         LIMIT 5
     """)
     for ss in single_source:
+        conc_sample = query("""
+            SELECT contract_number FROM city_contracts
+            WHERE supplier = ? AND department = ? AND contract_number IS NOT NULL
+            LIMIT 3
+        """, [ss["supplier"], ss["department"]])
         anomalies.append({
             "type": "high_concentration",
             "severity": "medium",
@@ -141,6 +166,10 @@ def contract_anomalies() -> Dict[str, Any]:
             "count": ss["contracts"],
             "description": f"{ss['supplier']} holds {ss['contracts']} contracts worth ${ss['total_value']:,.0f} in {ss['department']}.",
             "recommendation": "Consider whether competitive alternatives exist for future procurements.",
+            "related_contracts": [r["contract_number"] for r in conc_sample if r.get("contract_number")],
+            "financial_impact": int(ss["total_value"]),
+            "vendor_name": ss["supplier"],
+            "department_name": ss["department"],
         })
 
     # 4. Contracts with very long terms (>5 years)
@@ -152,6 +181,19 @@ def contract_anomalies() -> Dict[str, Any]:
         AND (CAST(end_date AS DATE) - CAST(start_date AS DATE)) > 1825
     """)
     if long_term and long_term[0]["count"] > 0:
+        lt_sample = query("""
+            SELECT contract_number FROM city_contracts
+            WHERE start_date IS NOT NULL AND end_date IS NOT NULL
+            AND (CAST(end_date AS DATE) - CAST(start_date AS DATE)) > 1825
+            AND contract_number IS NOT NULL
+            LIMIT 3
+        """)
+        lt_value = query("""
+            SELECT COALESCE(SUM(value), 0) AS total FROM city_contracts
+            WHERE start_date IS NOT NULL AND end_date IS NOT NULL
+            AND (CAST(end_date AS DATE) - CAST(start_date AS DATE)) > 1825
+            AND value > 0
+        """)
         anomalies.append({
             "type": "long_term",
             "severity": "low",
@@ -159,6 +201,8 @@ def contract_anomalies() -> Dict[str, Any]:
             "count": long_term[0]["count"],
             "description": f"{long_term[0]['count']} contracts span more than 5 years. Longest: {long_term[0]['max_days']} days ({long_term[0]['max_days']//365} years).",
             "recommendation": "Review long-term contracts for price competitiveness and renewal opportunities.",
+            "related_contracts": [r["contract_number"] for r in lt_sample if r.get("contract_number")],
+            "financial_impact": int(lt_value[0]["total"]) if lt_value else 0,
         })
 
     # 5. Price outliers (contracts >3x department average)
@@ -185,14 +229,33 @@ def contract_anomalies() -> Dict[str, Any]:
             "count": 1,
             "description": f"Contract #{o['contract_number']} in {o['department']} is ${o['value']:,.0f}, which is {o['z_score']}x standard deviations above the department average of ${o['avg_value']:,.0f}.",
             "recommendation": "Verify this contract was competitively bid and represents fair market value.",
+            "related_contracts": [o["contract_number"]] if o.get("contract_number") else [],
+            "financial_impact": int(o["value"]),
+            "vendor_name": o["supplier"],
+            "department_name": o["department"],
         })
 
     # Sort by severity
     severity_order = {"high": 0, "medium": 1, "low": 2}
     anomalies.sort(key=lambda a: severity_order.get(a["severity"], 3))
 
+    # Add AI recommendations to top 5 anomalies
+    for anomaly in anomalies[:5]:
+        try:
+            rec = chat(
+                "You are a procurement risk advisor. Given this anomaly, write ONE specific actionable sentence (under 20 words) about what the procurement officer should do. Return ONLY the sentence, no JSON.",
+                f"Anomaly: {anomaly['title']}. {anomaly['description']}"
+            )
+            anomaly["ai_recommendation"] = rec.strip().strip('"')
+        except Exception:
+            anomaly["ai_recommendation"] = anomaly.get("recommendation", "Review and take action.")
+
+    # Compute total estimated financial exposure
+    total_financial_impact = sum(a.get("financial_impact", 0) for a in anomalies)
+
     return {
         "anomalies": anomalies,
         "total": len(anomalies),
+        "total_financial_impact": total_financial_impact,
         "disclaimer": "Anomalies are statistical patterns, not compliance findings. All require human review.",
     }
