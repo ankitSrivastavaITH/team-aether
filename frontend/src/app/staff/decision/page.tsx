@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAPI } from "@/lib/api";
 import { formatCurrency, formatDate, riskColor } from "@/lib/utils";
@@ -618,13 +619,26 @@ function DecisionMemo({ memo }: { memo: string }) {
 // Main Page
 // ---------------------------------------------------------------------------
 
-export default function DecisionPage() {
+function DecisionPageInner() {
+  const searchParams = useSearchParams();
   const [selectedVendor, setSelectedVendor] = useState("");
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [result, setResult] = useState<DecisionResult | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [autoTriggered, setAutoTriggered] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
+
+  // Read URL params on mount: ?supplier=X&contract=Y
+  const paramSupplier = searchParams.get("supplier") || "";
+  const paramContract = searchParams.get("contract") || "";
+
+  // Auto-set vendor from URL params
+  useEffect(() => {
+    if (paramSupplier && !selectedVendor) {
+      setSelectedVendor(paramSupplier);
+    }
+  }, [paramSupplier, selectedVendor]);
 
   // Fetch contracts for the selected vendor
   const { data: vendorData, isLoading: vendorLoading } = useQuery<VendorDetailResponse>({
@@ -637,12 +651,36 @@ export default function DecisionPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Auto-select contract from URL params once vendor data loads
+  useEffect(() => {
+    if (paramContract && vendorData?.contracts && !selectedContract && !autoTriggered) {
+      const match = vendorData.contracts.find(
+        (c) => c.contract_number === paramContract
+      );
+      if (match) {
+        setSelectedContract(match);
+      }
+    }
+  }, [paramContract, vendorData, selectedContract, autoTriggered]);
+
+  // Auto-trigger analysis when both vendor and contract are set from URL
+  const handleAnalyzeRef = useRef<() => void>();
+  useEffect(() => {
+    if (paramSupplier && paramContract && selectedContract && !autoTriggered && !analyzing && !result) {
+      setAutoTriggered(true);
+      // Small delay to let UI render
+      setTimeout(() => handleAnalyzeRef.current?.(), 300);
+    }
+  }, [paramSupplier, paramContract, selectedContract, autoTriggered, analyzing, result]);
+
   // Reset downstream state when vendor changes
   useEffect(() => {
-    setSelectedContract(null);
-    setResult(null);
-    setError(null);
-  }, [selectedVendor]);
+    if (!paramSupplier) {
+      setSelectedContract(null);
+      setResult(null);
+      setError(null);
+    }
+  }, [selectedVendor, paramSupplier]);
 
   // Scroll to results when they load
   useEffect(() => {
@@ -725,6 +763,9 @@ export default function DecisionPage() {
       setAnalyzing(false);
     }
   }, [selectedContract, selectedVendor]);
+
+  // Keep ref updated for auto-trigger
+  handleAnalyzeRef.current = handleAnalyze;
 
   const contracts = vendorData?.contracts || [];
 
@@ -969,5 +1010,13 @@ export default function DecisionPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DecisionPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-32"><div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" /></div>}>
+      <DecisionPageInner />
+    </Suspense>
   );
 }

@@ -152,7 +152,7 @@ function StaffDashboardContent() {
                 critical.slice(0, 4).map((c) => (
                   <Link
                     key={c.contract_number}
-                    href="/staff/decision"
+                    href={`/staff/decision?supplier=${encodeURIComponent(c.supplier)}&contract=${encodeURIComponent(c.contract_number)}`}
                     className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-red-700 transition-all group"
                   >
                     <div className="min-w-0">
@@ -199,7 +199,7 @@ function StaffDashboardContent() {
                 warning.slice(0, 4).map((c) => (
                   <Link
                     key={c.contract_number}
-                    href="/staff/decision"
+                    href={`/staff/decision?supplier=${encodeURIComponent(c.supplier)}&contract=${encodeURIComponent(c.contract_number)}`}
                     className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700 transition-all group"
                   >
                     <div className="min-w-0">
