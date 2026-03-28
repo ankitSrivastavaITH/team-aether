@@ -166,54 +166,153 @@
 }
 
 /* Guided Tour (driver.js) */
-.rva-tour-popover {
-  --popover-bg: #1e293b;
-  --popover-text: #f1f5f9;
-}
-.rva-tour-popover .driver-popover {
+.driver-popover {
   background: #1e293b !important;
   color: #f1f5f9 !important;
   border-radius: 12px !important;
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4) !important;
-  max-width: 380px !important;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5) !important;
+  max-width: 400px !important;
+  padding: 20px !important;
+  overflow: visible !important;
 }
-.rva-tour-popover .driver-popover-title {
-  color: #fff !important;
-  font-size: 16px !important;
+.driver-popover * {
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+}
+.driver-popover-title {
+  color: #ffffff !important;
+  font-size: 17px !important;
   font-weight: 700 !important;
+  margin-bottom: 8px !important;
 }
-.rva-tour-popover .driver-popover-description {
-  color: #cbd5e1 !important;
+.driver-popover-description {
+  color: #e2e8f0 !important;
   font-size: 14px !important;
-  line-height: 1.6 !important;
+  line-height: 1.65 !important;
+  max-height: 200px !important;
+  overflow-y: auto !important;
 }
-.rva-tour-popover .driver-popover-navigation-btns button {
+.driver-popover-footer {
+  margin-top: 16px !important;
+}
+.driver-popover-navigation-btns {
+  gap: 8px !important;
+}
+.driver-popover-navigation-btns button {
   border-radius: 8px !important;
   padding: 8px 16px !important;
   font-size: 13px !important;
   font-weight: 600 !important;
   min-height: 36px !important;
+  white-space: nowrap !important;
 }
-.rva-tour-popover .driver-popover-next-btn {
+.driver-popover-next-btn {
   background: #7c3aed !important;
   color: #fff !important;
   border: none !important;
+  text-shadow: none !important;
 }
-.rva-tour-popover .driver-popover-next-btn:hover {
+.driver-popover-next-btn:hover {
   background: #6d28d9 !important;
 }
-.rva-tour-popover .driver-popover-prev-btn {
+.driver-popover-prev-btn {
   background: transparent !important;
-  color: #94a3b8 !important;
+  color: #cbd5e1 !important;
   border: 1px solid #475569 !important;
 }
-.rva-tour-popover .driver-popover-arrow-side-left .driver-popover-arrow,
-.rva-tour-popover .driver-popover-arrow-side-right .driver-popover-arrow,
-.rva-tour-popover .driver-popover-arrow-side-top .driver-popover-arrow,
-.rva-tour-popover .driver-popover-arrow-side-bottom .driver-popover-arrow {
+.driver-popover-prev-btn:hover {
+  background: #334155 !important;
+  color: #f1f5f9 !important;
+}
+.driver-popover-close-btn {
+  color: #94a3b8 !important;
+  font-size: 18px !important;
+  width: 28px !important;
+  height: 28px !important;
+}
+.driver-popover-close-btn:hover {
+  color: #f1f5f9 !important;
+}
+.driver-popover-arrow-side-left .driver-popover-arrow,
+.driver-popover-arrow-side-right .driver-popover-arrow,
+.driver-popover-arrow-side-top .driver-popover-arrow,
+.driver-popover-arrow-side-bottom .driver-popover-arrow {
   border-color: #1e293b !important;
 }
-.rva-tour-popover .driver-popover-progress-text {
-  color: #64748b !important;
-  font-size: 11px !important;
+.driver-popover-progress-text {
+  color: #94a3b8 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+/* Explore button injected via description */
+.tour-explore-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #a78bfa;
+  border: 1px solid #6d28d9;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tour-explore-btn:hover {
+  background: #6d28d9;
+  color: #fff;
+}
+/* Resume tour banner */
+.tour-resume-banner {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: #1e293b;
+  border: 1px solid #6d28d9;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px -8px rgba(0,0,0,0.4);
+  animation: slideUp 0.3s ease-out;
+}
+.tour-resume-banner span {
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 500;
+}
+.tour-resume-banner button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  min-height: 36px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+}
+.tour-resume-btn {
+  background: #7c3aed;
+  color: #fff;
+}
+.tour-resume-btn:hover {
+  background: #6d28d9;
+}
+.tour-end-btn {
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid #475569 !important;
+}
+.tour-end-btn:hover {
+  background: #334155;
+  color: #f1f5f9;
+}
+@keyframes slideUp {
+  from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+  to { transform: translateX(-50%) translateY(0); opacity: 1; }
 }
