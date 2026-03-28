@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { fetchAPI } from "@/lib/api";
+import { fetchAPI, API_BASE } from "@/lib/api";
 import { formatCurrency, formatDate, riskColor } from "@/lib/utils";
 import { VendorSelect } from "@/components/vendor-select";
 import { Card, CardContent } from "@/components/ui/card";
@@ -699,7 +699,7 @@ function DecisionPageInner() {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 30000);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8200"}/api/decision`, {
+      const res = await fetch(`${API_BASE}/api/decision`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -726,7 +726,7 @@ function DecisionPageInner() {
       // If AI returned fallback (unavailable), auto-retry once after 3s
       if (data.confidence === "LOW" && data.summary?.includes("unavailable")) {
         await new Promise(r => setTimeout(r, 3000));
-        const res2 = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8200"}/api/decision`, {
+        const res2 = await fetch(`${API_BASE}/api/decision`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

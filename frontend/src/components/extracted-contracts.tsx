@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FileText, ExternalLink } from "lucide-react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8200";
+import { API_BASE } from "@/lib/api";
 
 interface ExtractedContract {
   id: string;
