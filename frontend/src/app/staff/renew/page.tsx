@@ -47,6 +47,68 @@ interface Contract {
   [key: string]: unknown;
 }
 
+// ---------------------------------------------------------------------------
+// Priority Renewals — shows contracts that need renewal, ranked by urgency
+// ---------------------------------------------------------------------------
+
+function PriorityRenewals({ onSelect }: { onSelect: (c: Contract) => void }) {
+  const { data } = useQuery({
+    queryKey: ["priority-renewals"],
+    queryFn: () => fetchAPI<{ contracts: Contract[]; total: number }>("/api/contracts", { max_days: 90, limit: 10 }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  if (!data?.contracts?.length) return null;
+
+  // Sort by priority: highest value × urgency
+  const sorted = [...data.contracts].sort((a, b) => {
+    const urgencyA = Math.max(1, 91 - (a.days_to_expiry ?? 90));
+    const urgencyB = Math.max(1, 91 - (b.days_to_expiry ?? 90));
+    return (urgencyB * (b.value || 0)) - (urgencyA * (a.value || 0));
+  });
+
+  return (
+    <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/20">
+      <CardContent className="pt-5 pb-4">
+        <div className="flex items-center gap-2 mb-3">
+          <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+          <h2 className="text-lg font-semibold text-amber-800 dark:text-amber-300">Priority Renewals</h2>
+          <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/50 px-2 py-0.5 rounded-full">{data.total} expiring in 90 days</span>
+        </div>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">Contracts ranked by value × urgency. Click to start renewal.</p>
+        <div className="space-y-1.5">
+          {sorted.slice(0, 6).map((c, i) => (
+            <button
+              key={c.contract_number}
+              onClick={() => onSelect(c)}
+              className="w-full text-left px-3 py-2.5 rounded-lg border border-amber-200 dark:border-amber-800/50 bg-white dark:bg-slate-800 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-sm transition-all flex items-center gap-3 group"
+              style={{ minHeight: 44 }}
+            >
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 text-xs font-bold flex items-center justify-center">
+                {i + 1}
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-sm text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-700 dark:group-hover:text-blue-400">{c.supplier}</span>
+                  <span className="font-bold text-sm text-blue-700 dark:text-blue-400 flex-shrink-0">{formatCurrency(c.value)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <span>{c.department}</span>
+                  <span>·</span>
+                  <span className={`font-medium ${(c.days_to_expiry ?? 99) <= 7 ? "text-red-600 dark:text-red-400" : (c.days_to_expiry ?? 99) <= 30 ? "text-amber-600 dark:text-amber-400" : "text-slate-500"}`}>
+                    {c.days_to_expiry === 0 ? "Expires today" : `${c.days_to_expiry}d left`}
+                  </span>
+                </div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-blue-500 flex-shrink-0" aria-hidden="true" />
+            </button>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 interface DebarmentResult {
   supplier: string;
   checked: boolean;
@@ -317,11 +379,14 @@ export default function RenewPage() {
       {/* STEP 1: Select Contract */}
       {/* ================================================================== */}
       {step === 1 && (
-        <section aria-label="Step 1: Select Contract">
+        <section aria-label="Step 1: Select Contract" className="space-y-4">
+          {/* Priority renewals — contracts expiring soonest by value */}
+          <PriorityRenewals onSelect={handleSelectContract} />
+
           <Card className="border-slate-200 dark:border-slate-700">
             <CardContent className="pt-6 space-y-4">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                Find the contract to renew
+                Or search for a specific contract
               </h2>
               <VendorSelect
                 value={vendorFilter}

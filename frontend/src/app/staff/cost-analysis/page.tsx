@@ -183,22 +183,16 @@ export default function CostAnalysisPage() {
         .filter(Boolean)
     : [];
 
-  // Compute average comparison text
+  // Compute vendor's own price trend (not department average comparison)
   let avgComparison: string | null = null;
-  if (
-    trendData &&
-    trendData.department_average &&
-    trendData.latest_value &&
-    trendData.department_average > 0
-  ) {
-    const diff = trendData.latest_value - trendData.department_average;
-    const pct = Math.abs(
-      Math.round((diff / trendData.department_average) * 100)
-    );
-    if (diff > 0) {
-      avgComparison = `This vendor's latest contract is ${pct}% above the ${trendData.department} department average`;
-    } else if (diff < 0) {
-      avgComparison = `This vendor's latest contract is ${pct}% below the ${trendData.department} department average`;
+  if (trendData && trendData.total_contracts >= 2 && trendData.first_value && trendData.latest_value) {
+    const pctChange = trendData.price_change_pct;
+    if (pctChange > 10) {
+      avgComparison = `This vendor's prices increased ${pctChange}% from their first to latest contract. Consider negotiating or rebidding.`;
+    } else if (pctChange < -10) {
+      avgComparison = `This vendor's prices decreased ${Math.abs(pctChange)}% over time — good cost trend.`;
+    } else {
+      avgComparison = `This vendor's pricing has been stable (${pctChange > 0 ? "+" : ""}${pctChange}% change) across ${trendData.total_contracts} contracts.`;
     }
   }
 
