@@ -10,7 +10,6 @@ import {
   FileUp,
   ShieldAlert,
   BarChart3,
-  FileText,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -25,11 +24,7 @@ import {
   CalendarDays,
   LayoutGrid,
   GitCompare,
-  Bell,
-  ClipboardCheck,
   TrendingUp,
-  ShieldCheck,
-  RefreshCw,
   Activity,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -65,31 +60,27 @@ const navSections: NavSection[] = [
     title: "Procurement",
     items: [
       { href: "/staff/contracts", label: "All Contracts", icon: Table },
-      { href: "/staff/review", label: "Review Workflow", icon: ClipboardCheck },
-      { href: "/staff/renew", label: "Renew Contract", icon: RefreshCw },
-      { href: "/staff/compliance", label: "Compliance Check", icon: ShieldCheck },
+      { href: "/staff/decision", label: "Decision Engine", icon: Zap },
     ],
   },
   {
-    title: "AI & Intelligence",
+    title: "AI Tools",
     items: [
-      { href: "/staff/decision", label: "Decision Engine", icon: Zap },
       { href: "/staff/ask", label: "Ask Richmond", icon: MessageSquare },
       { href: "/staff/extract", label: "PDF Analyzer", icon: FileUp },
       { href: "/staff/parsed", label: "Contract Intel", icon: Brain },
-      { href: "/staff/report", label: "AI Report", icon: FileText },
       { href: "/staff/health", label: "Health Scanner", icon: Activity },
     ],
   },
   {
-    title: "Analytics & Insights",
+    title: "Analytics",
     collapsible: true,
     storageKey: ANALYTICS_OPEN_KEY,
     items: [
       { href: "/staff/analytics", label: "Charts & Trends", icon: BarChart3 },
       { href: "/staff/scorecard", label: "Dept Scorecards", icon: LayoutGrid },
-      { href: "/staff/timeline", label: "Timeline", icon: CalendarDays },
       { href: "/staff/cost-analysis", label: "Cost Analysis", icon: TrendingUp },
+      { href: "/staff/timeline", label: "Timeline", icon: CalendarDays },
       { href: "/staff/compare-vendors", label: "Compare Vendors", icon: GitCompare },
     ],
   },
@@ -101,7 +92,6 @@ const navSections: NavSection[] = [
       { href: "/staff/risk", label: "Vendor Risk (HHI)", icon: ShieldAlert },
       { href: "/staff/anomalies", label: "Anomalies", icon: AlertOctagon },
       { href: "/staff/mbe", label: "MBE Analysis", icon: Users },
-      { href: "/staff/alerts", label: "Alert Digest", icon: Bell },
     ],
   },
 ];

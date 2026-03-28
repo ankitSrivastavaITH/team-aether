@@ -122,6 +122,27 @@ def load_into_duckdb(df: pl.DataFrame) -> None:
         """)
         count = conn.execute("SELECT COUNT(*) FROM city_contracts").fetchone()[0]
         print(f"Table city_contracts created with {count} records.")
+
+        # Create decisions table for persisting AI verdicts
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS decisions (
+                id INTEGER PRIMARY KEY,
+                contract_number VARCHAR,
+                supplier VARCHAR,
+                department VARCHAR,
+                contract_value DOUBLE,
+                verdict VARCHAR,
+                confidence VARCHAR,
+                summary VARCHAR,
+                pros VARCHAR,
+                cons VARCHAR,
+                memo VARCHAR,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        # Create auto-incrementing sequence
+        conn.execute("CREATE SEQUENCE IF NOT EXISTS decisions_seq START 1")
+        print("Table decisions ready.")
     finally:
         conn.close()
 

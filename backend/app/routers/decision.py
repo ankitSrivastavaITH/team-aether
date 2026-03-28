@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+from pathlib import Path
 
+import duckdb
 import httpx
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
@@ -298,6 +300,23 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
         if result["confidence"] not in ("HIGH", "MEDIUM", "LOW"):
             result["confidence"] = "LOW"
 
+        # Save decision to database
+        try:
+            save_conn = duckdb.connect(str(Path(__file__).parent.parent.parent / "data" / "contracts.duckdb"))
+            save_conn.execute("""
+                INSERT INTO decisions (id, contract_number, supplier, department, contract_value, verdict, confidence, summary, pros, cons, memo)
+                VALUES (nextval('decisions_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, [
+                contract_number, supplier,
+                contract_details.get("department", "") if contract_details else "",
+                contract_details.get("value", 0) if contract_details else 0,
+                result["verdict"], result["confidence"], result["summary"],
+                json.dumps(result["pros"]), json.dumps(result["cons"]), result["memo"]
+            ])
+            save_conn.close()
+        except Exception:
+            pass  # Don't fail the response if save fails
+
     except Exception as _e:
         print(f"[DECISION] Groq failed: {type(_e).__name__}: {_e}")
         # Fallback when Groq is unavailable or returns bad data
@@ -347,3 +366,17 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
         "supplier": supplier,
         "disclaimer": "AI-generated recommendation for advisory purposes only. All procurement decisions require human review and approval.",
     }
+
+
+@router.get("")
+def list_decisions():
+    """List all past AI decisions, newest first."""
+    rows = db_query("SELECT * FROM decisions ORDER BY created_at DESC LIMIT 50")
+    for row in rows:
+        # Parse JSON strings back to arrays
+        try:
+            row["pros"] = json.loads(row.get("pros", "[]"))
+            row["cons"] = json.loads(row.get("cons", "[]"))
+        except Exception:
+            pass
+    return {"decisions": rows, "total": len(rows)}

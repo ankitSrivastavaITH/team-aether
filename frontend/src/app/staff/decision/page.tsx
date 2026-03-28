@@ -788,6 +788,16 @@ function DecisionPageInner() {
           AI-powered procurement decision intelligence. Select a contract for a
           comprehensive analysis.
         </p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+          Need a specific tool?{" "}
+          <Link href="/staff/review" className="hover:text-blue-500 transition-colors">Review Workflow</Link>
+          {" "}&middot;{" "}
+          <Link href="/staff/renew" className="hover:text-blue-500 transition-colors">Renew Contract</Link>
+          {" "}&middot;{" "}
+          <Link href="/staff/compliance" className="hover:text-blue-500 transition-colors">Compliance Check</Link>
+          {" "}&middot;{" "}
+          <Link href="/staff/report" className="hover:text-blue-500 transition-colors">AI Report</Link>
+        </p>
       </div>
 
       {/* ----------------------------------------------------------------- */}

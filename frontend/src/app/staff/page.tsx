@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Zap,
@@ -19,6 +19,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useContractStats } from "@/hooks/use-contracts";
+import { t, getLocale } from "@/lib/i18n";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -38,6 +39,16 @@ interface UrgentContract {
 // ---------------------------------------------------------------------------
 
 function StaffDashboardContent() {
+  const [locale, setLocaleState] = useState(getLocale());
+
+  useEffect(() => {
+    const handleStorage = () => setLocaleState(getLocale());
+    window.addEventListener("storage", handleStorage);
+    // Also poll for same-tab changes (language toggle)
+    const id = setInterval(handleStorage, 500);
+    return () => { window.removeEventListener("storage", handleStorage); clearInterval(id); };
+  }, []);
+
   const { data: stats, isLoading: statsLoading } = useContractStats();
 
   const { data: urgentData, isLoading: urgentLoading } = useQuery({
@@ -73,7 +84,7 @@ function StaffDashboardContent() {
       {/* ----------------------------------------------------------------- */}
       <div className="space-y-2">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-          Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"} — here&apos;s what needs your attention
+          {new Date().getHours() < 12 ? t("staff_greeting_morning", locale) : new Date().getHours() < 17 ? t("staff_greeting_afternoon", locale) : t("staff_greeting_evening", locale)}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {totalContracts.toLocaleString()} contracts worth {formatCurrency(totalValue)} across the City of Richmond
@@ -118,7 +129,7 @@ function StaffDashboardContent() {
             <div className="flex items-center gap-3">
               <CheckCircle className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
               <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
-                No critical contracts — all immediate expirations are handled
+                {t("no_critical", locale)}
               </p>
             </div>
           </CardContent>
@@ -136,7 +147,7 @@ function StaffDashboardContent() {
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-red-500" aria-hidden="true" />
                 <h2 className="text-sm font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
-                  Decide Today
+                  {t("decide_today", locale)}
                 </h2>
               </div>
               <Badge className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700">
@@ -157,15 +168,15 @@ function StaffDashboardContent() {
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{c.supplier}</p>
-                      <p className="text-xs text-slate-400">{c.days_to_expiry}d left · {formatCurrency(c.value)}</p>
+                      <p className="text-xs text-slate-400">{c.days_to_expiry} {t("days_left", locale)} · {formatCurrency(c.value)}</p>
                     </div>
                     <span className="text-xs font-medium text-red-600 dark:text-red-400 group-hover:underline shrink-0">
-                      Decide <ArrowRight className="h-3 w-3 inline" />
+                      {t("decide_today", locale).split(" ")[0]} <ArrowRight className="h-3 w-3 inline" />
                     </span>
                   </Link>
                 ))
               ) : (
-                <p className="text-sm text-slate-400 dark:text-slate-500 py-4 text-center">All clear</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 py-4 text-center">{t("all_clear", locale)}</p>
               )}
             </div>
             {critical.length > 4 && (
@@ -183,7 +194,7 @@ function StaffDashboardContent() {
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-amber-500" aria-hidden="true" />
                 <h2 className="text-sm font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                  Plan This Week
+                  {t("plan_this_week", locale)}
                 </h2>
               </div>
               <Badge className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700">
@@ -204,10 +215,10 @@ function StaffDashboardContent() {
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{c.supplier}</p>
-                      <p className="text-xs text-slate-400">{c.days_to_expiry}d left · {formatCurrency(c.value)}</p>
+                      <p className="text-xs text-slate-400">{c.days_to_expiry} {t("days_left", locale)} · {formatCurrency(c.value)}</p>
                     </div>
                     <span className="text-xs font-medium text-amber-600 dark:text-amber-400 group-hover:underline shrink-0">
-                      Plan <ArrowRight className="h-3 w-3 inline" />
+                      {t("plan_this_week", locale).split(" ")[0]} <ArrowRight className="h-3 w-3 inline" />
                     </span>
                   </Link>
                 ))
@@ -230,7 +241,7 @@ function StaffDashboardContent() {
               <div className="flex items-center gap-2">
                 <FileSearch className="h-4 w-4 text-blue-500" aria-hidden="true" />
                 <h2 className="text-sm font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                  Review This Month
+                  {t("review_this_month", locale)}
                 </h2>
               </div>
               <Badge className="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700">
@@ -251,10 +262,10 @@ function StaffDashboardContent() {
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{c.supplier}</p>
-                      <p className="text-xs text-slate-400">{c.days_to_expiry}d left · {formatCurrency(c.value)}</p>
+                      <p className="text-xs text-slate-400">{c.days_to_expiry} {t("days_left", locale)} · {formatCurrency(c.value)}</p>
                     </div>
                     <span className="text-xs font-medium text-blue-600 dark:text-blue-400 group-hover:underline shrink-0">
-                      Review <ArrowRight className="h-3 w-3 inline" />
+                      {t("review_this_month", locale).split(" ")[0]} <ArrowRight className="h-3 w-3 inline" />
                     </span>
                   </Link>
                 ))
@@ -276,7 +287,7 @@ function StaffDashboardContent() {
       {/* ----------------------------------------------------------------- */}
       <div>
         <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-3">
-          Quick Actions
+          {t("quick_actions", locale)}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <Link
@@ -286,8 +297,8 @@ function StaffDashboardContent() {
           >
             <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">AI Decision Engine</p>
-              <p className="text-xs text-blue-600 dark:text-blue-400">Analyze a contract</p>
+              <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">{t("decision_engine", locale)}</p>
+              <p className="text-xs text-blue-600 dark:text-blue-400">{t("analyze_contract", locale)}</p>
             </div>
             <ArrowRight className="h-4 w-4 text-blue-400 group-hover:translate-x-0.5 transition-transform" />
           </Link>
@@ -298,7 +309,7 @@ function StaffDashboardContent() {
           >
             <Activity className="h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">Health Scanner</p>
+              <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">{t("health_scanner", locale)}</p>
               <p className="text-xs text-emerald-600 dark:text-emerald-400">Portfolio overview</p>
             </div>
             <ArrowRight className="h-4 w-4 text-emerald-400 group-hover:translate-x-0.5 transition-transform" />
