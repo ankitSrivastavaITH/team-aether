@@ -52,6 +52,7 @@ const navSections: NavSection[] = [
     title: "",
     items: [
       { href: "/staff", label: "Dashboard", icon: LayoutDashboard, exact: true },
+      { href: "/staff/health", label: "Health Scanner", icon: Activity },
     ],
   },
   {
@@ -66,7 +67,6 @@ const navSections: NavSection[] = [
     items: [
       { href: "/staff/extract", label: "PDF Analyzer", icon: FileUp },
       { href: "/staff/parsed", label: "Contract Intel", icon: Brain },
-      { href: "/staff/health", label: "Health Scanner", icon: Activity },
     ],
   },
   {
