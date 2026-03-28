@@ -8,7 +8,12 @@ import {
   ShieldAlert,
   BarChart3,
   ArrowRight,
+  Zap,
+  CheckCircle,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAPI } from "@/lib/api";
+import { formatCurrency, riskColor } from "@/lib/utils";
 import { Disclaimer } from "@/components/disclaimer";
 import { RiskAlerts } from "@/components/risk-alerts";
 import { RiskNarrative } from "@/components/ai-insights";
@@ -42,6 +47,161 @@ function QuickLink({
         aria-hidden="true"
       />
     </Link>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Priority Decision Queue — contracts expiring soonest that need action
+// ---------------------------------------------------------------------------
+
+interface DecisionContract {
+  contract_number: string;
+  supplier: string;
+  value: number;
+  days_to_expiry?: number;
+  risk_level?: string;
+  [key: string]: unknown;
+}
+
+function PriorityDecisionQueue() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["decision-queue"],
+    queryFn: () =>
+      fetchAPI<{ contracts: DecisionContract[]; total: number }>(
+        "/api/contracts",
+        { max_days: 60, limit: 8 },
+      ),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  if (isLoading) {
+    return (
+      <section aria-labelledby="decision-queue-heading">
+        <div className="flex items-center gap-2 mb-1">
+          <Zap className="h-5 w-5 text-amber-500" aria-hidden="true" />
+          <h2
+            id="decision-queue-heading"
+            className="text-xl font-semibold text-slate-800 dark:text-slate-200"
+          >
+            Contracts Needing Your Decision
+          </h2>
+        </div>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+          Critical and warning contracts expiring soonest &mdash; click to
+          analyze
+        </p>
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+          aria-busy="true"
+          aria-label="Loading decision queue"
+        >
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-28 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse"
+            />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  const contracts = data?.contracts ?? [];
+
+  if (contracts.length === 0) {
+    return (
+      <section aria-labelledby="decision-queue-heading">
+        <div className="flex items-center gap-2 mb-1">
+          <Zap className="h-5 w-5 text-amber-500" aria-hidden="true" />
+          <h2
+            id="decision-queue-heading"
+            className="text-xl font-semibold text-slate-800 dark:text-slate-200"
+          >
+            Contracts Needing Your Decision
+          </h2>
+        </div>
+        <div className="flex items-center gap-2 mt-3 p-4 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+          <CheckCircle
+            className="h-5 w-5 text-green-600 dark:text-green-400"
+            aria-hidden="true"
+          />
+          <span className="text-sm font-medium text-green-700 dark:text-green-300">
+            No contracts need immediate attention
+          </span>
+        </div>
+      </section>
+    );
+  }
+
+  // Sort by days to expiry ascending (most urgent first)
+  const sorted = [...contracts].sort(
+    (a, b) => (a.days_to_expiry ?? 999) - (b.days_to_expiry ?? 999),
+  );
+
+  return (
+    <section aria-labelledby="decision-queue-heading">
+      <div className="flex items-center gap-2 mb-1">
+        <Zap className="h-5 w-5 text-amber-500" aria-hidden="true" />
+        <h2
+          id="decision-queue-heading"
+          className="text-xl font-semibold text-slate-800 dark:text-slate-200"
+        >
+          Contracts Needing Your Decision
+        </h2>
+        {data?.total != null && (
+          <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/50 px-2 py-0.5 rounded-full">
+            {data.total} expiring in 60 days
+          </span>
+        )}
+      </div>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        Critical and warning contracts expiring soonest &mdash; click to analyze
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {sorted.map((c) => {
+          const risk = c.risk_level ?? "unknown";
+          return (
+            <Link
+              key={c.contract_number}
+              href="/staff/decision"
+              className="group flex flex-col gap-1.5 p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+              aria-label={`Analyze contract ${c.contract_number} from ${c.supplier}, ${formatCurrency(c.value)}, ${risk} risk`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight truncate">
+                  {c.supplier}
+                </span>
+                <span
+                  className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full border ${riskColor(risk)}`}
+                >
+                  {risk === "critical"
+                    ? "Critical"
+                    : risk === "warning"
+                      ? "Warning"
+                      : risk.charAt(0).toUpperCase() + risk.slice(1)}
+                </span>
+              </div>
+              <span className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                {c.contract_number}
+              </span>
+              <div className="flex items-center justify-between mt-auto pt-1">
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  {formatCurrency(c.value)}
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {c.days_to_expiry != null
+                    ? `${c.days_to_expiry}d left`
+                    : "Expiry unknown"}
+                </span>
+              </div>
+              <span className="text-xs font-medium text-blue-600 dark:text-blue-400 group-hover:underline mt-1">
+                Analyze &rarr;
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -97,6 +257,9 @@ function StaffDashboardContent() {
         </h2>
         <ExpiryTimelineChart />
       </section>
+
+      {/* Priority Decision Queue */}
+      <PriorityDecisionQueue />
 
       {/* Quick Links to Sub-Pages */}
       <section aria-label="Quick navigation">

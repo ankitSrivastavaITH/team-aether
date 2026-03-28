@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import Link from "next/link";
 import {
   Brain,
   Loader2,
@@ -27,6 +28,11 @@ import {
   Scale,
   ScrollText,
   CircleDot,
+  Users,
+  RefreshCw,
+  GitCompare,
+  ClipboardCheck,
+  ShieldCheck,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -60,6 +66,21 @@ interface EvidenceItem {
   point: string;
   evidence: string;
   source: string;
+}
+
+interface DepartmentVendor {
+  supplier: string;
+  count: number;
+  total_value: number;
+}
+
+interface DepartmentDetailResponse {
+  department: string;
+  contracts: Contract[];
+  stats: Record<string, number>;
+  top_vendors: DepartmentVendor[];
+  risk_breakdown: { risk_level: string; count: number }[];
+  yearly_spending: { year: number; count: number; total_value: number }[];
 }
 
 interface DecisionResult {
@@ -408,6 +429,86 @@ function EvidenceGrid({ pros, cons }: { pros: EvidenceItem[]; cons: EvidenceItem
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Alternative Vendors
+// ---------------------------------------------------------------------------
+
+function AlternativeVendors({
+  department,
+  currentSupplier,
+}: {
+  department: string;
+  currentSupplier: string;
+}) {
+  const { data: deptData } = useQuery<DepartmentDetailResponse>({
+    queryKey: ["decision-alt-vendors", department],
+    queryFn: () =>
+      fetchAPI<DepartmentDetailResponse>(
+        `/api/contracts/departments/${encodeURIComponent(department)}`
+      ),
+    enabled: !!department,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const alternatives = (deptData?.top_vendors ?? [])
+    .filter((v) => v.supplier !== currentSupplier)
+    .sort((a, b) => (b.total_value ?? 0) - (a.total_value ?? 0))
+    .slice(0, 6);
+
+  if (alternatives.length === 0) return null;
+
+  return (
+    <Card>
+      <CardContent className="pt-2">
+        <div className="flex items-center gap-2 mb-4">
+          <Users
+            className="h-5 w-5 text-blue-600 dark:text-blue-400"
+            aria-hidden="true"
+          />
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+            Alternative Vendors in {department}
+          </h3>
+        </div>
+
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+          role="list"
+          aria-label={`Alternative vendors in ${department}`}
+        >
+          {alternatives.map((vendor) => (
+            <div
+              key={vendor.supplier}
+              role="listitem"
+              className="flex flex-col justify-between rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-4 transition-colors hover:border-blue-300 dark:hover:border-blue-600"
+            >
+              <div>
+                <p className="font-medium text-slate-900 dark:text-slate-100 truncate">
+                  {vendor.supplier}
+                </p>
+                <div className="mt-1.5 flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                  <span>
+                    {vendor.count} contract{vendor.count !== 1 ? "s" : ""}
+                  </span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">
+                    {formatCurrency(vendor.total_value)}
+                  </span>
+                </div>
+              </div>
+              <Link
+                href="/staff/cost-analysis"
+                className="mt-3 inline-flex items-center text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                aria-label={`Compare ${vendor.supplier} in cost analysis`}
+              >
+                Compare &rarr;
+              </Link>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -778,24 +879,93 @@ export default function DecisionPage() {
           {/* Layer 2: Evidence Grid */}
           <EvidenceGrid pros={result.pros} cons={result.cons} />
 
+          {/* Alternative Vendors */}
+          {result.department && (
+            <AlternativeVendors
+              department={result.department}
+              currentSupplier={result.supplier}
+            />
+          )}
+
           {/* Layer 3: Decision Memo */}
           <DecisionMemo memo={result.memo} />
 
-          {/* Analyze another */}
-          <div className="flex justify-center pt-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setResult(null);
-                setError(null);
-                setSelectedContract(null);
-              }}
-              className="gap-2"
-            >
-              <Brain className="h-4 w-4" aria-hidden="true" />
-              Analyze Another Contract
-            </Button>
-          </div>
+          {/* Action buttons */}
+          <Card>
+            <CardContent className="pt-2">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+                Next Steps
+              </p>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                {result.verdict === "RENEW" && (
+                  <>
+                    <Link
+                      href="/staff/renew"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-5 min-h-[44px] transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                    >
+                      <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                      Start Renewal Process
+                    </Link>
+                    <Link
+                      href="/staff/contracts"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium text-sm px-5 min-h-[44px] transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                    >
+                      <FileSearch className="h-4 w-4" aria-hidden="true" />
+                      View Full Contract
+                    </Link>
+                  </>
+                )}
+                {result.verdict === "REBID" && (
+                  <>
+                    <Link
+                      href="/staff/cost-analysis"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-5 min-h-[44px] transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                    >
+                      <GitCompare className="h-4 w-4" aria-hidden="true" />
+                      Compare Vendors
+                    </Link>
+                    <Link
+                      href="/staff/review"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium text-sm px-5 min-h-[44px] transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                    >
+                      <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
+                      View Review Workflow
+                    </Link>
+                  </>
+                )}
+                {result.verdict === "ESCALATE" && (
+                  <>
+                    <Link
+                      href="/staff/review"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-5 min-h-[44px] transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                    >
+                      <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
+                      Open Review Workflow
+                    </Link>
+                    <Link
+                      href="/staff/compliance"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium text-sm px-5 min-h-[44px] transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                    >
+                      <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                      Run Compliance Check
+                    </Link>
+                  </>
+                )}
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setResult(null);
+                    setError(null);
+                    setSelectedContract(null);
+                  }}
+                  className="gap-2 min-h-[44px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                >
+                  <Brain className="h-4 w-4" aria-hidden="true" />
+                  Analyze Another Contract
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
