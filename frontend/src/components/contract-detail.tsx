@@ -596,9 +596,9 @@ export function ContractDetail({ contract, open, onClose }: ContractDetailProps)
 
         <Separator className="my-4" />
 
-        <div className="px-4 pb-6">
+        <div className="px-4 pb-6 flex-1 overflow-y-auto">
           <Tabs defaultValue="details" onValueChange={setActiveTab}>
-            <TabsList className="w-full">
+            <TabsList className="w-full sticky top-0 z-10 bg-white dark:bg-slate-900">
               <TabsTrigger value="details">
                 <FileText className="h-3.5 w-3.5" aria-hidden="true" />
                 Details
