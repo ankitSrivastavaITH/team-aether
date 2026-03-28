@@ -73,14 +73,19 @@ export function DepartmentChartFilter({ selected, onChange }: ChartFilterProps) 
               aria-pressed={selected.includes(dept.department)}
               aria-label={`${dept.department}: ${dept.count} contracts, ${formatCurrency(dept.total_value)}`}
             >
-              {/* Bar background */}
+              {/* Bar background — color intensity based on value */}
               <div
                 className={`absolute inset-y-0 left-0 rounded-md transition-all ${
                   selected.includes(dept.department)
-                    ? "bg-blue-200/60 dark:bg-blue-800/40"
-                    : "bg-slate-100 dark:bg-slate-700/40"
+                    ? "bg-blue-400/50 dark:bg-blue-600/40"
+                    : ""
                 }`}
-                style={{ width: `${barWidth}%` }}
+                style={{
+                  width: `${barWidth}%`,
+                  backgroundColor: selected.includes(dept.department)
+                    ? undefined
+                    : `rgba(37, 99, 235, ${0.08 + (barWidth / 100) * 0.25})`,
+                }}
               />
 
               {/* Content overlay */}
