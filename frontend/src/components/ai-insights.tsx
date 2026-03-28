@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { fetchAPI } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -113,6 +114,7 @@ const ACTION_STYLES: Record<string, { bg: string; text: string; label: string }>
 export function RiskNarrative() {
   const [showAll, setShowAll] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const router = useRouter();
   const { data, isLoading } = useQuery({
     queryKey: ["risk-narrative"],
     queryFn: () => fetchAPI<RiskData>("/api/insights/risk-narrative"),
@@ -145,7 +147,21 @@ export function RiskNarrative() {
         </div>
         <div className="flex gap-1.5 flex-wrap">
           {(data.department_risk || []).slice(0, 3).map((d, i) => (
-            <Badge key={i} variant="outline" className="text-xs px-2 py-0.5 border-red-200 text-red-600">
+            <Badge
+              key={i}
+              variant="outline"
+              className="text-xs px-2 py-0.5 border-red-200 text-red-600 cursor-pointer hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors"
+              role="button"
+              tabIndex={0}
+              aria-label={`View department page for ${d.department}: ${d.critical} critical contracts`}
+              onClick={() => router.push(`/public/department/${encodeURIComponent(d.department)}`)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  router.push(`/public/department/${encodeURIComponent(d.department)}`);
+                }
+              }}
+            >
               {d.department.length > 15 ? d.department.slice(0, 14) + "…" : d.department}: {d.critical}
             </Badge>
           ))}

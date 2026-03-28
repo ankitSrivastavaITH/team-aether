@@ -87,7 +87,16 @@ function ScorecardCard({ card }: { card: Scorecard }) {
   return (
     <article
       className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all cursor-pointer focus-within:ring-2 focus-within:ring-blue-500"
-      aria-label={`${card.department} department scorecard`}
+      aria-label={`${card.department} department scorecard. Click to view department page.`}
+      onClick={handleNavigate}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleNavigate();
+        }
+      }}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-4">
@@ -165,12 +174,18 @@ function ScorecardCard({ card }: { card: Scorecard }) {
             <span className="text-xs text-slate-500 dark:text-slate-400">Expiring soon</span>
           </div>
           <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${riskCls.badge} ${riskCls.text}`}
-              aria-label={`${card.expiring_30} expiring within 30 days`}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(
+                  `/staff/contracts?department=${encodeURIComponent(card.department)}&max_days=30`
+                );
+              }}
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold cursor-pointer hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-opacity ${riskCls.badge} ${riskCls.text}`}
+              aria-label={`${card.expiring_30} contracts expiring within 30 days for ${card.department}. Click to view.`}
             >
               {card.expiring_30} in 30d
-            </span>
+            </button>
             <span className="text-xs text-slate-400 dark:text-slate-500">
               {card.expiring_90} in 90d
             </span>

@@ -18,6 +18,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchAPI } from "@/lib/api";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { useRouter } from "next/navigation";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -89,6 +90,7 @@ interface YearlyResponse {
 
 export function YearlySpendingChart() {
   const reducedMotion = useReducedMotion();
+  const router = useRouter();
   const { data, isLoading, isError } = useQuery<YearlyResponse>({
     queryKey: ["analytics-spending-by-year"],
     queryFn: () => fetchAPI<YearlyResponse>("/api/analytics/spending-by-year"),
@@ -129,16 +131,25 @@ export function YearlySpendingChart() {
               rows.length > 0
                 ? (() => {
                     const peak = rows.reduce((a, b) => (b.total_value > a.total_value ? b : a), rows[0]);
-                    return `Area chart: contract spending peaked at ${currencyTick(peak.total_value)} in ${peak.year}. ${rows.length} years of data shown.`;
+                    return `Area chart: contract spending peaked at ${currencyTick(peak.total_value)} in ${peak.year}. ${rows.length} years of data shown. Click a data point to filter by year.`;
                   })()
                 : "Area chart showing total contract spending by year."
             }
           >
+            <p className="text-xs text-[#475569] mb-2">Click a data point to filter contracts by year.</p>
             <ResponsiveContainer width="100%" height={320}>
               <ComposedChart
                 data={rows}
                 margin={{ top: 8, right: 16, bottom: 8, left: 16 }}
                 aria-hidden="true"
+                style={{ cursor: "pointer" }}
+                onClick={(chartData: unknown) => {
+                  const d = chartData as { activePayload?: Array<{ payload?: { year?: number } }> } | null;
+                  if (d?.activePayload && d.activePayload.length > 0) {
+                    const year = d.activePayload[0].payload?.year;
+                    if (year) router.push(`/staff/contracts?year=${year}`);
+                  }
+                }}
               >
                 <defs>
                   <linearGradient id="spendGradient" x1="0" y1="0" x2="0" y2="1">
@@ -239,6 +250,7 @@ function formatMonthLabel(month: string): string {
 
 export function ExpiryTimelineChart() {
   const reducedMotion = useReducedMotion();
+  const router = useRouter();
   const { data, isLoading, isError } = useQuery<ExpiryResponse>({
     queryKey: ["analytics-expiry-timeline"],
     queryFn: () => fetchAPI<ExpiryResponse>("/api/analytics/expiry-timeline"),
@@ -284,16 +296,36 @@ export function ExpiryTimelineChart() {
                 ? (() => {
                     const peak = rows.reduce((a, b) => (b.count > a.count ? b : a), rows[0]);
                     const total = rows.reduce((sum, r) => sum + r.count, 0);
-                    return `Bar chart: ${total} contracts expire in the next 12 months. ${peak.label} has the most expirations with ${peak.count} contracts. Red bars indicate the current month, yellow the next month.`;
+                    return `Bar chart: ${total} contracts expire in the next 12 months. ${peak.label} has the most expirations with ${peak.count} contracts. Red bars indicate the current month, yellow the next month. Click a bar to view expiring contracts.`;
                   })()
                 : "Bar chart showing contracts expiring each month for the next 12 months."
             }
           >
+            <p className="text-xs text-[#475569] mb-2">Click a bar to view contracts expiring that month.</p>
             <ResponsiveContainer width="100%" height={320}>
               <BarChart
                 data={rows}
                 margin={{ top: 8, right: 16, bottom: 8, left: 8 }}
                 aria-hidden="true"
+                style={{ cursor: "pointer" }}
+                onClick={(chartData: unknown) => {
+                  const d = chartData as { activePayload?: Array<{ payload?: { month?: string } }> } | null;
+                  if (d?.activePayload && d.activePayload.length > 0) {
+                    const month = d.activePayload[0].payload?.month;
+                    if (month) {
+                      const prefix = month.slice(0, 7); // "YYYY-MM"
+                      const [y, m] = prefix.split("-");
+                      const endDate = new Date(Number(y), Number(m), 0); // last day of that month
+                      const startDate = new Date(Number(y), Number(m) - 1, 1);
+                      const now = new Date();
+                      const daysToEnd = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                      const daysToStart = Math.ceil((startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                      const minDays = Math.max(0, daysToStart);
+                      const maxDays = Math.max(1, daysToEnd);
+                      router.push(`/staff/contracts?max_days=${maxDays}&min_days=${minDays}`);
+                    }
+                  }
+                }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
                 <XAxis
@@ -314,6 +346,7 @@ export function ExpiryTimelineChart() {
                   name="Contracts"
                   radius={[4, 4, 0, 0]}
                   isAnimationActive={!reducedMotion}
+                  style={{ cursor: "pointer" }}
                 >
                   {rows.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -358,6 +391,7 @@ interface ProcurementResponse {
 
 export function ProcurementTypeChart() {
   const reducedMotion = useReducedMotion();
+  const router = useRouter();
   const { data, isLoading, isError } = useQuery<ProcurementResponse>({
     queryKey: ["analytics-spending-by-type"],
     queryFn: () => fetchAPI<ProcurementResponse>("/api/analytics/spending-by-type"),
@@ -400,16 +434,25 @@ export function ProcurementTypeChart() {
               const sortedByValue = [...(data?.data ?? [])].sort((a, b) => b.total_value - a.total_value);
               const top = sortedByValue[0];
               return top
-                ? `Bar chart: ${top.procurement_type} leads procurement spending at ${currencyTick(top.total_value)}, followed by ${sortedByValue[1]?.procurement_type || "others"}.`
+                ? `Bar chart: ${top.procurement_type} leads procurement spending at ${currencyTick(top.total_value)}, followed by ${sortedByValue[1]?.procurement_type || "others"}. Click a bar to filter contracts.`
                 : "Horizontal bar chart showing spending by procurement type.";
             })()}
           >
+            <p className="text-xs text-[#475569] mb-2">Click a bar to filter contracts by procurement type.</p>
             <ResponsiveContainer width="100%" height={320}>
               <BarChart
                 data={rows}
                 layout="vertical"
                 margin={{ top: 8, right: 60, bottom: 8, left: 160 }}
                 aria-hidden="true"
+                style={{ cursor: "pointer" }}
+                onClick={(chartData: unknown) => {
+                  const d = chartData as { activePayload?: Array<{ payload?: { procurement_type?: string } }> } | null;
+                  if (d?.activePayload && d.activePayload.length > 0) {
+                    const type = d.activePayload[0].payload?.procurement_type;
+                    if (type) router.push(`/staff/contracts?search=${encodeURIComponent(type)}`);
+                  }
+                }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" horizontal={false} />
                 <XAxis
@@ -435,6 +478,7 @@ export function ProcurementTypeChart() {
                   fill="#2563EB"
                   radius={[0, 4, 4, 0]}
                   isAnimationActive={!reducedMotion}
+                  style={{ cursor: "pointer" }}
                 >
                   {rows.map((_, index) => (
                     <Cell
@@ -469,6 +513,7 @@ interface SizeResponse {
 
 export function ContractSizeChart() {
   const reducedMotion = useReducedMotion();
+  const router = useRouter();
   const { data, isLoading, isError } = useQuery<SizeResponse>({
     queryKey: ["analytics-contract-size-distribution"],
     queryFn: () => fetchAPI<SizeResponse>("/api/analytics/contract-size-distribution"),
@@ -508,15 +553,24 @@ export function ContractSizeChart() {
             aria-label={(() => {
               const topBucket = [...rows].sort((a, b) => b.count - a.count)[0];
               return topBucket
-                ? `Bar chart: the ${topBucket.bucket} contract size bucket has the most contracts at ${topBucket.count.toLocaleString()}. Showing distribution from under $50K to over $10M.`
+                ? `Bar chart: the ${topBucket.bucket} contract size bucket has the most contracts at ${topBucket.count.toLocaleString()}. Showing distribution from under $50K to over $10M. Click a bar to filter contracts.`
                 : "Bar chart showing the number of contracts by value bucket, ranging from under $50K to over $10M.";
             })()}
           >
+            <p className="text-xs text-[#475569] mb-2">Click a bar to filter contracts by size.</p>
             <ResponsiveContainer width="100%" height={320}>
               <BarChart
                 data={rows}
                 margin={{ top: 8, right: 16, bottom: 40, left: 8 }}
                 aria-hidden="true"
+                style={{ cursor: "pointer" }}
+                onClick={(chartData: unknown) => {
+                  const d = chartData as { activePayload?: Array<{ payload?: { bucket?: string } }> } | null;
+                  if (d?.activePayload && d.activePayload.length > 0) {
+                    const bucket = d.activePayload[0].payload?.bucket;
+                    if (bucket) router.push(`/staff/contracts?search=${encodeURIComponent(bucket)}`);
+                  }
+                }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
                 <XAxis
@@ -540,6 +594,7 @@ export function ContractSizeChart() {
                   name="Contracts"
                   radius={[4, 4, 0, 0]}
                   isAnimationActive={!reducedMotion}
+                  style={{ cursor: "pointer" }}
                 >
                   {rows.map((_, index) => (
                     <Cell

@@ -59,6 +59,12 @@ function useMultiSourceStats() {
   });
 }
 
+const SOURCE_SECTION_IDS: Record<string, string> = {
+  "City of Richmond": "city",
+  "SAM.gov (Federal)": "federal",
+  "eVA (Virginia)": "state",
+};
+
 function SourceSummaryCard({
   source,
   count,
@@ -72,9 +78,16 @@ function SourceSummaryCard({
   bgClass: string;
   textClass: string;
 }) {
+  const sectionId = SOURCE_SECTION_IDS[source];
+  const href = sectionId ? `#${sectionId}-contracts` : "#";
+
   return (
-    <Card className={`${bgClass} border-0 shadow-sm`}>
-      <CardContent className="pt-6 pb-6 flex flex-col items-center text-center gap-2">
+    <a
+      href={href}
+      className={`${bgClass} border-0 shadow-sm rounded-xl block transition-all hover:shadow-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+      aria-label={`${source}: ${count.toLocaleString()} contracts worth ${formatCurrency(totalValue)}. Click to view this data section.`}
+    >
+      <div className="pt-6 pb-6 flex flex-col items-center text-center gap-2 px-4">
         <p className="text-sm font-semibold text-[#475569] uppercase tracking-wide">{source}</p>
         <p className={`text-3xl font-bold leading-none tracking-tight ${textClass}`}>
           {count.toLocaleString()}
@@ -82,8 +95,9 @@ function SourceSummaryCard({
         <p className="text-sm text-[#475569]">contracts</p>
         <p className={`text-lg font-semibold ${textClass}`}>{formatCurrency(totalValue)}</p>
         <p className="text-xs text-[#64748b]">total value</p>
-      </CardContent>
-    </Card>
+        <p className="text-xs text-[#94a3b8] mt-1">Click to explore</p>
+      </div>
+    </a>
   );
 }
 
@@ -326,7 +340,7 @@ export function MultiSourceExplorer() {
       </div>
 
       {/* Federal contracts table */}
-      <Card className="border border-[#E2E8F0] shadow-sm">
+      <Card id="federal-contracts" className="border border-[#E2E8F0] shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-bold text-[#1E293B]">
             Federal Contracts in the Richmond Area

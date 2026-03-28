@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchAPI } from "@/lib/api";
 
@@ -69,11 +70,13 @@ function HeatmapGrid({
   cells,
   dataKey,
   maxValue,
+  onCellClick,
 }: {
   title: string;
   cells: Map<string, CellData>;
   dataKey: "starts" | "expirations";
   maxValue: number;
+  onCellClick?: (year: number, month: number) => void;
 }) {
   const years = useMemo(() => {
     const ys = new Set<number>();
@@ -136,13 +139,23 @@ function HeatmapGrid({
                   const bg = intensityClass(value, maxValue);
                   const textCls = textContrastClass(value, maxValue);
 
+                  const isClickable = !!onCellClick;
+
                   return (
                     <td key={monthIdx} className="p-0.5">
                       <div
-                        className={`w-10 h-8 rounded flex items-center justify-center ${bg} transition-colors`}
-                        title={`${year} ${MONTH_LABELS[monthIdx]}: ${value} ${dataKey}`}
-                        role="cell"
-                        aria-label={`${MONTH_LABELS[monthIdx]} ${year}: ${value}`}
+                        className={`w-10 h-8 rounded flex items-center justify-center ${bg} transition-colors ${isClickable ? "cursor-pointer hover:ring-2 hover:ring-blue-400 hover:ring-offset-1 focus:outline-none focus:ring-2 focus:ring-blue-500" : ""}`}
+                        title={`${year} ${MONTH_LABELS[monthIdx]}: ${value} ${dataKey}${isClickable ? ". Click to filter contracts." : ""}`}
+                        role={isClickable ? "button" : "cell"}
+                        tabIndex={isClickable ? 0 : undefined}
+                        aria-label={`${MONTH_LABELS[monthIdx]} ${year}: ${value}${isClickable ? ". Click to filter contracts." : ""}`}
+                        onClick={() => isClickable && onCellClick!(year, monthIdx)}
+                        onKeyDown={(e) => {
+                          if (isClickable && (e.key === "Enter" || e.key === " ")) {
+                            e.preventDefault();
+                            onCellClick!(year, monthIdx);
+                          }
+                        }}
                       >
                         <span className={`text-[10px] font-medium ${textCls}`}>
                           {value > 0 ? value : ""}
@@ -180,6 +193,7 @@ function HeatmapGrid({
 // ---------------------------------------------------------------------------
 
 export function SpendingHeatmap() {
+  const router = useRouter();
   const { data, isLoading, isError } = useQuery<MonthlyActivityResponse>({
     queryKey: ["monthly-activity"],
     queryFn: () => fetchAPI<MonthlyActivityResponse>("/api/analytics/monthly-activity"),
@@ -248,17 +262,26 @@ export function SpendingHeatmap() {
         )}
         {!isLoading && !isError && (
           <div className="space-y-8">
+            <p className="text-xs text-slate-500 dark:text-slate-400 -mt-2">Click any cell to filter contracts by that month.</p>
             <HeatmapGrid
               title="Contract Starts by Month"
               cells={cells}
               dataKey="starts"
               maxValue={maxStarts}
+              onCellClick={(year, monthIdx) => {
+                const month = String(monthIdx + 1).padStart(2, "0");
+                router.push(`/staff/contracts?start_month=${year}-${month}`);
+              }}
             />
             <HeatmapGrid
               title="Contract Expirations by Month"
               cells={cells}
               dataKey="expirations"
               maxValue={maxExpirations}
+              onCellClick={(year, monthIdx) => {
+                const month = String(monthIdx + 1).padStart(2, "0");
+                router.push(`/staff/contracts?expiry_month=${year}-${month}`);
+              }}
             />
           </div>
         )}

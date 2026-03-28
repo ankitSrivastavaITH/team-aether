@@ -209,6 +209,7 @@ export function DepartmentSpendingChart({ data }: DepartmentSpendingChartProps) 
 
 export function VendorPieChart({ data }: VendorPieChartProps) {
   const reducedMotion = useReducedMotion();
+  const router = useRouter();
   // Top 8 vendors
   const top8 = [...data]
     .sort((a, b) => b.total_value - a.total_value)
@@ -273,13 +274,14 @@ export function VendorPieChart({ data }: VendorPieChartProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <p className="text-xs text-[#475569] mb-2">Click a slice to see vendor contracts.</p>
         <div
           role="img"
           aria-label={ariaLabel}
           style={{ height: 380 }}
         >
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart aria-hidden="true">
+            <PieChart aria-hidden="true" style={{ cursor: "pointer" }}>
               <Pie
                 data={top8}
                 dataKey="total_value"
@@ -292,12 +294,17 @@ export function VendorPieChart({ data }: VendorPieChartProps) {
                 labelLine={false}
                 label={renderLabel}
                 isAnimationActive={!reducedMotion}
+                style={{ cursor: "pointer" }}
+                onClick={(_, index) => {
+                  const vendor = top8[index]?.supplier;
+                  if (vendor) router.push(`/public/vendor/${encodeURIComponent(vendor)}`);
+                }}
               >
                 {top8.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={VENDOR_COLORS[index % VENDOR_COLORS.length]}
-                    aria-label={`${entry.supplier}: ${formatTooltipValue(entry.total_value)}`}
+                    aria-label={`${entry.supplier}: ${formatTooltipValue(entry.total_value)}. Click to view vendor contracts.`}
                   />
                 ))}
               </Pie>

@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarDays, X } from "lucide-react";
+import Link from "next/link";
+import { CalendarDays, X, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -219,9 +220,21 @@ function DetailPanel({
         {/* Vendor */}
         <div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Vendor</p>
-          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-            {contract.supplier ?? "—"}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+              {contract.supplier ?? "—"}
+            </p>
+            {contract.supplier && (
+              <Link
+                href={`/public/vendor/${encodeURIComponent(contract.supplier)}`}
+                className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                aria-label={`View vendor page for ${contract.supplier}`}
+              >
+                <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                View
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Contract number */}
