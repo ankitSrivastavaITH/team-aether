@@ -6,7 +6,7 @@ import { PdfUpload } from "@/components/pdf-upload";
 import { ContractSearch } from "@/components/contract-search";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { fetchAPI } from "@/lib/api";
+import { fetchAPI, API_BASE } from "@/lib/api";
 import {
   FileSearch,
   FileText,
