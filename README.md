@@ -167,7 +167,7 @@ npm run dev -- -p 3200
 | Public transparency pages | 7 |
 | API endpoints | 40+ |
 | Commits | 152+ |
-| Total codebase | Built by 1 person in 48 hours |
+| Total codebase | Built by a team of 4 in 48 hours |
 | Manual review time saved | 60 min → 8 sec per contract |
 | OCR extraction capacity | 176K+ chars from a single scanned PDF |
 
@@ -399,7 +399,7 @@ cd backend && pytest tests/ -v
 
 ## Team
 
-Built by **Team Aether** (solo participant) for Hack for RVA 2026.
+Built by **Team Aether** (4 members) for Hack for RVA 2026.
 
 ---
 

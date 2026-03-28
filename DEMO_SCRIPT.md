@@ -128,7 +128,7 @@
 **SAY:**
 > "Everything you've seen runs on real City of Richmond data — 1,365 contracts, $6.1 billion, from the City's own open data portal. No synthetic data. No internal system access required."
 >
-> "The entire platform — staff view, public transparency, AI decision engine, strategic intelligence — was built by one person in 48 hours."
+> "The entire platform — staff view, public transparency, AI decision engine, strategic intelligence — was built by our team of four in 48 hours."
 >
 > "The City could pilot this in the next quarter. Swap in a new Socrata dataset, and it works for any city in America."
 >
@@ -172,7 +172,7 @@ If judges ask about...
 > "No — it's a federated intelligence engine. Eight independent data sources, three live compliance checks, and strategic scenario modeling. The What-If Estimator and Portfolio Strategy go beyond displaying data — they recommend specific actions with projected fiscal impact."
 
 **"Could this actually be piloted?"**
-> "Yes, today. It runs on the City's existing open data. No internal system access required. The only setup is a free Groq API key. We built it in 48 hours with one person — a pilot team could have it running in a week."
+> "Yes, today. It runs on the City's existing open data. No internal system access required. The only setup is a free Groq API key. Our team of four built it in 48 hours — a pilot team could have it running in a week."
 
 **"What about legal compliance?"**
 > "The AI recommends, humans decide. Every verdict shows full transparency — what the AI saw, how confident it is, and why. Staff can verify every data point before acting. All decisions are saved to an audit trail."
