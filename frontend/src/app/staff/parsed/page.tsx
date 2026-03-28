@@ -56,15 +56,31 @@ function StatCard({
   label,
   of,
   colorClass,
+  searchTerm,
 }: {
   value: number;
   label: string;
   of: number;
   colorClass: string;
+  searchTerm?: string;
 }) {
   const pct = of > 0 ? Math.round((value / of) * 100) : 0;
+
+  function handleClick() {
+    if (searchTerm) {
+      window.open(`/staff/contracts?search=${encodeURIComponent(searchTerm)}`, "_blank");
+    }
+  }
+
   return (
-    <div className="flex flex-col gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+    <button
+      onClick={handleClick}
+      disabled={!searchTerm}
+      className={`flex flex-col gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-left transition-all ${
+        searchTerm ? "cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-sm" : ""
+      }`}
+      aria-label={`${value} contracts ${label}. ${searchTerm ? "Click to view." : ""}`}
+    >
       <span className={`text-2xl font-bold ${colorClass}`}>{value.toLocaleString()}</span>
       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
       <div className="flex items-center gap-2 mt-1">
@@ -76,7 +92,12 @@ function StatCard({
         </div>
         <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">{pct}%</span>
       </div>
-    </div>
+      {searchTerm && (
+        <span className="text-[10px] text-blue-500 dark:text-blue-400 mt-1 flex items-center gap-1">
+          <ArrowRight className="h-2.5 w-2.5" aria-hidden="true" /> View contracts
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -391,36 +412,42 @@ export default function ParsedPage() {
               label="Have IFB numbers"
               of={total}
               colorClass="text-violet-600 dark:text-violet-400"
+              searchTerm="IFB"
             />
             <StatCard
               value={stats.rfp_count}
               label="Have RFP references"
               of={total}
               colorClass="text-blue-600 dark:text-blue-400"
+              searchTerm="RFP"
             />
             <StatCard
               value={stats.cooperative_count}
               label="Cooperative agreements"
               of={total}
               colorClass="text-emerald-600 dark:text-emerald-400"
+              searchTerm="cooperative"
             />
             <StatCard
               value={stats.has_renewal_info}
               label="Have renewal info"
               of={total}
               colorClass="text-amber-600 dark:text-amber-400"
+              searchTerm="renewal"
             />
             <StatCard
               value={stats.has_term_info}
               label="Have term info"
               of={total}
               colorClass="text-cyan-600 dark:text-cyan-400"
+              searchTerm="year"
             />
             <StatCard
               value={stats.has_requisition}
               label="Have requisition refs"
               of={total}
               colorClass="text-rose-600 dark:text-rose-400"
+              searchTerm="requisition"
             />
           </div>
         )}
