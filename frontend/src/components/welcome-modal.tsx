@@ -33,6 +33,11 @@ export function WelcomeModal() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && !sessionStorage.getItem("welcome_seen")) {
+      // Don't show welcome modal if guided tour is active
+      if (localStorage.getItem("rva_tour_active") === "true") {
+        sessionStorage.setItem("welcome_seen", "true");
+        return;
+      }
       setOpen(true);
     }
   }, []);

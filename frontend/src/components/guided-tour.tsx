@@ -193,6 +193,15 @@ export function GuidedTour() {
     }
   }, []);
 
+  // Listen for tour start event (from StartTourButton)
+  useEffect(() => {
+    function handleTourStart() {
+      setTourActive(true);
+    }
+    window.addEventListener("rva-tour-start", handleTourStart);
+    return () => window.removeEventListener("rva-tour-start", handleTourStart);
+  }, []);
+
   // Run tour steps for current page
   useEffect(() => {
     if (!tourActive) return;
@@ -251,9 +260,12 @@ export function StartTourButton({ className }: { className?: string }) {
   const startTour = useCallback(() => {
     localStorage.setItem(TOUR_KEY, "true");
     localStorage.setItem(TOUR_STEP_KEY, "0");
-    // If already on landing, just reload tour state
+    sessionStorage.setItem("welcome_seen", "true");
+    // Close any open modals
+    document.querySelectorAll("[data-base-ui-portal]").forEach((el) => el.remove());
     if (window.location.pathname === "/") {
-      window.location.reload();
+      // Dispatch event so GuidedTour picks it up without reload
+      window.dispatchEvent(new Event("rva-tour-start"));
     } else {
       router.push("/");
     }
