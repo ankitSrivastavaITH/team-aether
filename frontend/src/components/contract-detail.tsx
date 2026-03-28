@@ -564,8 +564,8 @@ export function ContractDetail({ contract, open, onClose }: ContractDetailProps)
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <SheetContent side="right" showCloseButton={false} className="w-full sm:max-w-2xl overflow-y-auto !gap-0">
-        <SheetHeader className="pr-12">
+      <SheetContent side="right" showCloseButton={false} className="!w-[500px] !max-w-[90vw] overflow-y-auto !gap-0 p-0">
+        <SheetHeader className="pr-12 px-5 pt-5">
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-2">
               <SheetTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100 leading-tight">
@@ -596,7 +596,7 @@ export function ContractDetail({ contract, open, onClose }: ContractDetailProps)
 
         <Separator className="my-2" />
 
-        <div className="px-4 pb-6">
+        <div className="px-5 pb-6">
           <Tabs defaultValue="details" onValueChange={setActiveTab}>
             <TabsList className="w-full sticky top-0 z-10 bg-white dark:bg-slate-900">
               <TabsTrigger value="details">
