@@ -169,13 +169,40 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
     contract_number = payload.contract_number
     supplier = payload.supplier
 
-    # ── 1. Gather data from all 6 sources ───────────────────────────────────
+    # ── 1. Gather data from all 7 sources ───────────────────────────────────
     contract_details = _gather_contract_details(contract_number)
     vendor_history = _gather_vendor_history(supplier)
     compliance_results = _gather_compliance(supplier)
     price_trend = _gather_price_trend(supplier)
     concentration_risk = _gather_concentration_risk(contract_number)
     description = contract_details.get("description", "N/A") if contract_details else "N/A"
+
+    # Source 7: PDF-extracted contract intelligence (from uploaded/ingested PDFs)
+    pdf_intel = None
+    try:
+        from app.services.extracted_store import list_extractions
+        from app.services.vector_store import search_contracts
+        # Check if we have extracted terms for this vendor
+        all_extractions = list_extractions()
+        vendor_extractions = [e for e in all_extractions if supplier.lower() in (e.get("parties") or "").lower() or supplier.lower() in (e.get("filename") or "").lower()]
+        # Also do semantic search for vendor name in PDFs
+        pdf_search = search_contracts(supplier, n_results=3)
+        if vendor_extractions or pdf_search:
+            pdf_intel = {
+                "extracted_terms": [{
+                    "filename": e.get("filename"),
+                    "expiration_date": e.get("expiration_date"),
+                    "renewal_option": e.get("renewal_option"),
+                    "contract_value": e.get("contract_value"),
+                    "summary": (e.get("summary") or "")[:200],
+                } for e in vendor_extractions[:3]],
+                "pdf_mentions": [{
+                    "filename": r.get("filename"),
+                    "excerpt": (r.get("text") or "")[:150],
+                } for r in pdf_search[:3]],
+            }
+    except Exception:
+        pass
 
     # ── 2. Build the data context (trimmed to fit LLM token limits) ─────────
     # Keep vendor history lean: only key fields, max 5 contracts
@@ -238,6 +265,7 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
             "vendor_dept_total": vendor_concentration_entry.get("total") if vendor_concentration_entry else 0,
             "vendor_dept_contracts": vendor_concentration_entry.get("count") if vendor_concentration_entry else 0,
             "total_vendors_in_dept": len(all_concentration),
+            "pdf_document_intelligence": pdf_intel,
         },
         default=str,
     )
@@ -361,7 +389,9 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
             "price-trend",
             "concentration-risk",
             "contract-description",
+            "pdf-document-intelligence",
         ],
+        "pdf_intel_found": pdf_intel is not None,
         "contract_number": contract_number,
         "supplier": supplier,
         "disclaimer": "AI-generated recommendation for advisory purposes only. All procurement decisions require human review and approval.",
