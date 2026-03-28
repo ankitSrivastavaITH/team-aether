@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
+// Link removed — public pages open in new tabs via <a target="_blank">
 import { CalendarDays, X, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -225,14 +225,16 @@ function DetailPanel({
               {contract.supplier ?? "—"}
             </p>
             {contract.supplier && (
-              <Link
+              <a
                 href={`/public/vendor/${encodeURIComponent(contract.supplier)}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
                 aria-label={`View vendor page for ${contract.supplier}`}
               >
                 <ExternalLink className="h-3 w-3" aria-hidden="true" />
                 View
-              </Link>
+              </a>
             )}
           </div>
         </div>

@@ -291,14 +291,16 @@ function AnomalyCard({ anomaly }: { anomaly: Anomaly }) {
         {/* Action footer */}
         {actionLink && (
           <div className="pt-1">
-            <Link
+            <a
               href={actionLink.href}
+              target="_blank"
+              rel="noopener noreferrer"
               className={`inline-flex items-center gap-1.5 text-sm font-semibold ${sev.iconClass} hover:underline focus:outline-none focus:ring-2 focus:ring-offset-1 rounded`}
               aria-label={actionLink.label}
             >
               {actionLink.label}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
+            </a>
           </div>
         )}
       </div>

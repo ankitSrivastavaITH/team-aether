@@ -81,7 +81,8 @@ function ScorecardCard({ card }: { card: Scorecard }) {
   const diversity = vendorDiversityLabel(card.unique_vendors, card.total_contracts);
 
   function handleNavigate() {
-    router.push(`/public/department/${encodeURIComponent(card.department)}`);
+    // Open in new tab to keep staff sidebar intact
+    window.open(`/public/department/${encodeURIComponent(card.department)}`, "_blank");
   }
 
   return (

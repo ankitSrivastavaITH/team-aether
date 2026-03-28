@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+// useRouter removed — public links open in new tabs via window.open
 import { fetchAPI } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -114,7 +114,6 @@ const ACTION_STYLES: Record<string, { bg: string; text: string; label: string }>
 export function RiskNarrative() {
   const [showAll, setShowAll] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const router = useRouter();
   const { data, isLoading } = useQuery({
     queryKey: ["risk-narrative"],
     queryFn: () => fetchAPI<RiskData>("/api/insights/risk-narrative"),
@@ -154,11 +153,11 @@ export function RiskNarrative() {
               role="button"
               tabIndex={0}
               aria-label={`View department page for ${d.department}: ${d.critical} critical contracts`}
-              onClick={() => router.push(`/public/department/${encodeURIComponent(d.department)}`)}
+              onClick={() => window.open(`/public/department/${encodeURIComponent(d.department)}`, "_blank")}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  router.push(`/public/department/${encodeURIComponent(d.department)}`);
+                  window.open(`/public/department/${encodeURIComponent(d.department)}`, "_blank");
                 }
               }}
             >
