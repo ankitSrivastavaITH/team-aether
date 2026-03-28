@@ -369,21 +369,24 @@ function ComplianceTab({ supplier, enabled }: { supplier: string; enabled: boole
 
       {/* Check cards — render all 7 from federal_lists */}
       <div className="space-y-2">
-        {data.federal_lists?.map((list, i) => {
-          // Each list may have its own result, or fall back to the top-level checks
+        {/* Top 3: API-based checks */}
+        <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold">Live API Checks</p>
+        <ComplianceStatusCard title="SAM.gov Exclusions (GSA)" isLoading={false} checked={data.sam_check?.checked ?? false} flagged={Boolean(data.sam_check?.debarred)} details={data.sam_check?.details} />
+        <ComplianceStatusCard title="FCC Covered List (FCC)" isLoading={false} checked={data.fcc_check?.checked ?? false} flagged={data.fcc_check?.flagged ?? false} details={data.fcc_check?.details} />
+        <ComplianceStatusCard title="Consolidated Screening List (Commerce)" isLoading={false} checked={data.csl_check?.checked ?? false} flagged={data.csl_check?.flagged ?? false} details={data.csl_check?.details} />
+
+        {/* Bottom 4: Keyword screening */}
+        <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold mt-3">Automated Keyword Screening</p>
+        {data.federal_lists?.slice(3).map((list, i) => {
           const r = list.result as Record<string, unknown> | undefined;
-          const fallback = list.name.includes("SAM") ? data.sam_check as unknown as Record<string, unknown> :
-            list.name.includes("FCC") ? data.fcc_check as unknown as Record<string, unknown> :
-            list.name.includes("Consolidated") ? data.csl_check as unknown as Record<string, unknown> : null;
-          const result = r || fallback;
           return (
             <ComplianceStatusCard
-              key={i}
+              key={i + 3}
               title={`${list.name} (${list.agency})`}
               isLoading={false}
-              checked={Boolean(result?.checked)}
-              flagged={Boolean(result?.flagged || result?.debarred)}
-              details={String(result?.details || "")}
+              checked={Boolean(r?.checked)}
+              flagged={Boolean(r?.flagged)}
+              details={String(r?.details || `Screened against known ${list.name} entries`)}
             />
           );
         }) ?? (
@@ -601,16 +604,16 @@ export function ContractDetail({ contract, open, onClose }: ContractDetailProps)
 
         <div className="px-5 pb-6">
           <Tabs defaultValue="details" onValueChange={setActiveTab}>
-            <TabsList className="w-full sticky top-0 z-10 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
-              <TabsTrigger value="details" className="data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-700 rounded-md">
+            <TabsList className="w-full sticky top-0 z-10 rounded-lg p-1">
+              <TabsTrigger value="details" className="data-active:!bg-blue-600 data-active:!text-white data-active:shadow-sm rounded-md">
                 <FileText className="h-3.5 w-3.5" aria-hidden="true" />
                 Details
               </TabsTrigger>
-              <TabsTrigger value="compliance" className="data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-700 rounded-md">
+              <TabsTrigger value="compliance" className="data-active:!bg-blue-600 data-active:!text-white data-active:shadow-sm rounded-md">
                 <Scale className="h-3.5 w-3.5" aria-hidden="true" />
                 Compliance
               </TabsTrigger>
-              <TabsTrigger value="ai-analysis" className="data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-700 rounded-md">
+              <TabsTrigger value="ai-analysis" className="data-active:!bg-blue-600 data-active:!text-white data-active:shadow-sm rounded-md">
                 <Brain className="h-3.5 w-3.5" aria-hidden="true" />
                 AI Analysis
               </TabsTrigger>
