@@ -30,6 +30,7 @@ import {
   TrendingUp,
   ShieldCheck,
   RefreshCw,
+  Activity,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -77,6 +78,7 @@ const navSections: NavSection[] = [
       { href: "/staff/extract", label: "PDF Analyzer", icon: FileUp },
       { href: "/staff/parsed", label: "Contract Intel", icon: Brain },
       { href: "/staff/report", label: "AI Report", icon: FileText },
+      { href: "/staff/health", label: "Health Scanner", icon: Activity },
     ],
   },
   {

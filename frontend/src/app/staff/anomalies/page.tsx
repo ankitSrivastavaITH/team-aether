@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment, useCallback, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertOctagon,
@@ -12,6 +13,8 @@ import {
   Lightbulb,
   BookOpen,
   ShieldAlert,
+  ClipboardCheck,
+  GraduationCap,
 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,6 +114,117 @@ const EXPLAINERS: Record<string, string> = {
     "Contracts over 5 years may not have been competitively re-bid, which is often required by procurement law. Prices may no longer reflect current market rates.",
   price_outlier:
     "This contract is significantly more expensive than similar contracts in the same department. It may have been awarded without competitive bidding, or the scope may differ.",
+};
+
+// ---------------------------------------------------------------------------
+// Risk Matrix — severity x likelihood classification
+// ---------------------------------------------------------------------------
+
+type Likelihood = "frequent" | "occasional" | "rare";
+
+interface RiskCell {
+  severity: Severity;
+  likelihood: Likelihood;
+}
+
+const ANOMALY_RISK_MAP: Record<string, RiskCell> = {
+  expired_active: { severity: "high", likelihood: "frequent" },
+  high_value_outlier: { severity: "high", likelihood: "occasional" },
+  single_source: { severity: "medium", likelihood: "occasional" },
+  duplicate_vendor: { severity: "low", likelihood: "rare" },
+};
+
+const DEFAULT_RISK_CELL: RiskCell = {
+  severity: "medium",
+  likelihood: "occasional",
+};
+
+function classifyAnomaly(type: string): RiskCell {
+  return ANOMALY_RISK_MAP[type] ?? DEFAULT_RISK_CELL;
+}
+
+const LIKELIHOOD_LABELS: Likelihood[] = ["frequent", "occasional", "rare"];
+const SEVERITY_LABELS: Severity[] = ["high", "medium", "low"];
+
+const MATRIX_CELL_STYLES: Record<string, string> = {
+  "high-frequent":
+    "bg-red-600 dark:bg-red-700 text-white hover:bg-red-700 dark:hover:bg-red-600",
+  "high-occasional":
+    "bg-red-400 dark:bg-red-600 text-white hover:bg-red-500 dark:hover:bg-red-500",
+  "high-rare":
+    "bg-amber-400 dark:bg-amber-600 text-slate-900 dark:text-white hover:bg-amber-500 dark:hover:bg-amber-500",
+  "medium-frequent":
+    "bg-amber-400 dark:bg-amber-600 text-slate-900 dark:text-white hover:bg-amber-500 dark:hover:bg-amber-500",
+  "medium-occasional":
+    "bg-amber-300 dark:bg-amber-700 text-slate-900 dark:text-amber-100 hover:bg-amber-400 dark:hover:bg-amber-600",
+  "medium-rare":
+    "bg-yellow-200 dark:bg-yellow-800 text-slate-900 dark:text-yellow-100 hover:bg-yellow-300 dark:hover:bg-yellow-700",
+  "low-frequent":
+    "bg-amber-300 dark:bg-amber-700 text-slate-900 dark:text-amber-100 hover:bg-amber-400 dark:hover:bg-amber-600",
+  "low-occasional":
+    "bg-yellow-200 dark:bg-yellow-800 text-slate-900 dark:text-yellow-100 hover:bg-yellow-300 dark:hover:bg-yellow-700",
+  "low-rare":
+    "bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100 hover:bg-emerald-300 dark:hover:bg-emerald-700",
+};
+
+// ---------------------------------------------------------------------------
+// Remediation steps per anomaly type
+// ---------------------------------------------------------------------------
+
+const REMEDIATION_STEPS: Record<string, string[]> = {
+  expired_active: [
+    "Verify contract status with department.",
+    "Initiate renewal or closeout.",
+  ],
+  high_value_outlier: [
+    "Review pricing against market benchmarks.",
+    "Consider competitive rebid.",
+  ],
+  single_source: [
+    "Identify alternative vendors in this category.",
+    "Plan competitive solicitation for next renewal.",
+  ],
+  duplicate_vendor: [
+    "Verify if entries are the same legal entity.",
+    "Consolidate vendor records.",
+  ],
+};
+
+const DEFAULT_REMEDIATION: string[] = [
+  "Flag for procurement officer review.",
+  "Document findings in contract file.",
+];
+
+function getRemediationSteps(type: string): string[] {
+  return REMEDIATION_STEPS[type] ?? DEFAULT_REMEDIATION;
+}
+
+// ---------------------------------------------------------------------------
+// Department health grading
+// ---------------------------------------------------------------------------
+
+type HealthGrade = "A" | "B" | "C" | "D" | "F";
+
+interface DepartmentHealth {
+  department: string;
+  count: number;
+  grade: HealthGrade;
+}
+
+function computeGrade(count: number): HealthGrade {
+  if (count === 0) return "A";
+  if (count <= 2) return "B";
+  if (count <= 5) return "C";
+  if (count <= 8) return "D";
+  return "F";
+}
+
+const GRADE_STYLES: Record<HealthGrade, string> = {
+  A: "bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700",
+  B: "bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700",
+  C: "bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 border-amber-300 dark:border-amber-700",
+  D: "bg-red-100 dark:bg-red-900/60 text-red-800 dark:text-red-200 border-red-300 dark:border-red-700",
+  F: "bg-red-200 dark:bg-red-900/80 text-red-900 dark:text-red-100 border-red-400 dark:border-red-600",
 };
 
 // ---------------------------------------------------------------------------
@@ -267,6 +381,9 @@ function AnomalyCard({ anomaly }: { anomaly: Anomaly }) {
           </div>
         )}
 
+        {/* Remediation steps */}
+        <RemediationBox type={anomaly.type} />
+
         {/* Related contract numbers */}
         {anomaly.related_contracts && anomaly.related_contracts.length > 0 && (
           <div>
@@ -380,6 +497,211 @@ function SummaryBar({ anomalies }: { anomalies: Anomaly[] }) {
 }
 
 // ---------------------------------------------------------------------------
+// Risk Matrix visualization (3x3 grid)
+// ---------------------------------------------------------------------------
+
+function RiskMatrix({
+  anomalies,
+  onCellClick,
+}: {
+  anomalies: Anomaly[];
+  onCellClick: (severity: Severity, likelihood: Likelihood) => void;
+}) {
+  // Build counts for each cell
+  const matrix = useMemo(() => {
+    const grid: Record<string, number> = {};
+    for (const sev of SEVERITY_LABELS) {
+      for (const lik of LIKELIHOOD_LABELS) {
+        grid[`${sev}-${lik}`] = 0;
+      }
+    }
+    for (const a of anomalies) {
+      const cell = classifyAnomaly(a.type);
+      grid[`${cell.severity}-${cell.likelihood}`] += 1;
+    }
+    return grid;
+  }, [anomalies]);
+
+  return (
+    <Card className="border-slate-200 dark:border-slate-700">
+      <CardHeader className="pb-3">
+        <CardTitle>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+            Risk Matrix
+          </h2>
+        </CardTitle>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Anomalies mapped by severity and likelihood. Click a cell to jump to
+          matching anomalies.
+        </p>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div
+          className="grid gap-0.5"
+          style={{
+            gridTemplateColumns: "auto 1fr 1fr 1fr",
+            gridTemplateRows: "auto 1fr 1fr 1fr",
+          }}
+          role="grid"
+          aria-label="Risk matrix: severity vs likelihood"
+        >
+          {/* Header row */}
+          <div className="flex items-end justify-center p-2" aria-hidden="true" />
+          {LIKELIHOOD_LABELS.map((lik) => (
+            <div
+              key={lik}
+              className="text-center text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 p-2"
+              role="columnheader"
+            >
+              {lik}
+            </div>
+          ))}
+
+          {/* Grid rows */}
+          {SEVERITY_LABELS.map((sev) => (
+            <Fragment key={sev}>
+              {/* Row header */}
+              <div
+                className="flex items-center justify-end pr-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                role="rowheader"
+              >
+                {sev}
+              </div>
+              {/* Cells */}
+              {LIKELIHOOD_LABELS.map((lik) => {
+                const key = `${sev}-${lik}`;
+                const count = matrix[key];
+                const cellStyle = MATRIX_CELL_STYLES[key] ?? "";
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => onCellClick(sev, lik)}
+                    className={`flex flex-col items-center justify-center rounded-lg p-3 min-h-[4rem] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 dark:focus:ring-offset-slate-900 cursor-pointer ${cellStyle}`}
+                    role="gridcell"
+                    aria-label={`${sev} severity, ${lik} likelihood: ${count} anomalies`}
+                  >
+                    <span className="text-2xl font-bold leading-none">{count}</span>
+                    {count > 0 && (
+                      <span className="text-[10px] font-medium mt-0.5 opacity-80">
+                        {count === 1 ? "anomaly" : "anomalies"}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </Fragment>
+          ))}
+        </div>
+        {/* Axis labels */}
+        <div className="flex items-center justify-between mt-3 px-1">
+          <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+            Severity (rows)
+          </span>
+          <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+            Likelihood (columns)
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Department Health Grades
+// ---------------------------------------------------------------------------
+
+function DepartmentHealthGrades({ anomalies }: { anomalies: Anomaly[] }) {
+  const grades = useMemo<DepartmentHealth[]>(() => {
+    const deptCounts: Record<string, number> = {};
+    for (const a of anomalies) {
+      const dept = a.department_name ?? "Unknown";
+      deptCounts[dept] = (deptCounts[dept] ?? 0) + 1;
+    }
+    return Object.entries(deptCounts)
+      .map(([department, count]) => ({
+        department,
+        count,
+        grade: computeGrade(count),
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [anomalies]);
+
+  if (grades.length === 0) return null;
+
+  return (
+    <Card className="border-slate-200 dark:border-slate-700">
+      <CardHeader className="pb-3">
+        <CardTitle>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <GraduationCap
+              className="h-5 w-5 text-slate-500 dark:text-slate-400"
+              aria-hidden="true"
+            />
+            Department Health Grades
+          </h2>
+        </CardTitle>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Grades based on anomaly count per department: A (0), B (1-2), C (3-5),
+          D/F (6+)
+        </p>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div
+          className="flex flex-wrap gap-2"
+          role="list"
+          aria-label="Department health grades"
+        >
+          {grades.map((dh) => (
+            <div
+              key={dh.department}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border ${GRADE_STYLES[dh.grade]}`}
+              role="listitem"
+              aria-label={`${dh.department}: grade ${dh.grade}, ${dh.count} anomalies`}
+            >
+              <span>{dh.department}:</span>
+              <span className="font-black text-base leading-none">{dh.grade}</span>
+              <span className="text-xs opacity-70">({dh.count})</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Remediation info box (within each anomaly card)
+// ---------------------------------------------------------------------------
+
+function RemediationBox({ type }: { type: string }) {
+  const steps = getRemediationSteps(type);
+  return (
+    <div className="flex items-start gap-2.5 p-3 rounded-lg bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800">
+      <ClipboardCheck
+        className="h-4 w-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5"
+        aria-hidden="true"
+      />
+      <div>
+        <p className="text-xs font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wide mb-1">
+          Recommended Action
+        </p>
+        <ol className="list-decimal list-inside space-y-0.5">
+          {steps.map((step, idx) => (
+            <li
+              key={idx}
+              className="text-sm text-sky-800 dark:text-sky-300 leading-relaxed"
+            >
+              {step}
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
@@ -400,6 +722,27 @@ export default function AnomaliesPage() {
 
   const totalImpact = data?.total_financial_impact ?? 0;
   const totalFlagged = anomalies.reduce((sum, a) => sum + (a.count ?? 0), 0);
+
+  // Refs for scroll-to-section from risk matrix
+  const highRef = useRef<HTMLDivElement>(null);
+  const medRef = useRef<HTMLDivElement>(null);
+  const lowRef = useRef<HTMLDivElement>(null);
+
+  const handleCellClick = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (severity: Severity, _likelihood: Likelihood) => {
+      const refMap: Record<Severity, React.RefObject<HTMLDivElement | null>> = {
+        high: highRef,
+        medium: medRef,
+        low: lowRef,
+      };
+      refMap[severity]?.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    },
+    [],
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -547,12 +890,22 @@ export default function AnomaliesPage() {
             </Card>
           )}
 
+          {/* Risk Matrix */}
+          {anomalies.length > 0 && (
+            <RiskMatrix anomalies={anomalies} onCellClick={handleCellClick} />
+          )}
+
+          {/* Department Health Grades */}
+          {anomalies.length > 0 && (
+            <DepartmentHealthGrades anomalies={anomalies} />
+          )}
+
           {/* Grouped anomaly sections */}
           {anomalies.length > 0 && (
             <div className="space-y-8">
               {/* HIGH */}
               {highAnomalies.length > 0 && (
-                <section aria-label="High priority anomalies">
+                <section ref={highRef} aria-label="High priority anomalies">
                   <SeveritySectionHeader severity="high" count={highAnomalies.length} />
                   <div className="mt-3 space-y-4">
                     {highAnomalies.map((anomaly, i) => (
@@ -564,7 +917,7 @@ export default function AnomaliesPage() {
 
               {/* MEDIUM */}
               {medAnomalies.length > 0 && (
-                <section aria-label="Medium priority anomalies">
+                <section ref={medRef} aria-label="Medium priority anomalies">
                   <SeveritySectionHeader severity="medium" count={medAnomalies.length} />
                   <div className="mt-3 space-y-4">
                     {medAnomalies.map((anomaly, i) => (
@@ -576,7 +929,7 @@ export default function AnomaliesPage() {
 
               {/* LOW */}
               {lowAnomalies.length > 0 && (
-                <section aria-label="Low priority anomalies">
+                <section ref={lowRef} aria-label="Low priority anomalies">
                   <SeveritySectionHeader severity="low" count={lowAnomalies.length} />
                   <div className="mt-3 space-y-4">
                     {lowAnomalies.map((anomaly, i) => (
