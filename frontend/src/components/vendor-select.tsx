@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAPI } from "@/lib/api";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,8 @@ export function VendorSelect({ value, onChange, placeholder = "Select a vendor..
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
   const { data: vendors = [] } = useQuery<Vendor[]>({
     queryKey: ["all-vendors"],
@@ -29,25 +32,45 @@ export function VendorSelect({ value, onChange, placeholder = "Select a vendor..
     staleTime: 10 * 60 * 1000,
   });
 
-  // Close on click outside
+  // Close on click outside (check both trigger and portal dropdown)
   useEffect(() => {
+    if (!open) return;
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      // Check if click is inside the trigger area
+      if (ref.current?.contains(target)) return;
+      // Check if click is inside the portal dropdown (it has z-9999)
+      const portal = document.querySelector("[style*='z-index: 9999']");
+      if (portal?.contains(target)) return;
+      setOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [open]);
 
   const filtered = vendors.filter((v) =>
     v.supplier.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <div ref={ref} className="relative w-full">
+    <div ref={ref} className="relative w-full" style={{ zIndex: open ? 100 : "auto" }}>
       {label && <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">{label}</label>}
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          if (!open && triggerRef.current) {
+            const rect = triggerRef.current.getBoundingClientRect();
+            setDropdownStyle({
+              position: "fixed",
+              top: rect.bottom + 4,
+              left: rect.left,
+              width: rect.width,
+              zIndex: 9999,
+            });
+          }
+          setOpen(!open);
+        }}
         className="w-full h-11 px-3 text-left flex items-center justify-between gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm hover:border-blue-300 dark:hover:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
         aria-label={label || "Select vendor"}
         aria-expanded={open}
@@ -72,8 +95,8 @@ export function VendorSelect({ value, onChange, placeholder = "Select a vendor..
         </div>
       </button>
 
-      {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-[300px] flex flex-col">
+      {open && typeof document !== "undefined" && createPortal(
+        <div style={dropdownStyle} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-2xl max-h-[300px] flex flex-col">
           <div className="p-2 border-b border-slate-100 dark:border-slate-700">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" aria-hidden="true" />
@@ -109,7 +132,8 @@ export function VendorSelect({ value, onChange, placeholder = "Select a vendor..
               <p className="text-xs text-slate-400 p-2 text-center border-t">Type to narrow down {filtered.length} vendors</p>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
