@@ -188,8 +188,20 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
             "risk_level": h.get("risk_level"),
         })
 
-    # Trim concentration risk to top 5
-    trimmed_concentration = (concentration_risk or [])[:5]
+    # Trim concentration risk: top 5 + ensure the selected vendor is included
+    all_concentration = concentration_risk or []
+    trimmed_concentration = all_concentration[:5]
+    # Find the selected vendor's position in the full list
+    vendor_position = None
+    vendor_concentration_entry = None
+    for idx, entry in enumerate(all_concentration):
+        if entry.get("supplier", "").lower() == supplier.lower():
+            vendor_position = idx + 1
+            vendor_concentration_entry = entry
+            # Add to trimmed if not already there
+            if entry not in trimmed_concentration:
+                trimmed_concentration.append(entry)
+            break
 
     # Trim price trend to key points
     trimmed_trend = []
@@ -219,7 +231,11 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
             "total_vendor_contracts": len(vendor_history or []),
             "compliance": compliance_results,
             "price_history": trimmed_trend,
-            "dept_concentration": trimmed_concentration,
+            "dept_concentration_top5": trimmed_concentration,
+            "vendor_rank_in_dept": vendor_position,
+            "vendor_dept_total": vendor_concentration_entry.get("total") if vendor_concentration_entry else 0,
+            "vendor_dept_contracts": vendor_concentration_entry.get("count") if vendor_concentration_entry else 0,
+            "total_vendors_in_dept": len(all_concentration),
         },
         default=str,
     )
