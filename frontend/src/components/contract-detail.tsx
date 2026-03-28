@@ -564,7 +564,7 @@ export function ContractDetail({ contract, open, onClose }: ContractDetailProps)
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <SheetContent side="right" showCloseButton={false} className="w-full sm:max-w-xl overflow-y-auto">
+      <SheetContent side="right" showCloseButton={false} className="w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader className="pr-12">
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-2">
