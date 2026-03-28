@@ -488,7 +488,7 @@ export default function ParsedPage() {
                   Close
                 </button>
               </div>
-              <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
+              <div className="space-y-1.5 max-h-[60vh] overflow-y-auto">
                 {filteredContracts.contracts.slice(0, visibleCount).map((c, i) => (
                   <button
                     key={i}
@@ -555,7 +555,7 @@ export default function ParsedPage() {
           {vendor && vendorContracts?.contracts && vendorContracts.contracts.length > 0 && (
             <div>
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">2. Pick a contract to parse:</p>
-              <div className="space-y-1.5 max-h-[250px] overflow-y-auto">
+              <div className="space-y-1.5 max-h-[50vh] overflow-y-auto">
                 {vendorContracts.contracts.map((c) => {
                   const cn = String(c.contract_number || "");
                   const isSelected = cn === contractNumber;
