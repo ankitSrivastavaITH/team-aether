@@ -13,7 +13,12 @@ import {
   TrendingUp,
   Building2,
   Clock,
+  Zap,
+  ArrowRight,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
+import Link from "next/link";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -317,6 +322,48 @@ export default function HealthScannerPage() {
                 </div>
               </div>
             </div>
+
+            {/* Actionable recommendation based on score */}
+            <div className={`w-full md:w-auto mt-4 md:mt-0 p-4 rounded-lg border ${
+              data.health_score > 70
+                ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800"
+                : data.health_score > 40
+                ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800"
+                : "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800"
+            }`}>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-1.5">
+                <Zap className="h-4 w-4" aria-hidden="true" />
+                Top Priority Action
+              </p>
+              {data.health_score <= 40 ? (
+                <>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">
+                    {(data.expiry_forecast.next_30 ?? 0)} contracts expire in 30 days worth {formatCurrency(data.expiry_forecast.value_30 ?? 0)}. Start with the highest-value critical contracts.
+                  </p>
+                  <Link href="/staff/decision" className="inline-flex items-center gap-1.5 mt-2 text-sm font-medium text-red-700 dark:text-red-400 hover:underline">
+                    Analyze Critical Contracts <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </>
+              ) : data.health_score <= 70 ? (
+                <>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">
+                    {data.department_grades.filter(d => d.grade === "D" || d.grade === "F").length} departments are at grade D or F. Focus on vendor diversification and renewals.
+                  </p>
+                  <Link href="/staff/decision" className="inline-flex items-center gap-1.5 mt-2 text-sm font-medium text-amber-700 dark:text-amber-400 hover:underline">
+                    Review At-Risk Departments <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">
+                    Portfolio is healthy. Monitor upcoming expirations and maintain competitive bidding practices.
+                  </p>
+                  <Link href="/staff/contracts" className="inline-flex items-center gap-1.5 mt-2 text-sm font-medium text-emerald-700 dark:text-emerald-400 hover:underline">
+                    View All Contracts <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -332,50 +379,33 @@ export default function HealthScannerPage() {
           </h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Next 30 days */}
-          <Card className="border-l-4 border-l-red-500 dark:border-l-red-400">
-            <CardContent className="py-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-red-600 dark:text-red-400 mb-1">
-                Next 30 Days
-              </p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                {(forecast.next_30 ?? 0).toLocaleString()}
-              </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {formatCurrency(forecast.value_30 ?? 0)}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* 31-60 days */}
-          <Card className="border-l-4 border-l-amber-500 dark:border-l-amber-400">
-            <CardContent className="py-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-1">
-                31 - 60 Days
-              </p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                {(forecast.next_60 ?? 0).toLocaleString()}
-              </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {formatCurrency(forecast.value_60 ?? 0)}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* 61-90 days */}
-          <Card className="border-l-4 border-l-emerald-500 dark:border-l-emerald-400">
-            <CardContent className="py-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">
-                61 - 90 Days
-              </p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                {(forecast.next_90 ?? 0).toLocaleString()}
-              </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {formatCurrency(forecast.value_90 ?? 0)}
-              </p>
-            </CardContent>
-          </Card>
+          {[
+            { label: "Next 30 Days", count: forecast.next_30 ?? 0, value: forecast.value_30 ?? 0, color: "red", action: "Urgent — renew or rebid now", link: "/staff/renew" },
+            { label: "31 - 60 Days", count: forecast.next_60 ?? 0, value: forecast.value_60 ?? 0, color: "amber", action: "Plan renewal decisions", link: "/staff/decision" },
+            { label: "61 - 90 Days", count: forecast.next_90 ?? 0, value: forecast.value_90 ?? 0, color: "emerald", action: "Schedule vendor reviews", link: "/staff/review" },
+          ].map(({ label, count, value, color, action, link }) => (
+            <Card key={label} className={`border-l-4 border-l-${color}-500 dark:border-l-${color}-400`}>
+              <CardContent className="py-5 space-y-3">
+                <p className={`text-xs font-semibold uppercase tracking-wider text-${color}-600 dark:text-${color}-400 mb-1`}>
+                  {label}
+                </p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  {count.toLocaleString()}
+                </p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {formatCurrency(value)}
+                </p>
+                {count > 0 && (
+                  <Link
+                    href={link}
+                    className={`inline-flex items-center gap-1.5 text-xs font-medium text-${color}-700 dark:text-${color}-400 hover:underline`}
+                  >
+                    {action} <ArrowRight className="h-3 w-3" />
+                  </Link>
+                )}
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
 
@@ -439,8 +469,8 @@ export default function HealthScannerPage() {
                   {/* Counts */}
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px]">
                     {dept.ok > 0 && (
-                      <span className="text-emerald-600 dark:text-emerald-400">
-                        {dept.ok} OK
+                      <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                        <CheckCircle className="h-3 w-3" aria-hidden="true" /> {dept.ok} OK
                       </span>
                     )}
                     {dept.warning > 0 && (
@@ -449,8 +479,8 @@ export default function HealthScannerPage() {
                       </span>
                     )}
                     {dept.critical > 0 && (
-                      <span className="text-red-600 dark:text-red-400">
-                        {dept.critical} Critical
+                      <span className="text-red-600 dark:text-red-400 flex items-center gap-0.5">
+                        <XCircle className="h-3 w-3" aria-hidden="true" /> {dept.critical} Critical
                       </span>
                     )}
                     {dept.expired > 0 && (
@@ -459,6 +489,24 @@ export default function HealthScannerPage() {
                       </span>
                     )}
                   </div>
+
+                  {/* Action link for at-risk departments */}
+                  {(dept.grade === "D" || dept.grade === "F") && (
+                    <Link
+                      href={`/staff/contracts?department=${encodeURIComponent(dept.department)}`}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
+                    >
+                      Review {dept.critical + dept.expired} at-risk contracts <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  )}
+                  {dept.grade === "C" && (
+                    <Link
+                      href={`/staff/contracts?department=${encodeURIComponent(dept.department)}`}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400 hover:underline"
+                    >
+                      Monitor {dept.warning} warning contracts <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  )}
                 </CardContent>
               </Card>
             );
@@ -531,6 +579,21 @@ export default function HealthScannerPage() {
                         </span>
                       )}
                     </p>
+                    <div className="mt-2 flex gap-3">
+                      {a.type === "expired_high_value" && a.contract_number && (
+                        <Link href="/staff/decision" className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                          <Zap className="h-3 w-3" /> Analyze Decision
+                        </Link>
+                      )}
+                      {a.type === "concentration_risk" && a.department && (
+                        <Link href="/staff/cost-analysis" className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                          <TrendingUp className="h-3 w-3" /> Compare Vendors
+                        </Link>
+                      )}
+                      <Link href="/staff/compliance" className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:underline">
+                        <ShieldAlert className="h-3 w-3" /> Check Compliance
+                      </Link>
+                    </div>
                   </CardContent>
                 </Card>
               );
