@@ -183,14 +183,16 @@ def _gather_compliance(supplier: str) -> list[dict]:
 
 
 def _search_vendor_web(supplier: str) -> dict | None:
-    """Search the web for vendor public information and reviews via DuckDuckGo."""
+    """Search Google for vendor public information."""
     try:
         import re
         query = f"{supplier} government contracts reviews"
         resp = httpx.get(
-            "https://html.duckduckgo.com/html/",
-            params={"q": query},
-            headers={"User-Agent": "Mozilla/5.0 (compatible; RVAContractLens/1.0)"},
+            "https://www.google.com/search",
+            params={"q": query, "num": 5},
+            headers={
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            },
             timeout=10,
             follow_redirects=True,
         )
@@ -198,16 +200,24 @@ def _search_vendor_web(supplier: str) -> dict | None:
             return None
         html = resp.text
         results = []
-        # Extract titles, snippets, and URLs from DuckDuckGo HTML results
-        titles = re.findall(r'<a[^>]*class="result__a"[^>]*>(.*?)</a>', html, re.DOTALL)
-        snippets = re.findall(r'class="result__snippet"[^>]*>(.*?)</(?:a|span|div)', html, re.DOTALL)
-        urls = re.findall(r'<a[^>]*class="result__url"[^>]*href="([^"]*)"', html)
+        # Extract from Google search results
+        # Look for <h3> tags (titles) and nearby snippets
+        h3_pattern = r'<h3[^>]*>(.*?)</h3>'
+        titles = re.findall(h3_pattern, html, re.DOTALL)
+        # Extract URLs from links containing /url?q=
+        url_pattern = r'/url\?q=(https?://[^&"]+)'
+        urls = re.findall(url_pattern, html)
+        # Extract snippets from spans after result blocks
+        snippet_pattern = r'<div[^>]*class="[^"]*VwiC3b[^"]*"[^>]*>(.*?)</div>'
+        snippets = re.findall(snippet_pattern, html, re.DOTALL)
+
         for i in range(min(3, len(titles))):
             title = re.sub(r'<[^>]+>', '', titles[i]).strip()
-            snippet = re.sub(r'<[^>]+>', '', snippets[i]).strip()[:200] if i < len(snippets) else ""
             url = urls[i] if i < len(urls) else ""
+            snippet = re.sub(r'<[^>]+>', '', snippets[i]).strip()[:200] if i < len(snippets) else ""
             if title:
                 results.append({"title": title, "snippet": snippet, "url": url})
+
         return {"results": results, "query": supplier} if results else None
     except Exception:
         return None
@@ -545,6 +555,45 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
         "supplier": supplier,
         "disclaimer": "AI-generated recommendation for advisory purposes only. All procurement decisions require human review and approval.",
     }
+
+
+class ConfirmDecisionRequest(BaseModel):
+    contract_number: str
+    supplier: str
+    ai_verdict: str
+    staff_decision: str
+    notes: str = ""
+
+
+@router.post("/confirm")
+def confirm_decision(payload: ConfirmDecisionRequest):
+    """Staff confirms their decision -- saves to DuckDB audit trail."""
+    try:
+        conn = duckdb.connect(str(Path(__file__).parent.parent.parent / "data" / "contracts.duckdb"))
+        conn.execute("""
+            INSERT INTO decisions (id, contract_number, supplier, verdict, confidence, summary, pros, cons, memo)
+            VALUES (nextval('decisions_seq'), ?, ?, ?, 'STAFF', ?, '[]', '[]', ?)
+        """, [payload.contract_number, payload.supplier, payload.staff_decision,
+              f"Staff confirmed: {payload.staff_decision} (AI recommended: {payload.ai_verdict})",
+              payload.notes or "No notes"])
+        conn.close()
+        return {"status": "confirmed", "decision": payload.staff_decision}
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
+
+
+@router.get("/precomputed")
+def get_precomputed_decisions():
+    """Return cached decisions for the most critical contracts."""
+    recent = db_query("""
+        SELECT contract_number, supplier, verdict, confidence, summary,
+               CAST(created_at AS VARCHAR) as created_at
+        FROM decisions
+        WHERE confidence != 'STAFF'
+        ORDER BY created_at DESC
+        LIMIT 20
+    """)
+    return {"decisions": recent, "total": len(recent)}
 
 
 @router.get("")

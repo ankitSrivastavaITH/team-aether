@@ -150,3 +150,17 @@
     box-shadow: none !important;
   }
 }
+
+/* High-contrast accessibility mode */
+.high-contrast {
+  --foreground: 0 0% 0%;
+  --background: 0 0% 100%;
+}
+.high-contrast * {
+  border-color: #000 !important;
+}
+.high-contrast .text-slate-400,
+.high-contrast .text-slate-500,
+.high-contrast .text-muted-foreground {
+  color: #1a1a1a !important;
+}

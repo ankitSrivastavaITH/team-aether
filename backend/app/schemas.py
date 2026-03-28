@@ -18,6 +18,8 @@ class Contract(BaseModel):
     end_date: Optional[str] = None
     days_to_expiry: Optional[int] = None
     risk_level: Optional[str] = None
+    risk_score: Optional[int] = None
+    renewal_probability: Optional[int] = None
 
 
 class ContractsResponse(BaseModel):

@@ -96,6 +96,18 @@ const translations = {
     // Language
     "lang.toggle": "Español",
     "lang.current": "English",
+
+    // Decision Engine (extended)
+    "verdict_label": "Verdict",
+    "confidence_label": "Confidence",
+    "reasons_renew": "Reasons to Renew",
+    "reasons_rebid": "Reasons to Rebid",
+    "confirm_decision": "Confirm Decision",
+    "staff_notes": "Staff Notes",
+    "decision_recorded": "Decision recorded",
+    "analyze": "Analyze",
+    "high_contrast": "High Contrast",
+    "font_size": "Font Size",
   },
   es: {
     // Navigation
@@ -192,6 +204,18 @@ const translations = {
     // Language
     "lang.toggle": "English",
     "lang.current": "Español",
+
+    // Decision Engine (extended)
+    "verdict_label": "Veredicto",
+    "confidence_label": "Confianza",
+    "reasons_renew": "Razones para renovar",
+    "reasons_rebid": "Razones para relicitar",
+    "confirm_decision": "Confirmar decisión",
+    "staff_notes": "Notas del personal",
+    "decision_recorded": "Decisión registrada",
+    "analyze": "Analizar",
+    "high_contrast": "Alto contraste",
+    "font_size": "Tamaño de texto",
   },
 } as const;
 

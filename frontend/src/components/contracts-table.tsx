@@ -244,6 +244,65 @@ export function ContractsTable({ contracts, onRowClick }: ContractsTableProps) {
           return a - b;
         },
       },
+      {
+        id: "risk_score",
+        accessorKey: "risk_score",
+        header: "Risk Score",
+        cell: ({ getValue }) => {
+          const score = (getValue() as number) ?? 0;
+          const color =
+            score > 70
+              ? "text-red-700 bg-red-50 border-red-200"
+              : score >= 40
+              ? "text-amber-700 bg-amber-50 border-amber-200"
+              : "text-green-700 bg-green-50 border-green-200";
+          return (
+            <span
+              className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold border ${color}`}
+              title={`Risk score: ${score}/100`}
+            >
+              {score}
+            </span>
+          );
+        },
+        sortingFn: (rowA, rowB) => {
+          const a = (rowA.getValue("risk_score") as number) ?? 0;
+          const b = (rowB.getValue("risk_score") as number) ?? 0;
+          return a - b;
+        },
+      },
+      {
+        id: "renewal_probability",
+        accessorKey: "renewal_probability",
+        header: "Renewal %",
+        cell: ({ getValue }) => {
+          const prob = (getValue() as number) ?? 0;
+          const barColor =
+            prob >= 70
+              ? "bg-green-500"
+              : prob >= 40
+              ? "bg-amber-500"
+              : "bg-red-400";
+          return (
+            <div className="flex items-center gap-2 min-w-[80px]">
+              <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden" title={`${prob}% renewal probability`}>
+                <div
+                  className={`h-full rounded-full transition-all ${barColor}`}
+                  style={{ width: `${prob}%` }}
+                />
+              </div>
+              <span className="text-xs font-medium text-slate-700 tabular-nums w-8 text-right">
+                {prob}%
+              </span>
+            </div>
+          );
+        },
+        sortingFn: (rowA, rowB) => {
+          const a = (rowA.getValue("renewal_probability") as number) ?? 0;
+          const b = (rowB.getValue("renewal_probability") as number) ?? 0;
+          return a - b;
+        },
+      },
     ],
     []
   );

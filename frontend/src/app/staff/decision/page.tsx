@@ -1042,12 +1042,41 @@ interface SuggestedContract {
   risk_level: string;
 }
 
+interface PrecomputedDecision {
+  contract_number: string;
+  supplier: string;
+  verdict: string;
+  confidence: string;
+  summary: string;
+  created_at: string;
+}
+
+const VERDICT_BADGE_STYLES: Record<string, string> = {
+  RENEW: "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700",
+  REBID: "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700",
+  ESCALATE: "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700",
+};
+
 function SuggestedContracts({ onSelect }: { onSelect: (supplier: string, contract: string) => void }) {
   const { data, isLoading } = useQuery({
     queryKey: ["suggested-decisions"],
     queryFn: () => fetchAPI<{ contracts: SuggestedContract[] }>("/api/contracts", { max_days: 90, limit: 8 }),
     staleTime: 5 * 60 * 1000,
   });
+
+  const { data: precomputed } = useQuery({
+    queryKey: ["precomputed-decisions"],
+    queryFn: () => fetchAPI<{ decisions: PrecomputedDecision[]; total: number }>("/api/decision/precomputed"),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Build a lookup map: contract_number -> precomputed decision
+  const precomputedMap = new Map<string, PrecomputedDecision>();
+  for (const d of precomputed?.decisions ?? []) {
+    if (!precomputedMap.has(d.contract_number)) {
+      precomputedMap.set(d.contract_number, d);
+    }
+  }
 
   const contracts = (data?.contracts ?? []).sort(
     (a, b) => (a.days_to_expiry ?? 999) - (b.days_to_expiry ?? 999)
@@ -1077,6 +1106,7 @@ function SuggestedContracts({ onSelect }: { onSelect: (supplier: string, contrac
         {contracts.map((c) => {
           const isRed = c.risk_level === "critical";
           const isAmber = c.risk_level === "warning";
+          const cached = precomputedMap.get(c.contract_number);
           return (
             <button
               key={c.contract_number}
@@ -1105,15 +1135,185 @@ function SuggestedContracts({ onSelect }: { onSelect: (supplier: string, contrac
               </div>
               <div className="flex items-center justify-between mt-2">
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{formatCurrency(c.value)}</span>
-                <span className="text-xs font-medium text-blue-600 dark:text-blue-400 group-hover:underline">
-                  Analyze →
-                </span>
+                {cached ? (
+                  <Badge className={`text-[10px] font-bold border ${VERDICT_BADGE_STYLES[cached.verdict] || VERDICT_BADGE_STYLES.ESCALATE}`}>
+                    {cached.verdict}
+                  </Badge>
+                ) : (
+                  <span className="text-xs font-medium text-blue-600 dark:text-blue-400 group-hover:underline">
+                    Analyze →
+                  </span>
+                )}
               </div>
             </button>
           );
         })}
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main Page
+// ---------------------------------------------------------------------------
+
+function ConfirmDecisionSection({
+  result,
+}: {
+  result: DecisionResult;
+}) {
+  const [staffDecision, setStaffDecision] = useState<string>(result.verdict);
+  const [notes, setNotes] = useState("");
+  const [confirming, setConfirming] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+
+  const handleConfirm = useCallback(async () => {
+    setConfirming(true);
+    setConfirmError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/decision/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contract_number: result.contract_number,
+          supplier: result.supplier,
+          ai_verdict: result.verdict,
+          staff_decision: staffDecision,
+          notes,
+        }),
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const data = await res.json();
+      if (data.status === "error") throw new Error(data.detail || "Unknown error");
+      setConfirmed(true);
+    } catch (err) {
+      setConfirmError(
+        err instanceof Error ? err.message : "Failed to confirm decision."
+      );
+    } finally {
+      setConfirming(false);
+    }
+  }, [result, staffDecision, notes]);
+
+  if (confirmed) {
+    return (
+      <Card className="border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/30">
+        <CardContent className="py-6">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="h-6 w-6 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            <div>
+              <p className="text-lg font-bold text-emerald-900 dark:text-emerald-200">
+                Decision recorded.
+              </p>
+              <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                Contract {result.contract_number} marked as <span className="font-bold">{staffDecision}</span>.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const options: Array<{ value: "RENEW" | "REBID" | "ESCALATE"; label: string; color: string; activeColor: string }> = [
+    {
+      value: "RENEW",
+      label: "Confirm RENEW",
+      color: "border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30",
+      activeColor: "bg-emerald-600 dark:bg-emerald-500 text-white border-emerald-600 dark:border-emerald-500",
+    },
+    {
+      value: "REBID",
+      label: "Confirm REBID",
+      color: "border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30",
+      activeColor: "bg-amber-600 dark:bg-amber-500 text-white border-amber-600 dark:border-amber-500",
+    },
+    {
+      value: "ESCALATE",
+      label: "Confirm ESCALATE",
+      color: "border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30",
+      activeColor: "bg-red-600 dark:bg-red-500 text-white border-red-600 dark:border-red-500",
+    },
+  ];
+
+  return (
+    <Card>
+      <CardContent className="pt-2 space-y-5">
+        <div className="flex items-center gap-2">
+          <ClipboardCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+            Confirm Your Decision
+          </h3>
+          <Badge variant="outline" className="text-[10px] text-slate-400 dark:text-slate-500 ml-auto">
+            Close the loop
+          </Badge>
+        </div>
+
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          The AI recommends <span className="font-bold">{result.verdict}</span>. Do you agree, or override with a different decision?
+        </p>
+
+        {/* Decision buttons */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setStaffDecision(opt.value)}
+              className={`flex-1 py-3 px-4 rounded-lg border-2 font-semibold text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer ${
+                staffDecision === opt.value ? opt.activeColor : opt.color
+              }`}
+              aria-pressed={staffDecision === opt.value}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Staff Notes */}
+        <div>
+          <label
+            htmlFor="staff-notes"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+          >
+            Staff Notes <span className="text-slate-400 dark:text-slate-500 font-normal">(optional)</span>
+          </label>
+          <textarea
+            id="staff-notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={3}
+            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y"
+            placeholder="Add justification, conditions, or notes for the audit trail..."
+          />
+        </div>
+
+        {/* Error */}
+        {confirmError && (
+          <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {confirmError}
+          </div>
+        )}
+
+        {/* Submit */}
+        <div className="flex justify-end">
+          <Button
+            onClick={handleConfirm}
+            disabled={confirming}
+            className="gap-2 px-6 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+          >
+            {confirming ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <CheckCircle className="h-4 w-4" aria-hidden="true" />
+            )}
+            {confirming ? "Recording..." : `Record ${staffDecision} Decision`}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -1587,6 +1787,9 @@ function DecisionPageInner() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Confirm Decision — staff closes the loop */}
+          <ConfirmDecisionSection result={result} />
         </div>
       )}
     </div>

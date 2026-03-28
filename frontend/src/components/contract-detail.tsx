@@ -53,6 +53,7 @@ interface ParsedFields {
   key_details: string[];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface ParsedContractResponse {
   contract_number: string;
   raw_description: string;
@@ -128,6 +129,7 @@ function DetailRow({ label, value }: { label: string; value: React.ReactNode }) 
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function TermFlow({
   original,
   renewal,
@@ -448,99 +450,141 @@ function ComplianceTab({ supplier, enabled }: { supplier: string; enabled: boole
 // Tab: AI Analysis
 // ---------------------------------------------------------------------------
 
-function AIAnalysisTab({ contractNumber, enabled }: { contractNumber: string; enabled: boolean }) {
-  const { data, isLoading, isError } = useQuery<ParsedContractResponse>({
-    queryKey: ["parsed-contract", contractNumber],
-    queryFn: () => fetchAPI<ParsedContractResponse>(`/api/parser/parse/${encodeURIComponent(contractNumber)}`),
+interface DeptStats {
+  total_contracts: number;
+  total_value: number;
+  [key: string]: unknown;
+}
+
+function AIAnalysisTab({ contract, contractNumber, supplierName, enabled }: { contract: Contract; contractNumber: string; supplierName: string; enabled: boolean }) {
+  const { data: stats, isLoading } = useQuery<DeptStats>({
+    queryKey: ["contract-stats"],
+    queryFn: () => fetchAPI<DeptStats>("/api/contracts/stats"),
     staleTime: 10 * 60 * 1000,
-    enabled: enabled && Boolean(contractNumber),
+    enabled,
   });
 
   if (isLoading) {
-    return <LoadingSkeleton lines={4} label="Parsing contract description" />;
+    return <LoadingSkeleton lines={4} label="Computing analysis" />;
   }
 
-  if (isError) {
-    return <ErrorMessage message="Could not parse contract description at this time." />;
+  const value = (contract.value as number) ?? (contract.amount as number) ?? 0;
+  const daysToExpiry = (contract.days_to_expiry ?? contract.days_until_expiry) as number | undefined;
+  const riskLevel = (contract.risk_level ?? "unknown") as string;
+  const department = (contract.department as string) ?? "Unknown";
+  const avgValue = (stats?.total_contracts && stats.total_contracts > 0)
+    ? stats.total_value / stats.total_contracts
+    : 0;
+
+  // Compute risk assessment
+  let riskAssessment: string;
+  let riskColor: string;
+  if (riskLevel === "critical" || (typeof daysToExpiry === "number" && daysToExpiry <= 30 && daysToExpiry >= 0)) {
+    riskAssessment = "High risk -- contract expires within 30 days. Immediate action required.";
+    riskColor = "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300";
+  } else if (riskLevel === "warning" || (typeof daysToExpiry === "number" && daysToExpiry <= 60 && daysToExpiry > 30)) {
+    riskAssessment = "Moderate risk -- contract expires within 60 days. Plan renewal or rebid soon.";
+    riskColor = "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300";
+  } else if (typeof daysToExpiry === "number" && daysToExpiry < 0) {
+    riskAssessment = `Expired ${Math.abs(daysToExpiry)} days ago. Initiate rebid or closeout immediately.`;
+    riskColor = "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300";
+  } else {
+    riskAssessment = "Low risk -- contract has adequate time remaining.";
+    riskColor = "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300";
   }
 
-  if (!data || data.error) {
-    return (
-      <p className="text-sm text-slate-400 dark:text-slate-500 italic py-4">
-        {data?.error ?? "No AI analysis available for this contract."}
-      </p>
-    );
+  // Compute value context
+  let valueContext: string;
+  if (avgValue > 0 && value > 0) {
+    const ratio = value / avgValue;
+    if (ratio < 0.5) {
+      valueContext = `This ${formatCurrency(value)} contract is well below the city average of ${formatCurrency(avgValue)} per contract.`;
+    } else if (ratio < 1.0) {
+      valueContext = `This ${formatCurrency(value)} contract is below the city average of ${formatCurrency(avgValue)} per contract.`;
+    } else if (ratio < 2.0) {
+      valueContext = `This ${formatCurrency(value)} contract is above the city average of ${formatCurrency(avgValue)} per contract.`;
+    } else {
+      valueContext = `This ${formatCurrency(value)} contract is significantly above the city average of ${formatCurrency(avgValue)} per contract. Additional scrutiny may be warranted.`;
+    }
+  } else {
+    valueContext = value > 0 ? `Contract valued at ${formatCurrency(value)}.` : "Contract value not available.";
+  }
+
+  // Compute recommendation
+  let recommendation: string;
+  if (typeof daysToExpiry === "number" && daysToExpiry < 0) {
+    recommendation = "Expired -- initiate rebid or closeout process.";
+  } else if (typeof daysToExpiry === "number" && daysToExpiry <= 30) {
+    recommendation = `Expiring in ${daysToExpiry} days -- make a renewal or rebid decision this week.`;
+  } else if (typeof daysToExpiry === "number" && daysToExpiry <= 90) {
+    recommendation = `Expiring in ${daysToExpiry} days -- schedule vendor review and begin planning.`;
+  } else if (typeof daysToExpiry === "number") {
+    recommendation = `${daysToExpiry} days remaining -- no immediate action needed. Review during next planning cycle.`;
+  } else {
+    recommendation = "Expiry date unavailable -- verify contract terms and update records.";
   }
 
   return (
     <div className="space-y-4">
-      {/* Solicitation + Procurement method badges */}
-      {(data.parsed.solicitation_number || data.parsed.procurement_method) && (
-        <div className="flex flex-wrap gap-2">
-          {data.parsed.solicitation_number && (
-            <span
-              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-violet-100 dark:bg-violet-900/40 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-700"
-              aria-label={`Solicitation number: ${data.parsed.solicitation_number}`}
-            >
-              {data.parsed.solicitation_number}
-            </span>
-          )}
-          {data.parsed.procurement_method && (
-            <span
-              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-700"
-              aria-label={`Procurement method: ${data.parsed.procurement_method}`}
-            >
-              {data.parsed.procurement_method}
-            </span>
-          )}
+      {/* Risk Assessment */}
+      <div>
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
+          Risk Assessment
+        </p>
+        <div className={`rounded-lg border p-3 ${riskColor}`}>
+          <div className="flex items-start gap-2">
+            {riskLevel === "critical" || (typeof daysToExpiry === "number" && daysToExpiry < 0) ? (
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />
+            ) : riskLevel === "warning" ? (
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />
+            ) : (
+              <CheckCircle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />
+            )}
+            <p className="text-sm font-medium">{riskAssessment}</p>
+          </div>
         </div>
-      )}
+      </div>
 
-      {/* Scope summary */}
-      {data.parsed.scope_summary && (
-        <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-800/50 rounded-md p-3">
-          <p className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
-            {data.parsed.scope_summary}
+      {/* Value Context */}
+      <div>
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
+          Value Context
+        </p>
+        <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-3">
+          <p className="text-sm text-blue-800 dark:text-blue-300">{valueContext}</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+            Department: {department}
           </p>
         </div>
-      )}
+      </div>
 
-      {/* Term flow */}
-      {(data.parsed.original_term || data.parsed.renewal_structure || data.parsed.total_possible_term) && (
-        <div>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">
-            Contract Duration
-          </p>
-          <TermFlow
-            original={data.parsed.original_term}
-            renewal={data.parsed.renewal_structure}
-            total={data.parsed.total_possible_term}
-          />
+      {/* Recommendation */}
+      <div>
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
+          Recommendation
+        </p>
+        <div className="rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 p-3">
+          <p className="text-sm text-violet-800 dark:text-violet-300 font-medium">{recommendation}</p>
         </div>
-      )}
+      </div>
 
-      {/* Key details */}
-      {data.parsed.key_details && data.parsed.key_details.length > 0 && (
-        <div>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
-            Key Details
-          </p>
-          <ul className="space-y-1" aria-label="Key contract details">
-            {data.parsed.key_details.map((detail, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
-                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-violet-400 dark:bg-violet-500 shrink-0" aria-hidden="true" />
-                {detail}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* Decision Engine link */}
+      <div className="pt-1">
+        <a
+          href={`/staff/decision?supplier=${encodeURIComponent(supplierName)}&contract=${encodeURIComponent(contractNumber)}`}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          <Brain className="h-4 w-4" aria-hidden="true" />
+          Analyze with Decision Engine
+          <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </a>
+      </div>
 
-      {/* AI disclaimer */}
+      {/* Computed data disclaimer */}
       <div className="flex items-start gap-1.5 pt-1">
         <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" aria-hidden="true" />
         <p className="text-xs text-slate-400 dark:text-slate-500 italic">
-          {data.disclaimer}
+          Computed from contract data -- no LLM involved. For AI-powered analysis, use the Decision Engine.
         </p>
       </div>
     </div>
@@ -632,7 +676,9 @@ export function ContractDetail({ contract, open, onClose }: ContractDetailProps)
 
             <TabsContent value="ai-analysis" className="mt-4">
               <AIAnalysisTab
+                contract={contract}
                 contractNumber={contractNumber}
+                supplierName={supplierName}
                 enabled={activeTab === "ai-analysis"}
               />
             </TabsContent>

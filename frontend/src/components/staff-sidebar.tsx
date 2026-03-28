@@ -29,6 +29,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AskRichmondPanel } from "@/components/ask-richmond-panel";
+import { FontSizeToggle, HighContrastToggle } from "@/components/accessibility-toggles";
 
 const COLLAPSE_KEY = "staff-sidebar-collapsed";
 const ANALYTICS_OPEN_KEY = "sidebar-analytics-open";
@@ -429,6 +430,8 @@ export function StaffSidebar({ children }: { children: React.ReactNode }) {
             <Eye className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Public View</span>
           </Link>
+          <FontSizeToggle />
+          <HighContrastToggle />
           <LanguageToggle />
           <ThemeToggle />
           <button

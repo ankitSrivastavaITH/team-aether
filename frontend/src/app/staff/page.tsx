@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Activity,
   FileSearch,
+  ClipboardCheck,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAPI } from "@/lib/api";
@@ -32,6 +33,15 @@ interface UrgentContract {
   value: number;
   days_to_expiry?: number;
   risk_level?: string;
+}
+
+interface Decision {
+  contract_number: string;
+  supplier: string;
+  verdict: string;
+  confidence: string;
+  summary: string;
+  created_at?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -59,6 +69,13 @@ function StaffDashboardContent() {
         { max_days: 90, limit: 200 },
       ),
     staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: decisionsData } = useQuery({
+    queryKey: ["recent-decisions"],
+    queryFn: () =>
+      fetchAPI<{ decisions: Decision[]; total: number }>("/api/decision"),
+    staleTime: 2 * 60 * 1000,
   });
 
   const urgent = (urgentData?.contracts ?? []).sort(
@@ -341,6 +358,74 @@ function StaffDashboardContent() {
             <ArrowRight className="h-4 w-4 text-amber-400 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
+      </div>
+
+      {/* ----------------------------------------------------------------- */}
+      {/* RECENT DECISIONS: Audit trail of staff-confirmed decisions         */}
+      {/* ----------------------------------------------------------------- */}
+      <div>
+        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+          <ClipboardCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          Recent Decisions
+        </h2>
+        {(() => {
+          const recentDecisions = (decisionsData?.decisions ?? []).slice(0, 3);
+          if (recentDecisions.length === 0) {
+            return (
+              <Card>
+                <CardContent className="py-5">
+                  <p className="text-sm text-slate-400 dark:text-slate-500 text-center">
+                    No decisions recorded yet
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          }
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {recentDecisions.map((d) => {
+                const isStaff = d.confidence === "STAFF";
+                const verdictColor =
+                  d.verdict === "RENEW"
+                    ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700"
+                    : d.verdict === "REBID"
+                    ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700"
+                    : "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700";
+                const timeAgo = d.created_at
+                  ? (() => {
+                      const diff = Date.now() - new Date(d.created_at).getTime();
+                      const mins = Math.floor(diff / 60000);
+                      if (mins < 60) return `${mins}m ago`;
+                      const hrs = Math.floor(mins / 60);
+                      if (hrs < 24) return `${hrs}h ago`;
+                      return `${Math.floor(hrs / 24)}d ago`;
+                    })()
+                  : "";
+                return (
+                  <Card key={`${d.contract_number}-${d.created_at}`} className="hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+                    <CardContent className="py-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                          {d.supplier}
+                        </p>
+                        <Badge className={`shrink-0 text-[10px] border ${verdictColor}`}>
+                          {d.verdict}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
+                        #{d.contract_number}
+                        {isStaff && <span className="ml-1 font-medium text-blue-600 dark:text-blue-400">(Staff confirmed)</span>}
+                      </p>
+                      {timeAgo && (
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">{timeAgo}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

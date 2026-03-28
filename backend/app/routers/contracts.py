@@ -23,6 +23,57 @@ router = APIRouter(prefix="/api/contracts", tags=["contracts"])
 
 
 # ---------------------------------------------------------------------------
+# Risk Score & Renewal Probability — novel computed metrics
+# ---------------------------------------------------------------------------
+
+def compute_risk_score(contract: dict) -> int:
+    """0-100 risk score combining multiple factors."""
+    score = 50  # baseline
+
+    days = contract.get("days_to_expiry") or 0
+    if days < 0:
+        score += 30  # expired = high risk
+    elif days < 30:
+        score += 25
+    elif days < 60:
+        score += 15
+    elif days < 90:
+        score += 5
+    else:
+        score -= 10
+
+    # Value factor — higher value = higher risk if expiring
+    value = contract.get("value") or 0
+    if value > 1_000_000:
+        score += 10
+    elif value > 100_000:
+        score += 5
+
+    return max(0, min(100, score))
+
+
+def compute_renewal_probability(contract: dict, vendor_history_count: int) -> int:
+    """Estimated renewal probability based on patterns."""
+    prob = 50  # baseline
+
+    desc = str(contract.get("description") or "").lower()
+    if "sole source" in desc:
+        prob += 25
+    if "renewal" in desc:
+        prob += 15
+    if "term" in desc and "of" in desc:
+        prob += 10  # "Term 2 of 5" = renewal pattern
+
+    # Multiple contracts with same vendor = likely renewal
+    if vendor_history_count >= 3:
+        prob += 15
+    elif vendor_history_count >= 2:
+        prob += 5
+
+    return max(0, min(100, prob))
+
+
+# ---------------------------------------------------------------------------
 # GET /api/contracts
 # ---------------------------------------------------------------------------
 
@@ -91,7 +142,28 @@ def list_contracts(
     """
     data_params = (params or []) + [limit, offset]
     rows = query(data_sql, data_params)
-    contracts = [Contract(**row) for row in rows]
+
+    # --- Build vendor history cache for renewal probability ---
+    vendor_names = list({r.get("supplier") for r in rows if r.get("supplier")})
+    vendor_counts: dict[str, int] = {}
+    if vendor_names:
+        placeholders = ", ".join(["?"] * len(vendor_names))
+        vc_rows = query(
+            f"SELECT supplier, COUNT(*) AS cnt FROM city_contracts WHERE supplier IN ({placeholders}) GROUP BY supplier",
+            vendor_names,
+        )
+        vendor_counts = {r["supplier"]: r["cnt"] for r in vc_rows}
+
+    # --- Enrich each contract with computed metrics ---
+    enriched = []
+    for row in rows:
+        row["risk_score"] = compute_risk_score(row)
+        row["renewal_probability"] = compute_renewal_probability(
+            row, vendor_counts.get(row.get("supplier", ""), 0)
+        )
+        enriched.append(row)
+
+    contracts = [Contract(**row) for row in enriched]
 
     return ContractsResponse(contracts=contracts, total=total)
 
