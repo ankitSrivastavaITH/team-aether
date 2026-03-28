@@ -1,4 +1,5 @@
-"""PDF text extraction and AI-powered term extraction."""
+"""PDF text extraction and AI-powered term extraction.
+Uses PyPDF for text-based PDFs, falls back to unstructured (OCR) for scanned PDFs."""
 
 import io
 import json
@@ -23,8 +24,8 @@ If a field cannot be determined from the text, set it to null.
 Do not guess or fabricate information. Only extract what is clearly stated."""
 
 
-def extract_text_from_pdf(file_bytes) -> str:
-    """Extract text from a PDF file."""
+def _extract_with_pypdf(file_bytes) -> str:
+    """Extract text from a text-based PDF using PyPDF."""
     if isinstance(file_bytes, bytes):
         file_bytes = io.BytesIO(file_bytes)
     reader = PdfReader(file_bytes)
@@ -36,6 +37,43 @@ def extract_text_from_pdf(file_bytes) -> str:
     return text.strip()
 
 
+def _extract_with_unstructured(file_bytes) -> str:
+    """Extract text from scanned/image PDFs using unstructured (OCR)."""
+    try:
+        from unstructured.partition.pdf import partition_pdf
+    except ImportError:
+        return ""
+
+    if isinstance(file_bytes, io.BytesIO):
+        file_bytes.seek(0)
+        raw = file_bytes.read()
+    elif isinstance(file_bytes, bytes):
+        raw = file_bytes
+    else:
+        return ""
+
+    try:
+        elements = partition_pdf(file=io.BytesIO(raw))
+        extracted = "\n\n".join(str(el) for el in elements if str(el).strip())
+        return extracted.strip()
+    except Exception:
+        return ""
+
+
+def extract_text_from_pdf(file_bytes) -> str:
+    """Extract text from PDF — tries PyPDF first, falls back to unstructured OCR."""
+    # Try fast text extraction first
+    text = _extract_with_pypdf(file_bytes)
+
+    # If PyPDF got very little text, try OCR via unstructured
+    if len(text) < 100:
+        ocr_text = _extract_with_unstructured(file_bytes)
+        if len(ocr_text) > len(text):
+            text = ocr_text
+
+    return text
+
+
 def extract_contract_terms(pdf_bytes: bytes, filename: str = "uploaded.pdf") -> Dict:
     """Extract text from PDF, store in vector DB, and extract key terms via AI."""
     # Step 1: Extract text
@@ -45,7 +83,7 @@ def extract_contract_terms(pdf_bytes: bytes, filename: str = "uploaded.pdf") -> 
         text = extract_text_from_pdf(pdf_bytes)
 
     if not text.strip():
-        return {"error": "Could not extract text from PDF. The file may be scanned/image-based."}
+        return {"error": "Could not extract text from PDF. Install 'unstructured[pdf]' for OCR support on scanned documents."}
 
     # Step 2: Store chunks in ChromaDB for later search
     chunk_count = ingest_pdf_text(text, filename)
