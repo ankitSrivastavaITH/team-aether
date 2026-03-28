@@ -15,7 +15,7 @@ import {
 import { ContractsTable } from "@/components/contracts-table";
 import { ContractDetail } from "@/components/contract-detail";
 import { SmartFilter } from "@/components/smart-filter";
-import { MultiSelect } from "@/components/multi-select";
+import { DepartmentChartFilter } from "@/components/chart-filter";
 import { TableSkeleton } from "@/components/skeletons";
 import { useContracts, useDepartments, type Contract } from "@/hooks/use-contracts";
 import { formatCurrency } from "@/lib/utils";
@@ -143,6 +143,9 @@ function ContractsPageContent() {
           </div>
         )}
 
+        {/* Department Chart Filter — visual bar chart with checkboxes */}
+        <DepartmentChartFilter selected={departments} onChange={setDepartments} />
+
         {/* Smart Filter */}
         <SmartFilter
           departments={departmentList}
@@ -198,14 +201,7 @@ function ContractsPageContent() {
               </Select>
             </div>
 
-            {/* Department filter — multi-select checkboxes */}
-            <MultiSelect
-              options={departmentList}
-              selected={departments}
-              onChange={setDepartments}
-              placeholder="All departments"
-              label="Filter by department"
-            />
+            {/* Export + Clear stay in the filter row */}
 
             {/* Export CSV button */}
             <Button
