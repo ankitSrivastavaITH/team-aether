@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Brain, Search, FileText, RefreshCw, Info, ArrowRight } from "lucide-react";
+import { Brain, Search, FileText, Info, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchAPI } from "@/lib/api";
+import { VendorSelect } from "@/components/vendor-select";
+import { formatCurrency } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -303,8 +305,16 @@ function ParseResult({ contractNumber }: { contractNumber: string }) {
 // ---------------------------------------------------------------------------
 
 export default function ParsedPage() {
-  const [input, setInput] = useState("");
+  const [vendor, setVendor] = useState("");
   const [contractNumber, setContractNumber] = useState("");
+
+  // Fetch contracts for selected vendor
+  const { data: vendorContracts } = useQuery({
+    queryKey: ["vendor-contracts-for-parse", vendor],
+    queryFn: () => fetchAPI<{ contracts: Array<Record<string, unknown>> }>(`/api/contracts/vendor/${encodeURIComponent(vendor)}`),
+    enabled: Boolean(vendor),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { data: statsData, isLoading: statsLoading } = useQuery<BatchStatsResponse>({
     queryKey: ["parser-batch-stats"],
@@ -315,11 +325,7 @@ export default function ParsedPage() {
   const stats = statsData?.stats;
   const total = stats?.total ?? 0;
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = input.trim();
-    if (trimmed) setContractNumber(trimmed);
-  }
+  // Contract selection handled via vendor dropdown → contract list
 
   return (
     <div className="flex flex-col gap-6">
@@ -420,7 +426,7 @@ export default function ParsedPage() {
         )}
       </section>
 
-      {/* Contract lookup */}
+      {/* Contract lookup — select vendor then pick contract */}
       <Card>
         <CardHeader>
           <CardTitle>
@@ -430,34 +436,53 @@ export default function ParsedPage() {
             </h2>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <form
-            onSubmit={handleSearch}
-            className="flex gap-2"
-            aria-label="Contract number search"
-          >
-            <label htmlFor="contract-number-input" className="sr-only">
-              Contract number
-            </label>
-            <input
-              id="contract-number-input"
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Enter contract number (e.g. C-12345)"
-              className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-              aria-label="Contract number to parse"
-            />
-            <button
-              type="submit"
-              disabled={!input.trim()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
-              aria-label="Parse contract"
-            >
-              <RefreshCw className="h-4 w-4" aria-hidden="true" />
-              Parse
-            </button>
-          </form>
+        <CardContent className="space-y-4">
+          <VendorSelect
+            value={vendor}
+            onChange={(v) => { setVendor(v); setContractNumber(""); }}
+            label="1. Select a Vendor"
+            placeholder="Pick a vendor..."
+          />
+
+          {vendor && vendorContracts?.contracts && vendorContracts.contracts.length > 0 && (
+            <div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">2. Pick a contract to parse:</p>
+              <div className="space-y-1.5 max-h-[250px] overflow-y-auto">
+                {vendorContracts.contracts.map((c) => {
+                  const cn = String(c.contract_number || "");
+                  const isSelected = cn === contractNumber;
+                  return (
+                    <button
+                      key={cn}
+                      onClick={() => setContractNumber(cn)}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg border transition-all text-sm ${
+                        isSelected
+                          ? "border-violet-400 dark:border-violet-600 bg-violet-50 dark:bg-violet-950/30"
+                          : "border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600"
+                      }`}
+                      style={{ minHeight: 44 }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400">#{cn}</span>
+                          <p className="text-sm text-slate-800 dark:text-slate-200 truncate mt-0.5">
+                            {String(c.description || "").slice(0, 80)}{String(c.description || "").length > 80 ? "…" : ""}
+                          </p>
+                        </div>
+                        <span className="font-bold text-blue-700 dark:text-blue-400 flex-shrink-0 text-sm">
+                          {formatCurrency(c.value as number)}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {vendor && vendorContracts?.contracts?.length === 0 && (
+            <p className="text-sm text-slate-400">No contracts found for this vendor.</p>
+          )}
 
           {contractNumber && <ParseResult contractNumber={contractNumber} />}
         </CardContent>
