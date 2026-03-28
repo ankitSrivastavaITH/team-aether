@@ -58,7 +58,7 @@ export default function ExtractPage() {
 
   const { data: extractedData } = useQuery({
     queryKey: ["extracted-contracts"],
-    queryFn: () => fetchAPI<ExtractedContract[]>("/api/extract/extracted"),
+    queryFn: () => fetchAPI<{ contracts: ExtractedContract[] }>("/api/extract/extracted").then(d => d.contracts),
   });
 
   const files = filesData?.files ?? [];
