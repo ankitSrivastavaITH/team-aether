@@ -22,9 +22,8 @@ export function StaffGate({ children }: { children: React.ReactNode }) {
   function handleLogin() {
     if (code.toLowerCase() === STAFF_CODE) {
       localStorage.setItem("staff_auth", "true");
+      setAuthenticated(true);
       toast.success("Welcome to the Staff Dashboard");
-      // Force reload to re-render with sidebar layout
-      window.location.reload();
     } else {
       setError(true);
       toast.error("Invalid access code");
