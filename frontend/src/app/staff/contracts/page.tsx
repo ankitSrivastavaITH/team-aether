@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { Search, X, Download } from "lucide-react";
+import { Search, X, Download, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,11 +14,9 @@ import {
 } from "@/components/ui/select";
 import { ContractsTable } from "@/components/contracts-table";
 import { ContractDetail } from "@/components/contract-detail";
-import { SmartFilter } from "@/components/smart-filter";
 import { DepartmentChartFilter } from "@/components/chart-filter";
 import { TableSkeleton } from "@/components/skeletons";
 import { useContracts, useDepartments, type Contract } from "@/hooks/use-contracts";
-import { formatCurrency } from "@/lib/utils";
 import { API_BASE } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -38,6 +36,7 @@ function ContractsPageContent() {
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [chartOpen, setChartOpen] = useState(false);
 
   // Sync filter state to URL when filters change
   useEffect(() => {
@@ -59,10 +58,10 @@ function ContractsPageContent() {
   if (search.trim()) contractParams.search = search.trim();
   if (maxDays !== "all") contractParams.max_days = Number(maxDays);
   if (departments.length === 1) contractParams.department = departments[0];
-  // department filtering handled above via departments array
 
   const { data: contractsData, isLoading: contractsLoading, isError: contractsError } = useContracts(contractParams);
-  const { data: departmentsData } = useDepartments();
+  // useDepartments kept for potential future use but not rendered in SmartFilter
+  useDepartments();
 
   const contracts = contractsData?.contracts ?? [];
   const total = contractsData?.total ?? 0;
@@ -95,191 +94,210 @@ function ContractsPageContent() {
 
   const hasActiveFilters = search.trim() !== "" || maxDays !== "all" || departments.length > 0;
 
-  // Departments list
-  const departmentList: string[] = Array.isArray(departmentsData)
-    ? departmentsData.flatMap((d) => {
-        if (typeof d === "string") return [d];
-        if (d && typeof d === "object" && "department" in d) return [(d as { department: string }).department];
-        return [];
-      }).filter(Boolean)
-    : [];
-
   return (
     <>
-      <div className="flex flex-col gap-6">
-        {/* Page Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Contracts</h1>
-          <p className="text-base text-slate-500 mt-1">
-            Search, filter, and explore all City of Richmond contracts.
-          </p>
-        </div>
+      <div className="flex flex-col gap-5">
 
-        {/* Summary chips */}
-        {!contractsLoading && contracts.length > 0 && (
-          <div className="flex items-center gap-3 flex-wrap text-sm" aria-label="Filtered contract statistics">
-            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full font-medium">
-              {total.toLocaleString()} contracts
-            </span>
-            <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full font-medium">
-              {formatCurrency(contracts.reduce((sum, c) => sum + ((c as Record<string, unknown>).value as number || 0), 0))}
-            </span>
-            {contracts.length > 0 && (
-              <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full font-medium">
-                Avg: {formatCurrency(
-                  contracts.reduce((sum, c) => sum + ((c as Record<string, unknown>).value as number || 0), 0) / contracts.length
-                )}
-              </span>
-            )}
-            {contracts.some((c) => typeof (c as Record<string, unknown>).days_until_expiry === "number" && ((c as Record<string, unknown>).days_until_expiry as number) >= 0) && (
-              <span className="px-3 py-1 bg-red-50 text-red-700 rounded-full font-medium">
-                Soonest: {Math.min(
-                  ...contracts
-                    .filter((c) => typeof (c as Record<string, unknown>).days_until_expiry === "number" && ((c as Record<string, unknown>).days_until_expiry as number) >= 0)
-                    .map((c) => (c as Record<string, unknown>).days_until_expiry as number)
-                )} days
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Department Chart Filter — visual bar chart with checkboxes */}
-        <DepartmentChartFilter selected={departments} onChange={setDepartments} />
-
-        {/* Smart Filter */}
-        <SmartFilter
-          departments={departmentList}
-          onApply={(filters) => {
-            if (filters.search !== undefined) setSearch(filters.search);
-            if (filters.maxDays !== undefined) setMaxDays(filters.maxDays);
-            if (filters.department !== undefined) setDepartments(filters.department ? [filters.department] : []);
-          }}
-          onClear={handleClearFilters}
-        />
-
-        {/* Filter Bar */}
-        <section aria-label="Contract filters">
-          <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-            {/* Search */}
-            <div className="relative flex-1 min-w-[220px]">
-              <label htmlFor="search-input" className="sr-only">
-                Search contracts by vendor or keyword
-              </label>
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none"
-                aria-hidden="true"
-              />
-              <Input
-                id="search-input"
-                type="search"
-                placeholder="Search vendor or keyword…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-11 text-base focus:ring-3 focus:ring-blue-500"
-              />
+        {/* Zone 1: Header + quick filters */}
+        <div className="flex flex-col gap-4">
+          {/* Header row */}
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Contracts</h1>
+              <p className="text-base text-slate-500 dark:text-slate-400 mt-1">
+                Search, filter, and explore all City of Richmond contracts.
+              </p>
             </div>
-
-            {/* Expiry filter */}
-            <div className="flex flex-col gap-1 min-w-[160px]">
-              <label htmlFor="expiry-select" className="text-sm font-medium text-slate-700 sr-only">
-                Expiry window
-              </label>
-              <Select value={maxDays} onValueChange={(v) => setMaxDays(v ?? "all")}>
-                <SelectTrigger
-                  id="expiry-select"
-                  aria-label="Filter by expiry window"
-                  className="h-11 text-base focus:ring-3 focus:ring-blue-500 min-w-[160px]"
-                >
-                  <SelectValue placeholder="Expiry window" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All expiry dates</SelectItem>
-                  <SelectItem value="30">Expiring ≤30 days</SelectItem>
-                  <SelectItem value="60">Expiring ≤60 days</SelectItem>
-                  <SelectItem value="90">Expiring ≤90 days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Export + Clear stay in the filter row */}
-
-            {/* Export CSV button */}
             <Button
               variant="outline"
               onClick={handleExport}
-              className="h-11 px-4 text-base focus:ring-3 focus:ring-blue-500 min-w-[44px] gap-2"
+              className="h-10 px-4 text-sm shrink-0 gap-2 focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
               aria-label="Export filtered contracts as CSV"
             >
               <Download className="h-4 w-4" aria-hidden="true" />
               Export CSV
             </Button>
+          </div>
 
-            {/* Clear button */}
-            {hasActiveFilters && (
-              <Button
-                variant="outline"
-                onClick={handleClearFilters}
-                className="h-11 px-4 text-base focus:ring-3 focus:ring-blue-500 min-w-[44px] gap-2"
-                aria-label="Clear all filters"
+          {/* Filter row */}
+          <section aria-label="Contract filters">
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Search */}
+              <div className="relative flex-1 min-w-[220px]">
+                <label htmlFor="search-input" className="sr-only">
+                  Search contracts by vendor or keyword
+                </label>
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none"
+                  aria-hidden="true"
+                />
+                <Input
+                  id="search-input"
+                  type="search"
+                  placeholder="Search vendor or keyword…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 h-10 text-sm focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-400"
+                />
+              </div>
+
+              {/* Expiry filter */}
+              <div className="min-w-[160px]">
+                <label htmlFor="expiry-select" className="sr-only">
+                  Expiry window
+                </label>
+                <Select value={maxDays} onValueChange={(v) => setMaxDays(v ?? "all")}>
+                  <SelectTrigger
+                    id="expiry-select"
+                    aria-label="Filter by expiry window"
+                    className="h-10 text-sm focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
+                  >
+                    <SelectValue placeholder="Expiry: All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Expiry: All</SelectItem>
+                    <SelectItem value="30">Expiring ≤30 days</SelectItem>
+                    <SelectItem value="60">Expiring ≤60 days</SelectItem>
+                    <SelectItem value="90">Expiring ≤90 days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Clear button */}
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  onClick={handleClearFilters}
+                  className="h-10 px-4 text-sm gap-2 focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+                  aria-label="Clear all filters"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                  Clear
+                </Button>
+              )}
+            </div>
+          </section>
+        </div>
+
+        {/* Zone 2: Department chart filter (collapsible) */}
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+          {/* Toggle button */}
+          <button
+            type="button"
+            onClick={() => setChartOpen((o) => !o)}
+            aria-expanded={chartOpen}
+            aria-controls="chart-filter-panel"
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
+          >
+            <span>
+              Filter by Department
+              {departments.length > 0 && (
+                <span className="ml-1 text-blue-600 dark:text-blue-400">
+                  ({departments.length} selected)
+                </span>
+              )}
+            </span>
+            {chartOpen ? (
+              <ChevronUp className="h-4 w-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
+            )}
+          </button>
+
+          {/* Active filter badges (always visible when departments are selected) */}
+          {departments.length > 0 && (
+            <div
+              className="flex gap-2 flex-wrap px-4 py-2 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+              aria-label="Active department filters"
+            >
+              {departments.map((d) => (
+                <span
+                  key={d}
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 rounded-full text-xs font-medium"
+                >
+                  {d}
+                  <button
+                    type="button"
+                    onClick={() => setDepartments((prev) => prev.filter((x) => x !== d))}
+                    aria-label={`Remove ${d} filter`}
+                    className="ml-0.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 p-0.5"
+                  >
+                    <X className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Chart content */}
+          {chartOpen && (
+            <div id="chart-filter-panel" className="border-t border-slate-200 dark:border-slate-700">
+              <DepartmentChartFilter selected={departments} onChange={setDepartments} />
+            </div>
+          )}
+        </div>
+
+        {/* Zone 3: Results count + pagination inline, then table */}
+        <div className="flex flex-col gap-3">
+          {/* Results count + pagination on same line */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p
+              className="text-sm text-slate-600 dark:text-slate-400"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {contractsLoading
+                ? "Loading contracts…"
+                : contractsError
+                ? "Error loading contracts."
+                : `Showing ${contracts.length.toLocaleString()} of ${total.toLocaleString()} contract${total !== 1 ? "s" : ""}`}
+            </p>
+
+            {!contractsLoading && !contractsError && totalPages > 1 && (
+              <nav
+                className="flex items-center gap-2"
+                aria-label="Contract table pagination"
               >
-                <X className="h-4 w-4" aria-hidden="true" />
-                Clear
-              </Button>
+                <p className="text-sm text-slate-500 dark:text-slate-400 tabular-nums">
+                  Page {page} of {totalPages}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="h-8 w-8 p-0 focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-40"
+                  aria-label="Go to previous page"
+                >
+                  ←
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="h-8 w-8 p-0 focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-40"
+                  aria-label="Go to next page"
+                >
+                  →
+                </Button>
+              </nav>
             )}
           </div>
-        </section>
 
-        {/* Results count */}
-        <p className="text-base text-slate-600" aria-live="polite" aria-atomic="true">
-          {contractsLoading
-            ? "Loading contracts…"
-            : contractsError
-            ? "Error loading contracts."
-            : `Showing ${contracts.length.toLocaleString()} of ${total.toLocaleString()} contract${total !== 1 ? "s" : ""}`}
-        </p>
-
-        {/* Contracts Table */}
-        {contractsLoading ? (
-          <TableSkeleton rows={8} />
-        ) : contractsError ? (
-          <div className="rounded-xl ring-1 ring-red-200 bg-red-50 p-8 text-center" role="alert">
-            <p className="text-base text-red-700">
-              Unable to load contract data right now. This usually resolves in a few minutes. If the problem persists, please contact your administrator.
-            </p>
-          </div>
-        ) : (
-          <ContractsTable contracts={contracts} onRowClick={handleRowClick} />
-        )}
-
-        {/* Pagination */}
-        {!contractsLoading && !contractsError && totalPages > 1 && (
-          <nav
-            className="flex items-center justify-between gap-3"
-            aria-label="Contract table pagination"
-          >
-            <Button
-              variant="outline"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="min-h-[44px] px-4 text-base focus:ring-3 focus:ring-blue-500"
-              aria-label="Go to previous page"
-            >
-              Previous
-            </Button>
-            <p className="text-sm text-slate-600" aria-live="polite" aria-atomic="true">
-              Page {page} of {totalPages}
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="min-h-[44px] px-4 text-base focus:ring-3 focus:ring-blue-500"
-              aria-label="Go to next page"
-            >
-              Next
-            </Button>
-          </nav>
-        )}
+          {/* Contracts Table */}
+          {contractsLoading ? (
+            <TableSkeleton rows={8} />
+          ) : contractsError ? (
+            <div className="rounded-xl ring-1 ring-red-200 dark:ring-red-800 bg-red-50 dark:bg-red-950/40 p-8 text-center" role="alert">
+              <p className="text-base text-red-700 dark:text-red-300">
+                Unable to load contract data right now. This usually resolves in a few minutes. If the problem persists, please contact your administrator.
+              </p>
+            </div>
+          ) : (
+            <ContractsTable contracts={contracts} onRowClick={handleRowClick} />
+          )}
+        </div>
       </div>
 
       {/* Contract Detail Drawer */}
@@ -297,8 +315,8 @@ export default function ContractsPage() {
     <Suspense
       fallback={
         <div className="flex flex-col gap-6">
-          <div className="h-10 w-64 bg-slate-100 rounded animate-pulse" />
-          <div className="h-64 bg-slate-100 rounded-xl animate-pulse" />
+          <div className="h-10 w-64 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+          <div className="h-64 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />
         </div>
       }
     >
