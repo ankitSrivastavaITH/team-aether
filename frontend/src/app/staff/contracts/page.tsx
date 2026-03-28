@@ -15,6 +15,7 @@ import {
 import { ContractsTable } from "@/components/contracts-table";
 import { ContractDetail } from "@/components/contract-detail";
 import { SmartFilter } from "@/components/smart-filter";
+import { MultiSelect } from "@/components/multi-select";
 import { TableSkeleton } from "@/components/skeletons";
 import { useContracts, useDepartments, type Contract } from "@/hooks/use-contracts";
 import { formatCurrency } from "@/lib/utils";
@@ -31,7 +32,9 @@ function ContractsPageContent() {
   // Initialize state from URL params
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [maxDays, setMaxDays] = useState(searchParams.get("max_days") || "all");
-  const [department, setDepartment] = useState(searchParams.get("department") || "all");
+  const [departments, setDepartments] = useState<string[]>(
+    searchParams.get("department") ? [searchParams.get("department")!] : []
+  );
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -41,12 +44,12 @@ function ContractsPageContent() {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (maxDays && maxDays !== "all") params.set("max_days", maxDays);
-    if (department && department !== "all") params.set("department", department);
+    if (departments.length === 1) params.set("department", departments[0]);
+    else if (departments.length > 1) params.set("department", departments.join(","));
     const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(newUrl, { scroll: false });
-    // Reset to first page when filters change
     setPage(1);
-  }, [search, maxDays, department, pathname, router]);
+  }, [search, maxDays, departments, pathname, router]);
 
   // Build API params
   const contractParams: Record<string, string | number> = {
@@ -55,7 +58,8 @@ function ContractsPageContent() {
   };
   if (search.trim()) contractParams.search = search.trim();
   if (maxDays !== "all") contractParams.max_days = Number(maxDays);
-  if (department !== "all") contractParams.department = department;
+  if (departments.length === 1) contractParams.department = departments[0];
+  // department filtering handled above via departments array
 
   const { data: contractsData, isLoading: contractsLoading, isError: contractsError } = useContracts(contractParams);
   const { data: departmentsData } = useDepartments();
@@ -76,20 +80,20 @@ function ContractsPageContent() {
   const handleClearFilters = useCallback(() => {
     setSearch("");
     setMaxDays("all");
-    setDepartment("all");
+    setDepartments([]);
     setPage(1);
   }, []);
 
   function handleExport() {
     const params = new URLSearchParams();
     if (maxDays && maxDays !== "all") params.set("max_days", maxDays);
-    if (department && department !== "all") params.set("department", department);
+    if (departments.length === 1) params.set("department", departments[0]);
     if (search) params.set("search", search);
     window.open(`${API_BASE}/api/contracts/export?${params.toString()}`, "_blank");
     toast.success("CSV export started", { description: "Your download should begin shortly." });
   }
 
-  const hasActiveFilters = search.trim() !== "" || maxDays !== "all" || department !== "all";
+  const hasActiveFilters = search.trim() !== "" || maxDays !== "all" || departments.length > 0;
 
   // Departments list
   const departmentList: string[] = Array.isArray(departmentsData)
@@ -145,7 +149,7 @@ function ContractsPageContent() {
           onApply={(filters) => {
             if (filters.search !== undefined) setSearch(filters.search);
             if (filters.maxDays !== undefined) setMaxDays(filters.maxDays);
-            if (filters.department !== undefined) setDepartment(filters.department);
+            if (filters.department !== undefined) setDepartments(filters.department ? [filters.department] : []);
           }}
           onClear={handleClearFilters}
         />
@@ -194,29 +198,14 @@ function ContractsPageContent() {
               </Select>
             </div>
 
-            {/* Department filter */}
-            <div className="flex flex-col gap-1 min-w-[200px]">
-              <label htmlFor="department-select" className="text-sm font-medium text-slate-700 sr-only">
-                Department
-              </label>
-              <Select value={department} onValueChange={(v) => setDepartment(v ?? "all")}>
-                <SelectTrigger
-                  id="department-select"
-                  aria-label="Filter by department"
-                  className="h-11 text-base focus:ring-3 focus:ring-blue-500 min-w-[200px]"
-                >
-                  <SelectValue placeholder="All departments" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All departments</SelectItem>
-                  {departmentList.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Department filter — multi-select checkboxes */}
+            <MultiSelect
+              options={departmentList}
+              selected={departments}
+              onChange={setDepartments}
+              placeholder="All departments"
+              label="Filter by department"
+            />
 
             {/* Export CSV button */}
             <Button
