@@ -33,8 +33,8 @@ export function StaffGate({ children }: { children: React.ReactNode }) {
   if (authenticated) return <>{children}</>;
 
   return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <Card className="p-8 max-w-md w-full space-y-6">
+    <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950">
+      <Card className="p-8 max-w-md w-full space-y-6 bg-white dark:bg-slate-800 shadow-lg">
         <div className="text-center space-y-2">
           <Shield className="h-12 w-12 text-blue-600 mx-auto" aria-hidden="true" />
           <h1 className="text-2xl font-bold">Staff Access</h1>
@@ -53,7 +53,7 @@ export function StaffGate({ children }: { children: React.ReactNode }) {
             aria-describedby={error ? "code-error" : undefined}
           />
           {error && <p id="code-error" className="text-sm text-red-600" role="alert">Invalid code. Please try again.</p>}
-          <Button onClick={handleLogin} className="w-full h-12 text-base gap-2">
+          <Button type="button" onClick={() => handleLogin()} className="w-full h-12 text-base gap-2">
             <Lock className="h-4 w-4" aria-hidden="true" />
             Access Dashboard
           </Button>
