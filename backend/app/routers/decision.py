@@ -183,15 +183,16 @@ def _gather_compliance(supplier: str) -> list[dict]:
 
 
 def _search_vendor_web(supplier: str) -> dict | None:
-    """Search Google for vendor public information."""
+    """Search DuckDuckGo Lite for vendor public information (reliable HTML scraping)."""
     try:
         import re
         query = f"{supplier} government contracts reviews"
-        resp = httpx.get(
-            "https://www.google.com/search",
-            params={"q": query, "num": 5},
+        resp = httpx.post(
+            "https://lite.duckduckgo.com/lite/",
+            data={"q": query},
             headers={
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Content-Type": "application/x-www-form-urlencoded",
             },
             timeout=10,
             follow_redirects=True,
@@ -200,22 +201,18 @@ def _search_vendor_web(supplier: str) -> dict | None:
             return None
         html = resp.text
         results = []
-        # Extract from Google search results
-        # Look for <h3> tags (titles) and nearby snippets
-        h3_pattern = r'<h3[^>]*>(.*?)</h3>'
-        titles = re.findall(h3_pattern, html, re.DOTALL)
-        # Extract URLs from links containing /url?q=
-        url_pattern = r'/url\?q=(https?://[^&"]+)'
-        urls = re.findall(url_pattern, html)
-        # Extract snippets from spans after result blocks
-        snippet_pattern = r'<div[^>]*class="[^"]*VwiC3b[^"]*"[^>]*>(.*?)</div>'
+        # DuckDuckGo Lite returns results in <a rel="nofollow"> tags
+        # and snippets in <td class="result-snippet"> tags
+        link_pattern = r'<a[^>]*rel="nofollow"[^>]*href="([^"]+)"[^>]*>(.*?)</a>'
+        links = re.findall(link_pattern, html, re.DOTALL)
+        snippet_pattern = r'<td[^>]*class="result-snippet"[^>]*>(.*?)</td>'
         snippets = re.findall(snippet_pattern, html, re.DOTALL)
 
-        for i in range(min(3, len(titles))):
-            title = re.sub(r'<[^>]+>', '', titles[i]).strip()
-            url = urls[i] if i < len(urls) else ""
+        for i in range(min(3, len(links))):
+            url, title_html = links[i]
+            title = re.sub(r'<[^>]+>', '', title_html).strip()
             snippet = re.sub(r'<[^>]+>', '', snippets[i]).strip()[:200] if i < len(snippets) else ""
-            if title:
+            if title and url:
                 results.append({"title": title, "snippet": snippet, "url": url})
 
         return {"results": results, "query": supplier} if results else None
@@ -366,7 +363,7 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
         if client is None:
             raise RuntimeError("GROQ_API_KEY not configured")
         resp = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -398,7 +395,49 @@ async def procurement_decision(request: Request, payload: DecisionRequest):
         if start >= 0 and end > start:
             cleaned = cleaned[start:end]
         # strict=False allows control characters (newlines) inside JSON strings
-        result = json.loads(cleaned, strict=False)
+        try:
+            result = json.loads(cleaned, strict=False)
+        except json.JSONDecodeError:
+            # Try fixing common LLM JSON issues: trailing commas
+            import re
+            fixed = re.sub(r',\s*([}\]])', r'\1', cleaned)
+            try:
+                result = json.loads(fixed, strict=False)
+            except json.JSONDecodeError:
+                # Last resort: extract key fields with regex
+                verdict_match = re.search(r'"verdict"\s*:\s*"(\w+)"', cleaned, re.IGNORECASE)
+                confidence_match = re.search(r'"confidence"\s*:\s*"(\w+)"', cleaned, re.IGNORECASE)
+                summary_match = re.search(r'"summary"\s*:\s*"([^"]+)"', cleaned)
+                memo_match = re.search(r'"memo"\s*:\s*"((?:[^"\\]|\\.)*)"', cleaned, re.DOTALL)
+
+                # Extract pros/cons points
+                def _extract_evidence(key: str) -> list:
+                    items = []
+                    pattern = rf'"{key}"\s*:\s*\[(.*?)\]'
+                    arr_match = re.search(pattern, cleaned, re.DOTALL)
+                    if arr_match:
+                        points = re.findall(r'"point"\s*:\s*"([^"]+)"', arr_match.group(1))
+                        evidences = re.findall(r'"evidence"\s*:\s*"([^"]+)"', arr_match.group(1))
+                        sources = re.findall(r'"source"\s*:\s*"([^"]+)"', arr_match.group(1))
+                        for i in range(len(points)):
+                            items.append({
+                                "point": points[i],
+                                "evidence": evidences[i] if i < len(evidences) else "",
+                                "source": sources[i] if i < len(sources) else "ai-analysis",
+                            })
+                    return items
+
+                pros = _extract_evidence("pros")
+                cons = _extract_evidence("cons")
+
+                result = {
+                    "verdict": (verdict_match.group(1) if verdict_match else "ESCALATE").upper(),
+                    "confidence": (confidence_match.group(1) if confidence_match else "LOW").upper(),
+                    "summary": summary_match.group(1) if summary_match else "AI analysis completed with partial parsing.",
+                    "pros": pros or [{"point": "Data collected", "evidence": f"All 8 sources gathered for {supplier}.", "source": "contract-details"}],
+                    "cons": cons or [{"point": "Review needed", "evidence": "AI output partially parsed. Review data above for full context.", "source": "ai-analysis"}],
+                    "memo": memo_match.group(1) if memo_match else f"## Executive Summary\\n\\nAI analysis for {supplier} contract {contract_number}. Review the data collected and confidence factors above for decision context.",
+                }
 
         # Validate required fields
         for field in ("verdict", "confidence", "summary", "pros", "cons", "memo"):

@@ -676,24 +676,25 @@ function DataAnalyzedSection({ data }: { data: DataCollected }) {
             </div>
           </div>
 
-          {/* PDF Intel */}
+          {/* PDF Contract Terms (OCR) */}
           <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-              PDF Intel
+              PDF Contract Terms (OCR)
             </p>
             <div className="flex items-center gap-2 text-sm">
               {data.pdf_intel === "found" ? (
                 <>
                   <FileText className="h-4 w-4 text-emerald-500" aria-hidden="true" />
                   <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                    Document terms found
+                    Contract terms extracted from PDF
                   </span>
+                  <span className="text-xs text-slate-400">(renewal clauses, pricing, expiration)</span>
                 </>
               ) : (
                 <>
                   <Minus className="h-4 w-4 text-slate-400" aria-hidden="true" />
                   <span className="font-medium text-slate-400 dark:text-slate-500">
-                    No documents ingested
+                    No PDF uploaded for this contract
                   </span>
                 </>
               )}

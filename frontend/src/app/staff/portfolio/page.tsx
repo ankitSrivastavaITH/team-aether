@@ -1,7 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { fetchAPI } from "@/lib/api";
+import { CollapsibleSection } from "@/components/collapsible-section";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +22,8 @@ import { useState } from "react";
 interface ActionItem {
   type: string;
   text: string;
+  link?: string;
+  link_label?: string;
 }
 
 interface DeptStrategy {
@@ -210,7 +214,7 @@ function StrategyCard({ strategy }: { strategy: DeptStrategy }) {
                     <div
                       key={i}
                       role="listitem"
-                      className={`flex items-start gap-2 p-3 rounded-lg text-sm ${
+                      className={`p-3 rounded-lg text-sm ${
                         a.type === "escalate"
                           ? "bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800"
                           : a.type === "rebid"
@@ -220,10 +224,28 @@ function StrategyCard({ strategy }: { strategy: DeptStrategy }) {
                           : "bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800"
                       }`}
                     >
-                      <span className="font-medium shrink-0">
-                        {a.type === "escalate" ? "🔴" : a.type === "rebid" ? "🟡" : a.type === "diversify" || a.type === "equity" ? "🟣" : "🟢"}
-                      </span>
-                      <p className="text-slate-700 dark:text-slate-300">{a.text}</p>
+                      <div className="flex items-start gap-2">
+                        <span className="font-medium shrink-0">
+                          {a.type === "escalate" ? "🔴" : a.type === "rebid" ? "🟡" : a.type === "diversify" || a.type === "equity" ? "🟣" : "🟢"}
+                        </span>
+                        <p className="text-slate-700 dark:text-slate-300">{a.text}</p>
+                      </div>
+                      {a.link && (
+                        <Link
+                          href={a.link}
+                          className={`inline-flex items-center gap-1.5 mt-2 ml-6 px-3 min-h-[36px] rounded-md text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+                            a.type === "escalate"
+                              ? "bg-red-600 hover:bg-red-700 text-white focus:ring-red-500"
+                              : a.type === "rebid"
+                              ? "bg-amber-600 hover:bg-amber-700 text-white focus:ring-amber-500"
+                              : a.type === "diversify" || a.type === "equity"
+                              ? "bg-purple-600 hover:bg-purple-700 text-white focus:ring-purple-500"
+                              : "bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-500"
+                          }`}
+                        >
+                          {a.link_label || "Take Action →"}
+                        </Link>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -328,67 +350,73 @@ export default function PortfolioStrategyPage() {
 
       {/* Portfolio-wide insights */}
       {data.portfolio_insights && data.portfolio_insights.length > 0 && (
-        <Card className="border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Briefcase className="h-5 w-5 text-purple-600 dark:text-purple-400" aria-hidden="true" />
-              <h2 className="font-semibold text-slate-900 dark:text-slate-100">
-                Portfolio Intelligence
-              </h2>
-            </div>
-            <ul className="space-y-2">
-              {data.portfolio_insights.map((insight, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
-                  <span className="text-purple-500 shrink-0 mt-0.5">→</span>
-                  {insight}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <CollapsibleSection
+          title="Portfolio Intelligence"
+          icon={Briefcase}
+          badge={`${data.portfolio_insights.length} insights`}
+          badgeClass="text-[10px] bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300"
+          defaultOpen
+          summary={data.portfolio_insights[0]}
+        >
+          <ul className="space-y-2">
+            {data.portfolio_insights.map((insight, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                <span className="text-purple-500 shrink-0 mt-0.5">→</span>
+                {insight}
+              </li>
+            ))}
+          </ul>
+        </CollapsibleSection>
       )}
 
       {/* Strategy cards by risk level */}
       {highRisk.length > 0 && (
-        <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-red-600 dark:text-red-400 mb-3 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
-            Immediate Action Required
-          </h2>
+        <CollapsibleSection
+          title="Immediate Action Required"
+          icon={AlertTriangle}
+          badge={`${highRisk.length} depts`}
+          badgeClass="text-[10px] bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
+          defaultOpen
+          summary={highRisk.map(s => s.department).join(", ")}
+        >
           <div className="space-y-3">
             {highRisk.map((s) => (
               <StrategyCard key={s.department} strategy={s} />
             ))}
           </div>
-        </div>
+        </CollapsibleSection>
       )}
 
       {medRisk.length > 0 && (
-        <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-3 flex items-center gap-2">
-            <GitCompare className="h-4 w-4" aria-hidden="true" />
-            Review This Quarter
-          </h2>
+        <CollapsibleSection
+          title="Review This Quarter"
+          icon={GitCompare}
+          badge={`${medRisk.length} depts`}
+          badgeClass="text-[10px] bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
+          summary={medRisk.map(s => s.department).join(", ")}
+        >
           <div className="space-y-3">
             {medRisk.map((s) => (
               <StrategyCard key={s.department} strategy={s} />
             ))}
           </div>
-        </div>
+        </CollapsibleSection>
       )}
 
       {lowRisk.length > 0 && (
-        <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-3 flex items-center gap-2">
-            <RefreshCw className="h-4 w-4" aria-hidden="true" />
-            Healthy — Monitor
-          </h2>
+        <CollapsibleSection
+          title="Healthy — Monitor"
+          icon={RefreshCw}
+          badge={`${lowRisk.length} depts`}
+          badgeClass="text-[10px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+          summary={lowRisk.map(s => s.department).join(", ")}
+        >
           <div className="space-y-3">
             {lowRisk.map((s) => (
               <StrategyCard key={s.department} strategy={s} />
             ))}
           </div>
-        </div>
+        </CollapsibleSection>
       )}
 
       <p className="text-xs text-slate-400 dark:text-slate-500 text-center">

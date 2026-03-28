@@ -90,22 +90,30 @@ def what_if_savings() -> Dict[str, Any]:
         LIMIT 8
     """)
 
-    # 5. Generate actionable recommendations
-    recommendations: List[Dict[str, str]] = []
+    # 5. Generate actionable recommendations with deep links
+    recommendations: List[Dict[str, Any]] = []
 
-    # Top rebid target
+    # Top rebid target — link to Decision Engine with vendor pre-selected
     if concentrated:
         top = concentrated[0]
         savings_10 = _fmt_currency(top["vendor_total"] * 0.10)
+        # Find a specific contract to analyze
+        top_contract = query(
+            "SELECT contract_number FROM city_contracts WHERE supplier = ? AND department = ? ORDER BY value DESC LIMIT 1",
+            [top["supplier"], top["department"]]
+        )
+        contract_num = top_contract[0]["contract_number"] if top_contract else ""
         recommendations.append({
             "priority": "critical",
             "action": f"Rebid {top['supplier']} contracts in {top['department']}",
             "detail": f"This vendor holds {top['share_pct']}% of department spending ({_fmt_currency(top['vendor_total'])}). "
                       f"Introducing competitive bidding could save {savings_10} at 10% reduction.",
-            "next_step": "Identify 2-3 alternative vendors and issue RFP before current contract expires.",
+            "next_step": "Analyze this vendor in the Decision Engine to see alternative vendors and compliance status.",
+            "link": f"/staff/decision?supplier={top['supplier']}&contract={contract_num}",
+            "link_label": "Analyze in Decision Engine →",
         })
 
-    # Urgent expiring
+    # Urgent expiring — link to Decision Engine for that contract
     if expiring_high:
         urgent = [c for c in expiring_high if c["days_to_expiry"] <= 60]
         if urgent:
@@ -115,10 +123,12 @@ def what_if_savings() -> Dict[str, Any]:
                 "action": f"Immediate: {top_urgent['supplier']} contract expires in {top_urgent['days_to_expiry']} days",
                 "detail": f"Contract {top_urgent['contract_number']} worth {_fmt_currency(top_urgent['value'])} in {top_urgent['department']}. "
                           f"Expiration within 60 days requires immediate decision — renew or rebid.",
-                "next_step": "Run Decision Engine analysis on this contract today. Prepare renewal paperwork or begin RFP process.",
+                "next_step": "Run AI Decision Engine now — get RENEW/REBID/ESCALATE verdict with compliance and vendor analysis.",
+                "link": f"/staff/decision?supplier={top_urgent['supplier']}&contract={top_urgent['contract_number']}",
+                "link_label": "Run Decision Engine Now →",
             })
 
-    # Diversification opportunity
+    # Diversification — link to MBE analysis
     low_diversity_depts = [d for d in dept_opportunities if d["unique_vendors"] <= 3 and d["expiring"] > 0]
     if low_diversity_depts:
         dept = low_diversity_depts[0]
@@ -127,10 +137,12 @@ def what_if_savings() -> Dict[str, Any]:
             "action": f"Diversify vendor pool in {dept['department']}",
             "detail": f"Only {dept['unique_vendors']} vendor(s) serve this department with {_fmt_currency(dept['expiring_value'])} expiring soon. "
                       f"Low competition increases price risk and creates single-point-of-failure.",
-            "next_step": "Research MBE-certified and small business vendors in this category. Add to bid list for upcoming renewals.",
+            "next_step": "View department vendor diversity data and identify MBE/small business candidates.",
+            "link": "/staff/mbe",
+            "link_label": "View MBE & Diversity Data →",
         })
 
-    # Quick win
+    # Quick win — link to cost analysis for comparison
     mid_value_expiring = [c for c in expiring_high if 500000 <= c["value"] <= 5000000 and c["days_to_expiry"] > 60]
     if mid_value_expiring:
         c = mid_value_expiring[0]
@@ -139,10 +151,12 @@ def what_if_savings() -> Dict[str, Any]:
             "action": f"Quick win: Rebid {c['supplier']} ({_fmt_currency(c['value'])})",
             "detail": f"Contract {c['contract_number']} in {c['department']} expires in {c['days_to_expiry']} days. "
                       f"Mid-value contracts are easiest to rebid competitively with the most time to act.",
-            "next_step": "Pull comparable contracts from eVA/VITA state listings. Compare pricing before renewal.",
+            "next_step": "Compare this vendor's pricing against similar contracts across departments.",
+            "link": "/staff/cost-analysis",
+            "link_label": "Compare in Cost Analysis →",
         })
 
-    # Overall portfolio insight
+    # Portfolio strategy — link to portfolio advisor
     if dept_opportunities:
         total_expiring_value = sum(d["expiring_value"] for d in dept_opportunities)
         recommendations.append({
@@ -150,7 +164,9 @@ def what_if_savings() -> Dict[str, Any]:
             "action": f"Portfolio overview: {_fmt_currency(total_expiring_value)} in contracts expiring within 6 months",
             "detail": f"Across {len(dept_opportunities)} departments, {sum(d['expiring'] for d in dept_opportunities)} contracts "
                       f"need attention. Proactive rebidding at even 5% savings yields {_fmt_currency(total_expiring_value * 0.05)}.",
-            "next_step": "Prioritize departments by expiring value. Start with highest-value departments first.",
+            "next_step": "View department-by-department strategy with specific renew/rebid/escalate recommendations.",
+            "link": "/staff/portfolio",
+            "link_label": "Open Portfolio Strategy →",
         })
 
     return {
@@ -229,19 +245,36 @@ def portfolio_strategy() -> Dict[str, Any]:
         top_vendor_contracts = top_vendor.get("vendor_contracts", 0)
 
         # Generate specific action items
-        actions: List[Dict[str, str]] = []
+        actions: List[Dict[str, Any]] = []
+        dept_name = dept["department"] or "Unknown"
+
+        # Find a specific critical contract for deep links
+        critical_contract = query(
+            "SELECT contract_number, supplier FROM city_contracts "
+            "WHERE department = ? AND risk_level IN ('critical', 'expired') "
+            "ORDER BY value DESC LIMIT 1",
+            [dept_name]
+        )
 
         if escalate_count > 0:
             actions.append({
                 "type": "escalate",
                 "text": f"Review {escalate_count} expired contract(s) immediately — these are operating without valid agreements.",
+                "link": f"/staff/contracts?department={dept_name}&risk=expired",
+                "link_label": "View Expired Contracts →",
             })
 
         if rebid_count > 0 and rebid_value > 0:
+            link = "/staff/decision"
+            if critical_contract:
+                cc = critical_contract[0]
+                link = f"/staff/decision?supplier={cc['supplier']}&contract={cc['contract_number']}"
             actions.append({
                 "type": "rebid",
                 "text": f"Initiate competitive rebid for {rebid_count} expiring contract(s) worth {_fmt_currency(rebid_value)}. "
                         f"Target {_fmt_currency(projected_savings)} in savings.",
+                "link": link,
+                "link_label": "Analyze Top Contract →",
             })
 
         if top_vendor_value > 0 and total > 0:
@@ -252,6 +285,8 @@ def portfolio_strategy() -> Dict[str, Any]:
                     "text": f"Reduce dependency on {top_vendor_name} ({vendor_share:.0f}% of dept spend, "
                             f"{top_vendor_contracts} contracts, {_fmt_currency(top_vendor_value)}). "
                             f"Seek alternative vendors for next renewal cycle.",
+                    "link": f"/staff/decision?supplier={top_vendor_name}",
+                    "link_label": "Find Alternatives →",
                 })
 
         if diversity < 0.3:
@@ -259,6 +294,8 @@ def portfolio_strategy() -> Dict[str, Any]:
                 "type": "equity",
                 "text": f"Only {dept['unique_vendors']} vendor(s) serve this department. "
                         f"Actively recruit MBE-certified and small business vendors to improve competition and equity.",
+                "link": "/staff/mbe",
+                "link_label": "View MBE Data →",
             })
 
         if renew_count > 0 and at_risk_pct < 0.15:

@@ -128,10 +128,11 @@ interface RiskCell {
 }
 
 const ANOMALY_RISK_MAP: Record<string, RiskCell> = {
-  expired_active: { severity: "high", likelihood: "frequent" },
-  high_value_outlier: { severity: "high", likelihood: "occasional" },
-  single_source: { severity: "medium", likelihood: "occasional" },
-  duplicate_vendor: { severity: "low", likelihood: "rare" },
+  long_expired: { severity: "high", likelihood: "frequent" },
+  price_outlier: { severity: "high", likelihood: "occasional" },
+  high_concentration: { severity: "medium", likelihood: "frequent" },
+  long_term: { severity: "medium", likelihood: "occasional" },
+  zero_value: { severity: "low", likelihood: "occasional" },
 };
 
 const DEFAULT_RISK_CELL: RiskCell = {
@@ -172,21 +173,30 @@ const MATRIX_CELL_STYLES: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 const REMEDIATION_STEPS: Record<string, string[]> = {
-  expired_active: [
+  long_expired: [
     "Verify contract status with department.",
-    "Initiate renewal or closeout.",
+    "Initiate renewal or closeout immediately.",
+    "Assess if services are still being received without a valid agreement.",
   ],
-  high_value_outlier: [
+  price_outlier: [
     "Review pricing against market benchmarks.",
-    "Consider competitive rebid.",
+    "Compare with similar contracts in the same department.",
+    "Consider competitive rebid if pricing is not justified.",
   ],
-  single_source: [
+  high_concentration: [
     "Identify alternative vendors in this category.",
     "Plan competitive solicitation for next renewal.",
+    "Review MBE/small business options to diversify.",
   ],
-  duplicate_vendor: [
-    "Verify if entries are the same legal entity.",
-    "Consolidate vendor records.",
+  long_term: [
+    "Check if contract has been competitively re-bid per procurement policy.",
+    "Verify pricing still reflects current market rates.",
+    "Schedule review with department stakeholders.",
+  ],
+  zero_value: [
+    "Verify if contract data is complete in the system.",
+    "Confirm whether spending is tracked under a different record.",
+    "Update contract value if information is available.",
   ],
 };
 

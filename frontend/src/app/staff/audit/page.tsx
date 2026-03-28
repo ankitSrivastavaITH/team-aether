@@ -5,6 +5,7 @@ import { fetchAPI } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CollapsibleSection } from "@/components/collapsible-section";
 import {
   History,
   CheckCircle,
@@ -12,6 +13,7 @@ import {
   AlertTriangle,
   ClipboardCheck,
   Building2,
+  Lightbulb,
 } from "lucide-react";
 
 interface TimelineDecision {
@@ -199,53 +201,41 @@ export default function AuditTimelinePage() {
 
           {/* AI Insights */}
           {data.insights && data.insights.length > 0 && (
-            <Card className="border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20">
-              <CardContent className="pt-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <History className="h-5 w-5 text-purple-600 dark:text-purple-400" aria-hidden="true" />
-                  <h2 className="font-semibold text-slate-900 dark:text-slate-100">
-                    Pattern Analysis
-                  </h2>
-                </div>
-                <ul className="space-y-2">
-                  {data.insights.map((insight, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
-                      <span className="text-purple-500 shrink-0 mt-0.5">→</span>
-                      {insight}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
+            <CollapsibleSection
+              title="Pattern Analysis"
+              icon={Lightbulb}
+              badge={`${data.insights.length} insights`}
+              badgeClass="text-[10px] bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300"
+              defaultOpen
+              summary={data.insights[0]}
+            >
+              <ul className="space-y-2">
+                {data.insights.map((insight, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                    <span className="text-purple-500 shrink-0 mt-0.5">→</span>
+                    {insight}
+                  </li>
+                ))}
+              </ul>
+            </CollapsibleSection>
           )}
 
           {/* Top departments */}
           {data.top_departments.length > 0 && (
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Building2
-                    className="h-4 w-4 text-blue-600 dark:text-blue-400"
-                    aria-hidden="true"
-                  />
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    Most Analyzed Departments
-                  </h3>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {data.top_departments.map((d) => (
-                    <Badge
-                      key={d.department}
-                      variant="outline"
-                      className="text-xs"
-                    >
-                      {d.department}{" "}
-                      <span className="ml-1 font-bold">{d.count}</span>
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <CollapsibleSection
+              title="Most Analyzed Departments"
+              icon={Building2}
+              badge={`${data.top_departments.length} depts`}
+              summary={data.top_departments.map(d => d.department).slice(0, 3).join(", ")}
+            >
+              <div className="flex flex-wrap gap-2">
+                {data.top_departments.map((d) => (
+                  <Badge key={d.department} variant="outline" className="text-xs">
+                    {d.department} <span className="ml-1 font-bold">{d.count}</span>
+                  </Badge>
+                ))}
+              </div>
+            </CollapsibleSection>
           )}
 
           {/* Timeline */}

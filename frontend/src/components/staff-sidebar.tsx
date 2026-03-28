@@ -37,7 +37,6 @@ import { FontSizeToggle, HighContrastToggle } from "@/components/accessibility-t
 
 const COLLAPSE_KEY = "staff-sidebar-collapsed";
 const ANALYTICS_OPEN_KEY = "sidebar-analytics-open";
-const RISK_OPEN_KEY = "sidebar-risk-open";
 
 interface NavItem {
   href: string;
@@ -59,6 +58,22 @@ const navSections: NavSection[] = [
     items: [
       { href: "/staff", label: "Dashboard", icon: LayoutDashboard, exact: true },
       { href: "/staff/health", label: "Health Scanner", icon: Activity },
+    ],
+  },
+  {
+    title: "Strategy",
+    items: [
+      { href: "/staff/what-if", label: "What-If Savings", icon: Calculator },
+      { href: "/staff/portfolio", label: "Portfolio Strategy", icon: Briefcase },
+      { href: "/staff/audit", label: "Decision Audit", icon: History },
+    ],
+  },
+  {
+    title: "Risk & Equity",
+    items: [
+      { href: "/staff/risk", label: "Vendor Risk (HHI)", icon: ShieldAlert },
+      { href: "/staff/anomalies", label: "Anomalies", icon: AlertOctagon },
+      { href: "/staff/mbe", label: "MBE Analysis", icon: Users },
     ],
   },
   {
@@ -84,24 +99,6 @@ const navSections: NavSection[] = [
       { href: "/staff/scorecard", label: "Dept Scorecards", icon: LayoutGrid },
       { href: "/staff/cost-analysis", label: "Cost Analysis", icon: TrendingUp },
       { href: "/staff/timeline", label: "Timeline", icon: CalendarDays },
-    ],
-  },
-  {
-    title: "Strategy",
-    items: [
-      { href: "/staff/what-if", label: "What-If Savings", icon: Calculator },
-      { href: "/staff/portfolio", label: "Portfolio Strategy", icon: Briefcase },
-      { href: "/staff/audit", label: "Decision Audit", icon: History },
-    ],
-  },
-  {
-    title: "Risk & Equity",
-    collapsible: true,
-    storageKey: RISK_OPEN_KEY,
-    items: [
-      { href: "/staff/risk", label: "Vendor Risk (HHI)", icon: ShieldAlert },
-      { href: "/staff/anomalies", label: "Anomalies", icon: AlertOctagon },
-      { href: "/staff/mbe", label: "MBE Analysis", icon: Users },
     ],
   },
 ];

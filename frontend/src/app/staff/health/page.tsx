@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchAPI } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Activity,
@@ -19,6 +19,7 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { CollapsibleSection } from "@/components/collapsible-section";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -368,16 +369,14 @@ export default function HealthScannerPage() {
         </CardContent>
       </Card>
 
-      {/* ----------------------------------------------------------------- */}
-      {/* 2. Expiry Forecast Bar */}
-      {/* ----------------------------------------------------------------- */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Clock className="h-5 w-5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-            Expiry Forecast
-          </h2>
-        </div>
+      {/* 2. Expiry Forecast */}
+      <CollapsibleSection
+        title="Expiry Forecast"
+        icon={Clock}
+        badge={`${(forecast.next_30 ?? 0) + (forecast.next_60 ?? 0) + (forecast.next_90 ?? 0)} contracts`}
+        defaultOpen
+        summary={`${forecast.next_30 ?? 0} in 30 days (${formatCurrency(forecast.value_30 ?? 0)})`}
+      >
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { label: "Next 30 Days", count: forecast.next_30 ?? 0, value: forecast.value_30 ?? 0, color: "red", action: "Urgent — renew or rebid now", link: "/staff/renew" },
@@ -386,20 +385,11 @@ export default function HealthScannerPage() {
           ].map(({ label, count, value, color, action, link }) => (
             <Card key={label} className={`border-l-4 border-l-${color}-500 dark:border-l-${color}-400`}>
               <CardContent className="py-5 space-y-3">
-                <p className={`text-xs font-semibold uppercase tracking-wider text-${color}-600 dark:text-${color}-400 mb-1`}>
-                  {label}
-                </p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                  {count.toLocaleString()}
-                </p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {formatCurrency(value)}
-                </p>
+                <p className={`text-xs font-semibold uppercase tracking-wider text-${color}-600 dark:text-${color}-400 mb-1`}>{label}</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{count.toLocaleString()}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{formatCurrency(value)}</p>
                 {count > 0 && (
-                  <Link
-                    href={link}
-                    className={`inline-flex items-center gap-1.5 text-xs font-medium text-${color}-700 dark:text-${color}-400 hover:underline`}
-                  >
+                  <Link href={link} className={`inline-flex items-center gap-1.5 text-xs font-medium text-${color}-700 dark:text-${color}-400 hover:underline`}>
                     {action} <ArrowRight className="h-3 w-3" />
                   </Link>
                 )}
@@ -407,177 +397,53 @@ export default function HealthScannerPage() {
             </Card>
           ))}
         </div>
-      </div>
+      </CollapsibleSection>
 
-      {/* ----------------------------------------------------------------- */}
       {/* 3. Risk Distribution */}
-      {/* ----------------------------------------------------------------- */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="h-5 w-5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
-            Portfolio Risk Distribution
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RiskBar distribution={data.risk_distribution} total={data.total_contracts} />
-        </CardContent>
-      </Card>
+      <CollapsibleSection
+        title="Portfolio Risk Distribution"
+        icon={TrendingUp}
+        summary={`${data.risk_distribution.find(r => r.risk_level === "ok")?.count ?? 0} OK, ${data.risk_distribution.find(r => r.risk_level === "critical")?.count ?? 0} Critical`}
+      >
+        <RiskBar distribution={data.risk_distribution} total={data.total_contracts} />
+      </CollapsibleSection>
 
-      {/* ----------------------------------------------------------------- */}
-      {/* 4. Department Grade Cards */}
-      {/* ----------------------------------------------------------------- */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Building2 className="h-5 w-5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-            Department Grades
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.department_grades.map((dept) => {
-            const gc = GRADE_COLORS[dept.grade] || GRADE_COLORS.F;
-            return (
-              <Card key={dept.department} className="overflow-hidden">
-                <CardContent className="py-4 space-y-3">
-                  {/* Header row */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate" title={dept.department}>
-                        {dept.department}
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {dept.total} contracts
-                      </p>
-                    </div>
-                    <span
-                      className={`inline-flex items-center justify-center w-9 h-9 rounded-lg text-lg font-bold ring-1 ${gc.bg} ${gc.text} ${gc.ring}`}
-                      aria-label={`Grade: ${dept.grade}`}
-                    >
-                      {dept.grade}
-                    </span>
-                  </div>
-
-                  {/* Value */}
-                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                    {formatCurrency(dept.total_value)}
-                  </p>
-
-                  {/* Mini risk bar */}
-                  <DeptRiskBar dept={dept} />
-
-                  {/* Counts */}
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px]">
-                    {dept.ok > 0 && (
-                      <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
-                        <CheckCircle className="h-3 w-3" aria-hidden="true" /> {dept.ok} OK
-                      </span>
-                    )}
-                    {dept.warning > 0 && (
-                      <span className="text-amber-600 dark:text-amber-400">
-                        {dept.warning} Warning
-                      </span>
-                    )}
-                    {dept.critical > 0 && (
-                      <span className="text-red-600 dark:text-red-400 flex items-center gap-0.5">
-                        <XCircle className="h-3 w-3" aria-hidden="true" /> {dept.critical} Critical
-                      </span>
-                    )}
-                    {dept.expired > 0 && (
-                      <span className="text-slate-500 dark:text-slate-400">
-                        {dept.expired} Expired
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Action link for at-risk departments */}
-                  {(dept.grade === "D" || dept.grade === "F") && (
-                    <Link
-                      href={`/staff/contracts?department=${encodeURIComponent(dept.department)}`}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
-                    >
-                      Review {dept.critical + dept.expired} at-risk contracts <ArrowRight className="h-3 w-3" />
-                    </Link>
-                  )}
-                  {dept.grade === "C" && (
-                    <Link
-                      href={`/staff/contracts?department=${encodeURIComponent(dept.department)}`}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400 hover:underline"
-                    >
-                      Monitor {dept.warning} warning contracts <ArrowRight className="h-3 w-3" />
-                    </Link>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ----------------------------------------------------------------- */}
-      {/* 5. Top Anomalies */}
-      {/* ----------------------------------------------------------------- */}
+      {/* 4. Top Anomalies (MOVED UP) */}
       {data.anomalies.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <ShieldAlert className="h-5 w-5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              Top Anomalies
-            </h2>
-          </div>
+        <CollapsibleSection
+          title="Top Anomalies"
+          icon={ShieldAlert}
+          badge={`${data.anomalies.filter(a => a.severity === "high").length} high`}
+          badgeClass="text-[10px] bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
+          defaultOpen
+          summary={`${data.anomalies.length} anomalies detected`}
+        >
           <div className="space-y-3">
             {data.anomalies.map((a, i) => {
               const isHigh = a.severity === "high";
               return (
                 <Card
                   key={`${a.type}-${i}`}
-                  className={`border-l-4 ${
-                    isHigh
-                      ? "border-l-red-500 dark:border-l-red-400"
-                      : "border-l-amber-500 dark:border-l-amber-400"
-                  }`}
+                  className={`border-l-4 ${isHigh ? "border-l-red-500 dark:border-l-red-400" : "border-l-amber-500 dark:border-l-amber-400"}`}
                 >
                   <CardContent className="py-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                      {/* Severity badge */}
-                      <Badge
-                        className={
-                          isHigh
-                            ? "bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700"
-                            : "bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700"
-                        }
-                      >
+                      <Badge className={isHigh
+                        ? "bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700"
+                        : "bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700"
+                      }>
                         {isHigh ? "High" : "Medium"}
                       </Badge>
-
-                      {/* Type label */}
                       <Badge variant="outline" className="text-xs">
-                        {a.type === "expired_high_value"
-                          ? "Expired High Value"
-                          : "Concentration Risk"}
+                        {a.type === "expired_high_value" ? "Expired High Value" : "Concentration Risk"}
                       </Badge>
-
-                      {/* Vendor */}
-                      <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                        {a.supplier}
-                      </span>
-
-                      {/* Spacer */}
+                      <span className="text-sm font-medium text-slate-900 dark:text-slate-100">{a.supplier}</span>
                       <span className="hidden sm:block flex-1" />
-
-                      {/* Value */}
-                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                        {formatCurrency(a.value)}
-                      </span>
+                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{formatCurrency(a.value)}</span>
                     </div>
-
                     <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                       {a.detail}
-                      {a.contract_number && (
-                        <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">
-                          #{a.contract_number}
-                        </span>
-                      )}
+                      {a.contract_number && <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">#{a.contract_number}</span>}
                     </p>
                     <div className="mt-2 flex gap-3">
                       {a.type === "expired_high_value" && a.contract_number && (
@@ -599,8 +465,56 @@ export default function HealthScannerPage() {
               );
             })}
           </div>
-        </div>
+        </CollapsibleSection>
       )}
+
+      {/* 5. Department Grades */}
+      <CollapsibleSection
+        title="Department Grades"
+        icon={Building2}
+        badge={`${data.department_grades.filter(d => d.grade === "D" || d.grade === "F").length} at-risk`}
+        badgeClass="text-[10px] bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
+        summary={`${data.department_grades.length} departments graded A-F`}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data.department_grades.map((dept) => {
+            const gc = GRADE_COLORS[dept.grade] || GRADE_COLORS.F;
+            return (
+              <Card key={dept.department} className="overflow-hidden">
+                <CardContent className="py-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate" title={dept.department}>{dept.department}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{dept.total} contracts</p>
+                    </div>
+                    <span className={`inline-flex items-center justify-center w-9 h-9 rounded-lg text-lg font-bold ring-1 ${gc.bg} ${gc.text} ${gc.ring}`} aria-label={`Grade: ${dept.grade}`}>
+                      {dept.grade}
+                    </span>
+                  </div>
+                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{formatCurrency(dept.total_value)}</p>
+                  <DeptRiskBar dept={dept} />
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px]">
+                    {dept.ok > 0 && <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5"><CheckCircle className="h-3 w-3" aria-hidden="true" /> {dept.ok} OK</span>}
+                    {dept.warning > 0 && <span className="text-amber-600 dark:text-amber-400">{dept.warning} Warning</span>}
+                    {dept.critical > 0 && <span className="text-red-600 dark:text-red-400 flex items-center gap-0.5"><XCircle className="h-3 w-3" aria-hidden="true" /> {dept.critical} Critical</span>}
+                    {dept.expired > 0 && <span className="text-slate-500 dark:text-slate-400">{dept.expired} Expired</span>}
+                  </div>
+                  {(dept.grade === "D" || dept.grade === "F") && (
+                    <Link href={`/staff/contracts?department=${encodeURIComponent(dept.department)}`} className="inline-flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400 hover:underline">
+                      Review {dept.critical + dept.expired} at-risk contracts <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  )}
+                  {dept.grade === "C" && (
+                    <Link href={`/staff/contracts?department=${encodeURIComponent(dept.department)}`} className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400 hover:underline">
+                      Monitor {dept.warning} warning contracts <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </CollapsibleSection>
     </div>
   );
 }
