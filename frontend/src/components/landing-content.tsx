@@ -147,7 +147,7 @@ export function LandingContent() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/staff"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg transition-all shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/50 focus:ring-offset-2 min-h-[44px] active:scale-[0.98]"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-lg transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-orange-400/50 focus:ring-offset-2 min-h-[44px] active:scale-[0.98]"
           >
             <Shield className="h-5 w-5" aria-hidden="true" />
             Staff Dashboard
@@ -156,7 +156,7 @@ export function LandingContent() {
 
           <Link
             href="/public"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border-2 border-orange-500 text-orange-600 dark:text-orange-400 dark:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/40 font-semibold text-lg transition-all focus:outline-none focus:ring-4 focus:ring-orange-400/50 focus:ring-offset-2 min-h-[44px] active:scale-[0.98]"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-semibold text-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/50 focus:ring-offset-2 min-h-[44px] active:scale-[0.98]"
           >
             <BarChart3 className="h-5 w-5" aria-hidden="true" />
             Public Transparency

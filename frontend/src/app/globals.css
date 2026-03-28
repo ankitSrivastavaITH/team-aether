@@ -96,7 +96,8 @@
   }
 
   html {
-    font-family: var(--font-sans), Inter, system-ui, sans-serif;
+    font-family: var(--font-sans), var(--font-inter), Inter, system-ui, sans-serif;
+    scroll-behavior: smooth;
   }
 }
 

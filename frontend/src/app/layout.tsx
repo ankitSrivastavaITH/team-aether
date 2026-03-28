@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Atkinson_Hyperlegible } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { QueryProvider } from "@/components/query-provider";
@@ -8,7 +8,14 @@ import { ErrorBoundary } from "@/components/error-boundary";
 // AskRichmondPanel moved to staff/public layouts — not shown on landing/about/compare
 import { Toaster } from "sonner";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const atkinson = Atkinson_Hyperlegible({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "RVA Contract Lens — Richmond Procurement Transparency",
@@ -35,7 +42,7 @@ const jsonLd = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${atkinson.variable} ${inter.variable}`}>
       <body className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-[#1E293B] dark:text-slate-200 font-sans antialiased">
         {/* JSON-LD structured data for SEO — static content, no XSS risk */}
         <script

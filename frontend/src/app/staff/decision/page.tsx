@@ -667,7 +667,7 @@ function SuggestedContracts({ onSelect }: { onSelect: (supplier: string, contrac
             <button
               key={c.contract_number}
               onClick={() => onSelect(c.supplier, c.contract_number)}
-              className={`text-left p-3 rounded-lg border transition-all hover:shadow-md group ${
+              className={`text-left p-3 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer group ${
                 isRed
                   ? "border-red-200 dark:border-red-800 hover:border-red-400 bg-red-50/50 dark:bg-red-950/20"
                   : isAmber
@@ -972,7 +972,7 @@ function DecisionPageInner() {
               <Button
                 onClick={handleAnalyze}
                 size="lg"
-                className="gap-2 px-8 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-200"
+                className="gap-2 px-8 bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all duration-200 cursor-pointer"
                 aria-label={`Analyze contract ${selectedContract.contract_number}`}
               >
                 <Brain className="h-5 w-5" aria-hidden="true" />

@@ -115,7 +115,7 @@ function StaffDashboardContent() {
               </div>
               <Link
                 href="/staff/decision"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors shrink-0"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#DC2626] hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors duration-200 cursor-pointer shrink-0"
                 style={{ minHeight: 44 }}
               >
                 <Zap className="h-4 w-4" /> Start Reviewing <ArrowRight className="h-4 w-4" />
@@ -166,7 +166,7 @@ function StaffDashboardContent() {
                   <Link
                     key={c.contract_number}
                     href={`/staff/decision?supplier=${encodeURIComponent(c.supplier)}&contract=${encodeURIComponent(c.contract_number)}`}
-                    className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-red-700 transition-all group"
+                    className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-red-700 transition-all duration-200 group"
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{c.supplier}</p>
@@ -213,7 +213,7 @@ function StaffDashboardContent() {
                   <Link
                     key={c.contract_number}
                     href={`/staff/decision?supplier=${encodeURIComponent(c.supplier)}&contract=${encodeURIComponent(c.contract_number)}`}
-                    className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700 transition-all group"
+                    className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200 group"
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{c.supplier}</p>
@@ -260,7 +260,7 @@ function StaffDashboardContent() {
                   <Link
                     key={c.contract_number}
                     href="/staff/review"
-                    className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 transition-all group"
+                    className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-200 group"
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{c.supplier}</p>
@@ -294,7 +294,7 @@ function StaffDashboardContent() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <Link
             href="/staff/decision"
-            className="flex items-center gap-3 p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all group"
+            className="flex items-center gap-3 p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 group"
             style={{ minHeight: 44 }}
           >
             <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
@@ -306,7 +306,7 @@ function StaffDashboardContent() {
           </Link>
           <Link
             href="/staff/health"
-            className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all group"
+            className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all duration-200 group"
             style={{ minHeight: 44 }}
           >
             <Activity className="h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
@@ -318,7 +318,7 @@ function StaffDashboardContent() {
           </Link>
           <Link
             href="/staff/compliance"
-            className="flex items-center gap-3 p-4 rounded-xl bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-700 hover:bg-violet-100 dark:hover:bg-violet-900/30 transition-all group"
+            className="flex items-center gap-3 p-4 rounded-xl bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-700 hover:bg-violet-100 dark:hover:bg-violet-900/30 transition-all duration-200 group"
             style={{ minHeight: 44 }}
           >
             <ShieldCheck className="h-5 w-5 text-violet-600 dark:text-violet-400" aria-hidden="true" />
@@ -330,7 +330,7 @@ function StaffDashboardContent() {
           </Link>
           <Link
             href="/staff/cost-analysis"
-            className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all group"
+            className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all duration-200 group"
             style={{ minHeight: 44 }}
           >
             <TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
