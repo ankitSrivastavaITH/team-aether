@@ -77,7 +77,13 @@ export default function ExtractPage() {
 
   // Find extracted data for a file
   function getExtraction(filename: string): ExtractedContract | undefined {
-    return extracted.find((e) => e.filename === filename || e.filename === filename.replace(".pdf", ".txt"));
+    const base = filename.replace(".txt", ".pdf");
+    return extracted.find((e) =>
+      e.filename === filename ||
+      e.filename === base ||
+      e.filename === filename.replace(".pdf", ".txt") ||
+      e.filename.replace(".txt", ".pdf") === base
+    );
   }
 
   return (
@@ -238,45 +244,36 @@ export default function ExtractPage() {
               </button>
 
               {/* Expanded detail */}
-              {isExpanded && extraction && (
-                <div className="ml-12 mt-1 mb-2 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700 space-y-3">
-                  {extraction.summary && (
-                    <p className="text-sm text-slate-700 dark:text-slate-300">{extraction.summary}</p>
-                  )}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">Value</p>
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                        {extraction.contract_value && extraction.contract_value !== "null" ? extraction.contract_value : "—"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">Expires</p>
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                        {extraction.expiration_date && extraction.expiration_date !== "null" ? extraction.expiration_date : "—"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">Renewal</p>
-                      <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2">
-                        {extraction.renewal_option && extraction.renewal_option !== "null" ? extraction.renewal_option : "—"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">Parties</p>
-                      <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2">
-                        {extraction.parties && extraction.parties !== "null" ? extraction.parties : "—"}
-                      </p>
-                    </div>
+              {isExpanded && extraction && (() => {
+                const fields: { label: string; value: string | null | undefined }[] = [
+                  { label: "Contract Value", value: extraction.contract_value },
+                  { label: "Expiration Date", value: extraction.expiration_date },
+                  { label: "Renewal Option", value: extraction.renewal_option },
+                  { label: "Pricing Structure", value: extraction.pricing_structure },
+                  { label: "Parties", value: extraction.parties },
+                  { label: "Key Conditions", value: extraction.key_conditions },
+                ];
+                const hasData = fields.filter(f => f.value && f.value !== "null" && f.value !== "Not found");
+                return (
+                  <div className="ml-12 mt-1 mb-2 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700 space-y-3">
+                    {extraction.summary && extraction.summary !== "null" && extraction.summary !== "2 sentence summary" && (
+                      <p className="text-sm text-slate-700 dark:text-slate-300">{extraction.summary}</p>
+                    )}
+                    {hasData.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {hasData.map(f => (
+                          <div key={f.label}>
+                            <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">{f.label}</p>
+                            <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{f.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-400">Document indexed for search. Detailed terms not yet extracted.</p>
+                    )}
                   </div>
-                  {extraction.key_conditions && extraction.key_conditions !== "null" && (
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Key Conditions</p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">{extraction.key_conditions}</p>
-                    </div>
-                  )}
-                </div>
-              )}
+                );
+              })()}
 
               {/* Expanded but no extraction */}
               {isExpanded && !extraction && (
