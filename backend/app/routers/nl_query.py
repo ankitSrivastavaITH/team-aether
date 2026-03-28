@@ -109,13 +109,18 @@ async def nl_query(request: Request, req: NLQueryRequest):
                 """Call 2: Generate AI analysis of the query results."""
                 try:
                     analysis_data = json.dumps(results[:20], default=str)
-                    analysis_prompt = """You are a procurement analyst. Given these query results, write a brief 3-4 sentence analysis in markdown.
-Include: key takeaways, total value if applicable, any risks or patterns you notice.
-Be specific with numbers. Keep it concise. No headers, just a paragraph with **bold** for key figures.
-Return ONLY the markdown text, no JSON wrapping."""
+                    total_val = sum(r.get("value", 0) for r in results if isinstance(r.get("value"), (int, float)))
+                    analysis_prompt = f"""You are a procurement analyst. Write a 3-4 sentence analysis of these query results.
+
+FACTS (use these exact numbers, do NOT make up different numbers):
+- Total results: {len(results)} contracts
+- Total value: ${total_val:,.2f}
+- Question asked: {req.question}
+
+Include key takeaways, risks, and patterns. Use **bold** for key figures. Be concise. Return ONLY markdown text."""
                     return await asyncio.to_thread(
                         chat, analysis_prompt,
-                        f"Question: {req.question}\nResults ({len(results)} rows):\n{analysis_data}"
+                        f"Results ({len(results)} rows, ${total_val:,.2f} total):\n{analysis_data}"
                     )
                 except Exception:
                     return ""
