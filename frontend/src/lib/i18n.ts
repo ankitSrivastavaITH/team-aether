@@ -108,6 +108,43 @@ const translations = {
     "analyze": "Analyze",
     "high_contrast": "High Contrast",
     "font_size": "Font Size",
+
+    // Analytics page
+    "analytics.title": "Analytics",
+    "analytics.subtitle": "Spending trends, upcoming expirations, procurement methods, and contract size distribution.",
+
+    // Risk page
+    "risk.title": "Vendor Concentration Risk",
+    "risk.subtitle": "Analyze vendor concentration across departments to identify dependency risks and competition gaps.",
+    "risk.hhi_title": "What is the HHI (Herfindahl-Hirschman Index)?",
+    "risk.hhi_desc": "The HHI measures market concentration by summing the squares of each vendor's market share percentage. A lower score means more competition among vendors; a higher score means spending is concentrated among fewer vendors.",
+    "risk.hhi_low": "Below 1,500 — Low concentration (healthy competition)",
+    "risk.hhi_moderate": "1,500 to 2,500 — Moderate concentration",
+    "risk.hhi_high": "Above 2,500 — High concentration (dependency risk)",
+
+    // Ask Richmond page
+    "ask.title": "Ask Richmond",
+    "ask.subtitle": "Ask questions about city contracts in plain English. Our AI translates your question into a database query and returns results instantly.",
+
+    // MBE page
+    "mbe.title": "Supplier Diversity & MBE Analysis",
+    "mbe.subtitle": "Analyze vendor diversity, small business participation, and procurement equity across city departments.",
+    "mbe.badge": "MBE",
+    "mbe.small_business": "Small Business",
+    "mbe.diversity_ratio": "Diversity Ratio",
+    "mbe.vendor_diversity": "Vendor Diversity by Department",
+    "mbe.competitive_bidding": "Competitive Bidding",
+    "mbe.procurement_methods": "Procurement Methods",
+    "mbe.insights": "Supplier Diversity Insights",
+
+    // Equity labels (shared)
+    "equity.mbe_vendor": "MBE Vendor",
+    "equity.small_business_vendor": "Small Business",
+    "equity.diversity_score": "Dept Diversity Score",
+    "equity.equity_note": "Equity Note",
+
+    // Skip link
+    "skip.main_content": "Skip to main content",
   },
   es: {
     // Navigation
@@ -216,6 +253,43 @@ const translations = {
     "analyze": "Analizar",
     "high_contrast": "Alto contraste",
     "font_size": "Tamaño de texto",
+
+    // Analytics page
+    "analytics.title": "Análisis",
+    "analytics.subtitle": "Tendencias de gastos, vencimientos próximos, métodos de adquisición y distribución por tamaño de contrato.",
+
+    // Risk page
+    "risk.title": "Riesgo de Concentración de Proveedores",
+    "risk.subtitle": "Analice la concentración de proveedores en todos los departamentos para identificar riesgos de dependencia y brechas de competencia.",
+    "risk.hhi_title": "¿Qué es el IHH (Índice Herfindahl-Hirschman)?",
+    "risk.hhi_desc": "El IHH mide la concentración del mercado sumando los cuadrados del porcentaje de participación de cada proveedor. Una puntuación más baja significa más competencia; una puntuación más alta significa que el gasto se concentra en menos proveedores.",
+    "risk.hhi_low": "Menor a 1,500 — Baja concentración (competencia saludable)",
+    "risk.hhi_moderate": "1,500 a 2,500 — Concentración moderada",
+    "risk.hhi_high": "Mayor a 2,500 — Alta concentración (riesgo de dependencia)",
+
+    // Ask Richmond page
+    "ask.title": "Pregunte a Richmond",
+    "ask.subtitle": "Haga preguntas sobre contratos de la ciudad en español. Nuestra IA traduce su pregunta a una consulta de base de datos y devuelve resultados al instante.",
+
+    // MBE page
+    "mbe.title": "Diversidad de Proveedores y Análisis MBE",
+    "mbe.subtitle": "Analice la diversidad de proveedores, la participación de pequeñas empresas y la equidad en adquisiciones en todos los departamentos.",
+    "mbe.badge": "MBE",
+    "mbe.small_business": "Pequeña Empresa",
+    "mbe.diversity_ratio": "Índice de Diversidad",
+    "mbe.vendor_diversity": "Diversidad de Proveedores por Departamento",
+    "mbe.competitive_bidding": "Licitación Competitiva",
+    "mbe.procurement_methods": "Métodos de Adquisición",
+    "mbe.insights": "Perspectivas de Diversidad de Proveedores",
+
+    // Equity labels (shared)
+    "equity.mbe_vendor": "Proveedor MBE",
+    "equity.small_business_vendor": "Pequeña Empresa",
+    "equity.diversity_score": "Puntuación de Diversidad del Depto",
+    "equity.equity_note": "Nota de Equidad",
+
+    // Skip link
+    "skip.main_content": "Saltar al contenido principal",
   },
 } as const;
 

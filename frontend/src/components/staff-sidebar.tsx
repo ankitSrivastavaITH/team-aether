@@ -24,10 +24,14 @@ import {
   LayoutGrid,
   TrendingUp,
   Activity,
+  Calculator,
+  Briefcase,
+  History,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SkipLink } from "@/components/skip-link";
 import { AskRichmondPanel } from "@/components/ask-richmond-panel";
 import { FontSizeToggle, HighContrastToggle } from "@/components/accessibility-toggles";
 
@@ -80,6 +84,14 @@ const navSections: NavSection[] = [
       { href: "/staff/scorecard", label: "Dept Scorecards", icon: LayoutGrid },
       { href: "/staff/cost-analysis", label: "Cost Analysis", icon: TrendingUp },
       { href: "/staff/timeline", label: "Timeline", icon: CalendarDays },
+    ],
+  },
+  {
+    title: "Strategy",
+    items: [
+      { href: "/staff/what-if", label: "What-If Savings", icon: Calculator },
+      { href: "/staff/portfolio", label: "Portfolio Strategy", icon: Briefcase },
+      { href: "/staff/audit", label: "Decision Audit", icon: History },
     ],
   },
   {
@@ -377,6 +389,7 @@ export function StaffSidebar({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <SkipLink />
       {/* Desktop sidebar */}
       <aside
         className="hidden md:flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 shrink-0 overflow-hidden"

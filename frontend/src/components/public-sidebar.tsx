@@ -18,6 +18,8 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { FontSizeToggle, HighContrastToggle } from "@/components/accessibility-toggles";
+import { SkipLink } from "@/components/skip-link";
 
 const COLLAPSE_KEY = "public-sidebar-collapsed";
 
@@ -147,8 +149,10 @@ function SidebarContent({
           {!collapsed && <span className="text-sm">Staff Dashboard</span>}
         </Link>
 
-        {/* Language toggle + Theme toggle */}
-        <div className={`flex items-center gap-1 ${collapsed ? "justify-center" : "px-1"}`}>
+        {/* Accessibility + Language + Theme toggles */}
+        <div className={`flex items-center gap-1 flex-wrap ${collapsed ? "justify-center" : "px-1"}`}>
+          <FontSizeToggle />
+          <HighContrastToggle />
           <LanguageToggle />
           <ThemeToggle />
         </div>
@@ -202,6 +206,7 @@ export function PublicSidebar({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <SkipLink />
       {/* Desktop sidebar */}
       <aside
         className="hidden md:flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 shrink-0 transition-[width] duration-200 ease-out overflow-hidden"

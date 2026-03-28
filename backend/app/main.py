@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.rate_limit import limiter
-from app.routers import contracts, extract, nl_query, insights, analytics, services, mbe, parser, decision, health_scan
+from app.routers import contracts, extract, nl_query, insights, analytics, services, mbe, parser, decision, health_scan, strategy
 
 app = FastAPI(
     title="RVA Contract Lens API",
@@ -40,6 +40,7 @@ app.include_router(mbe.router)
 app.include_router(parser.router)
 app.include_router(decision.router)
 app.include_router(health_scan.router)
+app.include_router(strategy.router)
 
 
 @app.get("/api/health")

@@ -848,6 +848,111 @@ function SimilarContractsSection({ contracts }: { contracts: SimilarContract[] }
 }
 
 // ---------------------------------------------------------------------------
+// Equity & Supplier Diversity Consideration
+// ---------------------------------------------------------------------------
+
+function EquityConsideration({
+  department,
+}: {
+  department: string;
+}) {
+  const { data: mbeData } = useQuery<{
+    department_diversity: { department: string; unique_vendors: number; total_contracts: number; diversity_ratio: number }[];
+    small_business_contracts: { count: number; total_value: number };
+    all_contracts: { count: number; total_value: number };
+  }>({
+    queryKey: ["decision-mbe", department],
+    queryFn: () => fetchAPI("/api/mbe/analysis"),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  if (!mbeData) return null;
+
+  const deptDiversity = mbeData.department_diversity?.find(
+    (d) => d.department?.toLowerCase() === department?.toLowerCase()
+  );
+  const diversityRatio = deptDiversity?.diversity_ratio ?? 0;
+  const uniqueVendors = deptDiversity?.unique_vendors ?? 0;
+  const totalContracts = deptDiversity?.total_contracts ?? 0;
+  const sbPct = mbeData.all_contracts.count
+    ? ((mbeData.small_business_contracts.count / mbeData.all_contracts.count) * 100).toFixed(1)
+    : "0";
+
+  const diversityLevel =
+    diversityRatio >= 0.7
+      ? { label: "Strong", color: "text-emerald-700 dark:text-emerald-300", bg: "bg-emerald-100 dark:bg-emerald-900/40" }
+      : diversityRatio >= 0.4
+      ? { label: "Moderate", color: "text-amber-700 dark:text-amber-300", bg: "bg-amber-100 dark:bg-amber-900/40" }
+      : { label: "Low", color: "text-red-700 dark:text-red-300", bg: "bg-red-100 dark:bg-red-900/40" };
+
+  return (
+    <Card className="border-purple-200/60 dark:border-purple-800/40">
+      <CardContent className="pt-2">
+        <div className="flex items-center gap-2 mb-4">
+          <Users
+            className="h-5 w-5 text-purple-600 dark:text-purple-400"
+            aria-hidden="true"
+          />
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+            Equity & Supplier Diversity
+          </h3>
+          <Badge className="text-[10px] bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 ml-auto">
+            MBE Context
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Department Diversity */}
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+              Dept Vendor Diversity
+            </p>
+            <div className="flex items-center gap-2">
+              <span className={`text-2xl font-bold ${diversityLevel.color}`}>
+                {(diversityRatio * 100).toFixed(0)}%
+              </span>
+              <Badge className={`text-[10px] ${diversityLevel.bg} ${diversityLevel.color} border-0`}>
+                {diversityLevel.label}
+              </Badge>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {uniqueVendors} unique vendors across {totalContracts} contracts
+            </p>
+          </div>
+
+          {/* Small Business Participation */}
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+              Small Business Share
+            </p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              {sbPct}%
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {mbeData.small_business_contracts.count} of {mbeData.all_contracts.count} contracts
+            </p>
+          </div>
+
+          {/* Equity Consideration */}
+          <div className="rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/30 p-3">
+            <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-2">
+              Equity Note
+            </p>
+            <p className="text-sm text-purple-900 dark:text-purple-200">
+              {diversityRatio < 0.4
+                ? `${department} has low vendor diversity. Consider MBE/small business vendors when rebidding.`
+                : diversityRatio < 0.7
+                ? `${department} has moderate diversity. Review if alternative MBE vendors are available.`
+                : `${department} shows strong vendor diversity — a positive equity indicator.`}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Alternative Vendors
 // ---------------------------------------------------------------------------
 
@@ -1670,6 +1775,11 @@ function DecisionPageInner() {
 
           {/* Layer 2: Evidence Grid */}
           <EvidenceGrid pros={result.pros} cons={result.cons} />
+
+          {/* Equity & Supplier Diversity */}
+          {result.department && (
+            <EquityConsideration department={result.department} />
+          )}
 
           {/* Web Intelligence */}
           {webIntel && webIntel.results && webIntel.results.length > 0 && (
