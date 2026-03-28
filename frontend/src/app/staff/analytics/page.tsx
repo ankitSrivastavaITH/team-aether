@@ -6,14 +6,15 @@ import {
   ProcurementTypeChart,
   ContractSizeChart,
 } from "@/components/analytics-charts";
+import { SpendingHeatmap } from "@/components/spending-heatmap";
 
 export default function AnalyticsPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Analytics</h1>
-        <p className="text-base text-slate-500 mt-1">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Analytics</h1>
+        <p className="text-base text-slate-500 dark:text-slate-400 mt-1">
           Spending trends, upcoming expirations, procurement methods, and
           contract size distribution.
         </p>
@@ -26,6 +27,9 @@ export default function AnalyticsPage() {
         <ProcurementTypeChart />
         <ContractSizeChart />
       </div>
+
+      {/* Full-width heatmap */}
+      <SpendingHeatmap />
     </div>
   );
 }

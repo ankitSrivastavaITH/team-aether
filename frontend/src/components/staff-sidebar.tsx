@@ -19,6 +19,10 @@ import {
   Users,
   AlertOctagon,
   Brain,
+  CalendarDays,
+  LayoutGrid,
+  GitCompare,
+  Bell,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -37,6 +41,10 @@ const navItems = [
   { href: "/staff/mbe", label: "MBE Analysis", icon: Users },
   { href: "/staff/anomalies", label: "Anomalies", icon: AlertOctagon },
   { href: "/staff/parsed", label: "Contract Intel", icon: Brain },
+  { href: "/staff/timeline", label: "Timeline", icon: CalendarDays },
+  { href: "/staff/scorecard", label: "Scorecards", icon: LayoutGrid },
+  { href: "/staff/compare-vendors", label: "Compare", icon: GitCompare },
+  { href: "/staff/alerts", label: "Alerts", icon: Bell },
 ];
 
 function isActive(pathname: string, href: string, exact?: boolean): boolean {
