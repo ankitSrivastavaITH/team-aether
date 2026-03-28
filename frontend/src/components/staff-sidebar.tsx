@@ -377,8 +377,8 @@ export function StaffSidebar({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen overflow-hidden">
       {/* Desktop sidebar */}
       <aside
-        className="hidden md:flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 shrink-0 transition-[width] duration-200 ease-out overflow-hidden"
-        style={{ width: collapsed ? 64 : 240 }}
+        className="hidden md:flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 shrink-0 overflow-hidden"
+        style={{ width: collapsed ? 72 : 240 }}
       >
         <SidebarContent collapsed={collapsed} onToggle={handleToggle} />
       </aside>
