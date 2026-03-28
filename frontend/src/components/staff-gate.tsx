@@ -9,6 +9,10 @@ import { toast } from "sonner";
 const STAFF_PASSWORD = "rva2026";
 
 export function StaffGate({ children }: { children: React.ReactNode }) {
+  // Auth disabled for hackathon demo — direct access
+  return <>{children}</>;
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [authenticated, setAuthenticated] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
