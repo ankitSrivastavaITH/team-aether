@@ -18,12 +18,12 @@ interface SearchResult {
 }
 
 const EXAMPLE_SEARCHES = [
-  "What are the renewal terms?",
-  "HVAC renovation scope",
-  "Insurance requirements",
-  "Body camera warranty",
-  "DBE participation goals",
-  "Liquidated damages",
+  "Elevator inspection ASME safety codes",
+  "Paving contract MBE subcontractor requirements",
+  "CliftonLarsonAllen audit services scope",
+  "Workers compensation claims administration Corvel",
+  "Vision Government CAMA system implementation",
+  "Flock Group surveillance camera technology",
 ];
 
 function highlightQuery(text: string, query: string): React.ReactNode {

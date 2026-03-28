@@ -15,11 +15,24 @@ def _ensure_table():
             id VARCHAR PRIMARY KEY,
             filename VARCHAR,
             uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            expiration_date VARCHAR,
-            renewal_option VARCHAR,
-            pricing_structure VARCHAR,
+            contract_number VARCHAR,
+            contract_type VARCHAR,
+            vendor_name VARCHAR,
+            department VARCHAR,
             contract_value VARCHAR,
+            commencement_date VARCHAR,
+            expiration_date VARCHAR,
+            performance_period VARCHAR,
+            renewal_option VARCHAR,
+            total_possible_term VARCHAR,
+            pricing_structure VARCHAR,
+            scope_of_work VARCHAR,
+            mbe_requirement VARCHAR,
+            insurance_requirement VARCHAR,
+            bonding_requirement VARCHAR,
+            liquidated_damages VARCHAR,
             parties VARCHAR,
+            key_risks VARCHAR,
             key_conditions VARCHAR,
             summary VARCHAR,
             source VARCHAR DEFAULT 'pdf_upload'
@@ -34,21 +47,41 @@ def store_extraction(filename: str, extraction: Dict) -> str:
     record_id = hashlib.md5(f"{filename}:{datetime.now().isoformat()}".encode()).hexdigest()[:12]
 
     _ensure_table()
+    def _join(val):
+        if isinstance(val, list):
+            return ", ".join(str(v) for v in val)
+        return val
+
     conn = duckdb.connect(str(DB_PATH))
     try:
         conn.execute("""
-            INSERT INTO extracted_contracts (id, filename, expiration_date, renewal_option,
-                pricing_structure, contract_value, parties, key_conditions, summary)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO extracted_contracts (id, filename, contract_number, contract_type, vendor_name,
+                department, contract_value, commencement_date, expiration_date, performance_period,
+                renewal_option, total_possible_term, pricing_structure, scope_of_work,
+                mbe_requirement, insurance_requirement, bonding_requirement, liquidated_damages,
+                parties, key_risks, key_conditions, summary)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, [
-            record_id,
-            filename,
-            extraction.get("expiration_date"),
-            extraction.get("renewal_option"),
-            extraction.get("pricing_structure"),
+            record_id, filename,
+            extraction.get("contract_number"),
+            extraction.get("contract_type"),
+            extraction.get("vendor_name"),
+            extraction.get("department"),
             extraction.get("contract_value"),
-            ", ".join(extraction.get("parties", [])) if isinstance(extraction.get("parties"), list) else extraction.get("parties"),
-            ", ".join(extraction.get("key_conditions", [])) if isinstance(extraction.get("key_conditions"), list) else extraction.get("key_conditions"),
+            extraction.get("commencement_date"),
+            extraction.get("expiration_date"),
+            extraction.get("performance_period"),
+            extraction.get("renewal_option"),
+            extraction.get("total_possible_term"),
+            extraction.get("pricing_structure"),
+            extraction.get("scope_of_work"),
+            extraction.get("mbe_requirement"),
+            extraction.get("insurance_requirement"),
+            extraction.get("bonding_requirement"),
+            extraction.get("liquidated_damages"),
+            _join(extraction.get("parties")),
+            _join(extraction.get("key_risks")),
+            _join(extraction.get("key_conditions")),
             extraction.get("summary"),
         ])
         return record_id

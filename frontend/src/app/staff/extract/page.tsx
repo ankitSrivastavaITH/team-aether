@@ -278,12 +278,29 @@ export default function ExtractPage() {
               {/* Expanded but no extraction */}
               {isExpanded && !extraction && (
                 <div className="ml-12 mt-1 mb-2 p-4 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
-                  <p className="text-sm text-amber-700 dark:text-amber-400">
-                    This file is indexed for search ({f.chunks} chunks) but hasn&apos;t been AI-analyzed yet.
-                  </p>
-                  <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">
-                    Re-upload this PDF above to run AI extraction for contract value, expiration, renewal terms, and key conditions.
-                  </p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm text-amber-700 dark:text-amber-400">
+                        Indexed for search ({f.chunks} chunks) but not yet AI-analyzed.
+                      </p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`${API_BASE}/api/extract`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ filename: f.filename, rescan: true }),
+                          });
+                          if (res.ok) { refetchExtracted(); refetchFiles(); }
+                        } catch {}
+                      }}
+                      className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                      style={{ minHeight: 32 }}
+                    >
+                      <BrainCircuit className="h-3 w-3" /> Analyze Now
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
