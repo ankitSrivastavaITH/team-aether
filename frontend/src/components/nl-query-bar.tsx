@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Search, Loader2, ChevronDown, ChevronUp, ExternalLink, Sparkles } from "lucide-react";
+import { Search, Loader2, ExternalLink, Sparkles } from "lucide-react";
 import { postAPI } from "@/lib/api";
 import ReactMarkdown from "react-markdown";
 
@@ -110,7 +110,7 @@ export function NLQueryBar() {
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState<QueryResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showSql, setShowSql] = useState(false);
+  // SQL display removed — end users don't need to see generated queries
   const [lastQueryTime, setLastQueryTime] = useState(0);
   const [rateLimitMsg, setRateLimitMsg] = useState(false);
 
@@ -208,26 +208,6 @@ export function NLQueryBar() {
           {/* Explanation */}
           {result.explanation && (
             <p className="text-base text-gray-700">{result.explanation}</p>
-          )}
-
-          {/* SQL toggle */}
-          {result.sql && (
-            <div>
-              <button
-                onClick={() => setShowSql(!showSql)}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1"
-                aria-expanded={showSql}
-                aria-controls="generated-sql"
-              >
-                {showSql ? <ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ChevronDown className="h-4 w-4" aria-hidden="true" />}
-                {showSql ? "Hide" : "View"} generated SQL
-              </button>
-              {showSql && (
-                <pre id="generated-sql" className="mt-2 p-3 bg-gray-50 rounded-lg text-xs font-mono overflow-x-auto border">
-                  {result.sql}
-                </pre>
-              )}
-            </div>
           )}
 
           {/* Result count */}

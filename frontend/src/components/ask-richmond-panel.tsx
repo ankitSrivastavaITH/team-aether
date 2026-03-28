@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  MessageSquare, X, Send, Loader2, ChevronDown, ChevronUp,
+  MessageSquare, X, Send, Loader2,
   Sparkles, Trash2, ArrowRight,
 } from "lucide-react";
 import { postAPI } from "@/lib/api";
@@ -100,7 +100,7 @@ function ResultCards({ results }: { results: Record<string, unknown>[] }) {
 }
 
 function ChatBubble({ msg, onFollowUp }: { msg: ChatMessage; onFollowUp?: (q: string) => void }) {
-  const [showSql, setShowSql] = useState(false);
+  // SQL display removed — not shown to end users
 
   if (msg.type === "user") {
     return (
@@ -156,18 +156,9 @@ function ChatBubble({ msg, onFollowUp }: { msg: ChatMessage; onFollowUp?: (q: st
             ))}
           </div>
         )}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
           <span className="text-xs text-slate-400">{r.total} result{r.total !== 1 ? "s" : ""}</span>
-          {r.sql && (
-            <button onClick={() => setShowSql(!showSql)} className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1">
-              {showSql ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-              SQL
-            </button>
-          )}
         </div>
-        {showSql && r.sql && (
-          <pre className="text-xs bg-slate-100 dark:bg-slate-900 rounded p-2 overflow-x-auto font-mono">{r.sql}</pre>
-        )}
       </div>
     </div>
   );
