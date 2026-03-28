@@ -303,13 +303,24 @@ export default function DepartmentDetailPage() {
       </section>
 
       {/* Charts: risk breakdown + yearly spending */}
+      <section aria-labelledby="charts-heading" className="space-y-2">
+        <h2 id="charts-heading" className="text-xl font-bold text-slate-900 dark:text-slate-100">
+          Analytics
+        </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          How this department&apos;s contracts are distributed by risk status and how spending has changed over time.
+        </p>
+      </section>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Risk Breakdown Pie */}
-        <Card>
+        <Card className="dark:bg-slate-800 dark:border-slate-700">
           <CardHeader>
             <CardTitle>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Risk Breakdown</h2>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Risk Breakdown</h3>
             </CardTitle>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Shows how many contracts are approaching expiration, already expired, or healthy.
+            </p>
           </CardHeader>
           <CardContent>
             <div role="img" aria-label={riskAriaLabel} style={{ height: 300 }}>
@@ -356,11 +367,14 @@ export default function DepartmentDetailPage() {
         </Card>
 
         {/* Yearly Spending Area Chart */}
-        <Card>
+        <Card className="dark:bg-slate-800 dark:border-slate-700">
           <CardHeader>
             <CardTitle>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Spending Over Time</h2>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Spending Over Time</h3>
             </CardTitle>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Year-by-year spending trend for this department, showing how contract investment has grown or shifted.
+            </p>
           </CardHeader>
           <CardContent>
             {yearData.length === 0 ? (
@@ -419,9 +433,12 @@ export default function DepartmentDetailPage() {
 
       {/* Top 10 Vendors */}
       <section aria-labelledby="vendors-heading">
-        <h2 id="vendors-heading" className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+        <h2 id="vendors-heading" className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
           Top 10 Vendors
         </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+          The companies that receive the most contract value from this department. Click any vendor for their full profile.
+        </p>
         {data.top_vendors.length === 0 ? (
           <p className="text-slate-500 dark:text-slate-400">No vendor data available.</p>
         ) : (
@@ -470,9 +487,12 @@ export default function DepartmentDetailPage() {
 
       {/* Full Contracts Table */}
       <section aria-labelledby="contracts-heading">
-        <h2 id="contracts-heading" className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+        <h2 id="contracts-heading" className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
           All Contracts ({data.contracts.length.toLocaleString()})
         </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+          Every contract managed by this department. Click a vendor name to view their full profile.
+        </p>
         {data.contracts.length === 0 ? (
           <p className="text-slate-500 dark:text-slate-400">No contracts found for this department.</p>
         ) : (
