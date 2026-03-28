@@ -624,7 +624,7 @@ def compliance_check(supplier: str):
     try:
         resp = httpx.get(
             "https://api.sam.gov/entity-information/v3/exclusions",
-            params={"api_key": "DEMO_KEY", "q": supplier, "limit": 5},
+            params={"api_key": "SAM-70b6309d-7278-4955-b726-96dd471362df", "q": supplier, "limit": 5},
             timeout=10,
         )
         if resp.status_code == 200:
@@ -637,9 +637,9 @@ def compliance_check(supplier: str):
                 "details": f"{'Exclusion records found' if total > 0 else 'No exclusion records found'} in SAM.gov",
             }
         else:
-            sam_result = {"checked": False, "details": "Could not reach SAM.gov API"}
+            sam_result = {"checked": False, "details": "SAM.gov API returned error — key may need activation (can take up to 24hrs). Verify manually at sam.gov/content/exclusions"}
     except Exception:
-        sam_result = {"checked": False, "details": "Could not reach SAM.gov API"}
+        sam_result = {"checked": False, "details": "SAM.gov API unreachable — verify manually at sam.gov/content/exclusions"}
 
     # Count auto-checked lists
     auto_checked = sum(1 for fl in federal_lists if fl.get("auto"))
@@ -678,7 +678,7 @@ def check_debarment(supplier: str):
     try:
         resp = httpx.get(
             "https://api.sam.gov/entity-information/v3/exclusions",
-            params={"api_key": "DEMO_KEY", "q": supplier, "limit": 5},
+            params={"api_key": "SAM-70b6309d-7278-4955-b726-96dd471362df", "q": supplier, "limit": 5},
             timeout=10,
         )
         if resp.status_code == 200:
