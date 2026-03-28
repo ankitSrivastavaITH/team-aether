@@ -56,7 +56,7 @@ export default function ExtractPage() {
     queryFn: () => fetchAPI<{ files: IngestedFile[] }>("/api/extract/files"),
   });
 
-  const { data: extractedData } = useQuery({
+  const { data: extractedData, refetch: refetchExtracted } = useQuery({
     queryKey: ["extracted-contracts"],
     queryFn: () => fetchAPI<{ contracts: ExtractedContract[] }>("/api/extract/extracted").then(d => d.contracts),
   });
@@ -131,7 +131,7 @@ export default function ExtractPage() {
       {showUpload && (
         <Card>
           <CardContent className="pt-4">
-            <PdfUpload onUploadComplete={() => { refetchFiles(); setShowUpload(false); }} />
+            <PdfUpload onUploadComplete={() => { refetchFiles(); refetchExtracted(); }} />
           </CardContent>
         </Card>
       )}
@@ -280,9 +280,12 @@ export default function ExtractPage() {
 
               {/* Expanded but no extraction */}
               {isExpanded && !extraction && (
-                <div className="ml-12 mt-1 mb-2 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700">
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
-                    No AI extraction available for this file. Upload the PDF to extract terms.
+                <div className="ml-12 mt-1 mb-2 p-4 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                  <p className="text-sm text-amber-700 dark:text-amber-400">
+                    This file is indexed for search ({f.chunks} chunks) but hasn&apos;t been AI-analyzed yet.
+                  </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">
+                    Re-upload this PDF above to run AI extraction for contract value, expiration, renewal terms, and key conditions.
                   </p>
                 </div>
               )}
