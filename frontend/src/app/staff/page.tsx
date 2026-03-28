@@ -56,7 +56,7 @@ function StaffDashboardContent() {
     queryFn: () =>
       fetchAPI<{ contracts: UrgentContract[]; total: number }>(
         "/api/contracts",
-        { max_days: 90, limit: 20 },
+        { max_days: 90, limit: 200 },
       ),
     staleTime: 5 * 60 * 1000,
   });
@@ -71,9 +71,11 @@ function StaffDashboardContent() {
 
   const totalContracts = (stats?.total_contracts as number) ?? 0;
   const totalValue = (stats?.total_value as number) ?? 0;
-  const exp30 = (stats?.expiring_30 as number) ?? (stats?.expiring_soon as number) ?? 0;
-  const exp60 = (stats?.expiring_60 as number) ?? 0;
-  const exp90 = (stats?.expiring_90 as number) ?? 0;
+
+  // Use actual filtered counts so badges match cards
+  const exp30 = critical.length;
+  const exp60 = warning.length;
+  const exp90 = attention.length;
 
   const loading = statsLoading || urgentLoading;
 

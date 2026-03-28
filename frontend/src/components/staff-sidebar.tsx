@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Table,
-  MessageSquare,
   FileUp,
   ShieldAlert,
   BarChart3,
@@ -23,7 +22,6 @@ import {
   Zap,
   CalendarDays,
   LayoutGrid,
-  GitCompare,
   TrendingUp,
   Activity,
 } from "lucide-react";
