@@ -111,19 +111,22 @@ async def nl_query(request: Request, req: NLQueryRequest):
                     analysis_data = json.dumps(results[:20], default=str)
                     # Sum all numeric value-like fields (value, total_value, sum, etc.)
                     total_val = 0
+                    has_value_field = False
                     for r in results:
                         for k, v in r.items():
                             if isinstance(v, (int, float)) and any(vk in k.lower() for vk in ["value", "total", "sum", "amount"]):
                                 total_val += v
-                                break  # Only count one value field per row
+                                has_value_field = True
+                                break
+                    value_line = f"- Combined value: ${total_val:,.2f}" if has_value_field else "- No dollar values in these results"
                     analysis_prompt = f"""You are a procurement analyst. Write a 3-4 sentence analysis of these query results.
 
 FACTS (use these exact numbers, do NOT make up different numbers):
 - Total results: {len(results)} row(s)
-- Combined value from results: ${total_val:,.2f}
+{value_line}
 - Question asked: {req.question}
 
-Analyze the data shown in the results. Use **bold** for key figures. Be concise. Return ONLY markdown text."""
+Analyze the actual data in the results. Use **bold** for key figures. Do NOT mention $0 unless the data actually shows zero-value contracts. Be concise. Return ONLY markdown text."""
                     return await asyncio.to_thread(
                         chat, analysis_prompt,
                         f"Results ({len(results)} rows, ${total_val:,.2f} total):\n{analysis_data}"
