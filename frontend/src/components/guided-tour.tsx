@@ -285,6 +285,7 @@ export function GuidedTour() {
             setTourActive(false);
             setPaused(false);
             d.destroy();
+            router.push("/staff");
           } else if (nextRoute) {
             localStorage.setItem(
               TOUR_STEP_KEY,
