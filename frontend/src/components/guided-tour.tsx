@@ -18,7 +18,7 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
       popover: {
         title: "Welcome to RVA Contract Lens",
         description:
-          "Richmond's $6.76B in public contracts — made visible. This platform serves two audiences: procurement staff and Richmond residents.<br/><br/>Follow the guided tour, or explore on your own anytime." + EXPLORE_BTN,
+          "Richmond's $6.76B in public contracts — made visible. This 30-page platform serves procurement staff and Richmond residents. Built by a team of 4 in 48 hours.<br/><br/>Follow the guided tour, or explore on your own anytime." + EXPLORE_BTN,
         side: "bottom",
         align: "center",
       },
@@ -27,9 +27,9 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
   "/staff": [
     {
       popover: {
-        title: "Staff Dashboard",
+        title: "Staff Dashboard — Command Center",
         description:
-          "This is what a procurement officer sees. Not a data dump — an action plan with three urgency lanes." + EXPLORE_BTN,
+          "This is what a procurement officer sees when they log in. Not a data dump — an <strong>action plan</strong>. The dashboard answers one question: <em>what needs my attention right now?</em>" + EXPLORE_BTN,
         side: "bottom",
         align: "center",
       },
@@ -37,9 +37,9 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
     {
       element: '[data-tour="decide-today"]',
       popover: {
-        title: "Decide Today",
+        title: "Decide Today — Critical Contracts",
         description:
-          "Contracts expiring this week that need immediate attention. Each card links to the AI Decision Engine.",
+          "Contracts expiring within 7 days. These need an immediate decision: renew or rebid. Each card links directly to the AI Decision Engine for a full 8-source analysis.",
         side: "bottom",
         align: "start",
       },
@@ -47,9 +47,9 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
     {
       element: '[data-tour="plan-week"]',
       popover: {
-        title: "Plan This Week",
+        title: "Plan This Week — Upcoming Expirations",
         description:
-          "Upcoming contracts to schedule for review. Proactive, not reactive.",
+          "Contracts expiring in 8-60 days. Staff has time to gather data, compare vendors, and start the rebid process if needed. Proactive instead of reactive.",
         side: "bottom",
         align: "center",
       },
@@ -57,9 +57,9 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
     {
       element: '[data-tour="review-month"]',
       popover: {
-        title: "Review This Month",
+        title: "Review This Month — Longer Horizon",
         description:
-          "Longer-horizon renewals to plan for.",
+          "Contracts expiring in 60-90 days. Enough time for a full competitive procurement if needed. Early visibility prevents last-minute renewals at unfavorable terms.",
         side: "bottom",
         align: "end",
       },
@@ -68,9 +68,9 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
   "/staff/decision": [
     {
       popover: {
-        title: "AI Decision Engine",
+        title: "AI Decision Engine — The Core Feature",
         description:
-          "The core feature. Select a vendor and contract — the system aggregates 8 real data sources and generates a RENEW / REBID / ESCALATE verdict in 8 seconds." + EXPLORE_BTN,
+          "This is where the magic happens. Select a vendor and contract. The system federates <strong>8 real data sources</strong>, runs <strong>3 federal compliance checks</strong>, and delivers a <strong>RENEW / REBID / ESCALATE</strong> verdict — all in 8 seconds." + EXPLORE_BTN,
         side: "bottom",
         align: "center",
       },
@@ -80,7 +80,7 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
       popover: {
         title: "Try It: Select a Vendor",
         description:
-          'Choose any vendor from the dropdown — try "CIGNA HEALTHCARE." Then select a contract and click Analyze to see the 8-source AI analysis.',
+          'Choose any vendor — try <strong>"CIGNA HEALTHCARE"</strong> (the City\'s largest single-vendor contract). Then pick a contract and click <strong>Analyze</strong>.<br/><br/>You\'ll see: AI verdict, confidence breakdown, pros/cons with sources, equity context, alternative vendors, and an exportable decision memo.',
         side: "bottom",
         align: "start",
       },
@@ -89,9 +89,9 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
   "/staff/what-if": [
     {
       popover: {
-        title: "What-If Savings Estimator",
+        title: "What-If Savings Estimator — Strategic Intelligence",
         description:
-          "Strategic intelligence, not just data. Model what happens if the City rebids its most concentrated contracts." + EXPLORE_BTN,
+          "This is what makes us more than a dashboard. Instead of just showing data, this page models the <strong>fiscal impact</strong> of procurement decisions before they happen." + EXPLORE_BTN,
         side: "bottom",
         align: "center",
       },
@@ -101,7 +101,7 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
       popover: {
         title: "Three Rebid Scenarios",
         description:
-          "Conservative (5%), Moderate (10%), Aggressive (15%). Each shows specific vendors to target and projected savings.",
+          "Conservative (5%), Moderate (10%), Aggressive (15%). Toggle between them to see how projected savings change. The numbers aren't theoretical — they're calculated from <strong>real contract data and vendor concentration</strong>.",
         side: "bottom",
         align: "center",
       },
@@ -109,9 +109,9 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
     {
       element: '[data-tour="recommendations"]',
       popover: {
-        title: "Actionable Recommendations",
+        title: "AI Recommendations — What To Do Next",
         description:
-          "Not just numbers — specific next steps with buttons that link directly to the relevant tool.",
+          "Every recommendation has a <strong>priority level</strong>, a specific <strong>vendor to target</strong>, and an <strong>action button</strong> that links directly to the Decision Engine or Cost Analysis. This is where data becomes decisions.",
         side: "top",
         align: "center",
       },
@@ -122,7 +122,17 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
       popover: {
         title: "Portfolio Strategy Advisor",
         description:
-          "Department-level strategy: how many contracts to renew, rebid, or escalate — with projected savings and equity context." + EXPLORE_BTN,
+          "This page answers: <em>what should each department do with its contract portfolio?</em> For every department, AI generates a strategy: how many contracts to renew, rebid, or escalate." + EXPLORE_BTN,
+        side: "bottom",
+        align: "center",
+      },
+    },
+    {
+      element: '[data-tour="portfolio-summary"]',
+      popover: {
+        title: "Portfolio-Wide Impact",
+        description:
+          "Total projected savings across all departments, number of high-risk departments, and contracts recommended for competitive rebid. These are the numbers a CFO or City Manager needs.",
         side: "bottom",
         align: "center",
       },
@@ -131,10 +141,30 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
   "/staff/risk": [
     {
       popover: {
-        title: "Vendor Concentration Risk",
+        title: "Vendor Concentration Risk — Monopoly Detection",
         description:
-          "HHI analysis flags departments over-dependent on single vendors. Monopoly risk identified before it becomes a crisis.",
+          "When a single vendor holds too much of a department's spending, the City loses negotiating power and faces supply chain risk. This page identifies those dependencies <strong>before</strong> they become crises." + EXPLORE_BTN,
         side: "bottom",
+        align: "center",
+      },
+    },
+    {
+      element: '[data-tour="hhi-explainer"]',
+      popover: {
+        title: "The HHI Index — Industry Standard",
+        description:
+          "The Herfindahl-Hirschman Index is the same metric the DOJ uses to evaluate market concentration in mergers. We apply it to city procurement: <strong>below 1,500</strong> is healthy competition, <strong>above 2,500</strong> is monopoly risk.",
+        side: "bottom",
+        align: "center",
+      },
+    },
+    {
+      element: '[data-tour="concentration-cards"]',
+      popover: {
+        title: "Department-by-Department Analysis",
+        description:
+          "Each department card shows its top vendors and concentration percentage. High concentration means the City is over-dependent on one supplier — a risk to pricing, service continuity, and equity.",
+        side: "top",
         align: "center",
       },
     },
@@ -142,10 +172,30 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
   "/staff/mbe": [
     {
       popover: {
-        title: "Equity & Supplier Diversity",
+        title: "MBE & Supplier Diversity — Equity In Action",
         description:
-          "Equity is woven into every decision — not a checkbox. Vendor diversity ratios, small business participation, and competitive bidding rates." + EXPLORE_BTN,
+          "The Mayor's Action Plan centers equity. This page tracks vendor diversity, small business participation, and competitive bidding rates. But equity isn't just here — it's embedded in <strong>every Decision Engine analysis</strong>." + EXPLORE_BTN,
         side: "bottom",
+        align: "center",
+      },
+    },
+    {
+      element: '[data-tour="mbe-stats"]',
+      popover: {
+        title: "Diversity KPIs",
+        description:
+          "Small business contract count and value, unique vendor count, single-contract vendor ratio, and competitive bidding percentage. These metrics reveal whether procurement is <strong>inclusive or concentrated</strong>.",
+        side: "bottom",
+        align: "center",
+      },
+    },
+    {
+      element: '[data-tour="mbe-insights"]',
+      popover: {
+        title: "AI-Generated Diversity Insights",
+        description:
+          "The system identifies patterns: which departments have low vendor diversity, where barriers to MBE participation might exist, and which procurement methods favor competition.",
+        side: "top",
         align: "center",
       },
     },
@@ -153,9 +203,28 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
   "/public": [
     {
       popover: {
-        title: "Public Transparency",
+        title: "Public Transparency — For Richmond Residents",
         description:
-          "For residents: explore $6.76B in city spending by department, vendor, or service — no FOIA request needed. Try the language toggle and accessibility controls in the sidebar.",
+          "This view serves the second audience: taxpayers. Where does $6.76B in public money go? Residents can explore spending by department, vendor, or service — <strong>without filing a FOIA request</strong>." + EXPLORE_BTN,
+        side: "bottom",
+        align: "center",
+      },
+    },
+    {
+      element: '[data-tour="public-metrics"]',
+      popover: {
+        title: "At-a-Glance Spending Metrics",
+        description:
+          "Total contract value, number of contracts, active vendors, top department, and expiring contracts — all in plain language. Designed for residents with <strong>any level of digital literacy</strong>.",
+        side: "bottom",
+        align: "center",
+      },
+    },
+    {
+      popover: {
+        title: "Tour Complete — Start Exploring!",
+        description:
+          'You\'ve seen the full platform. For the engineering behind this, visit our <a href="https://github.com/ankitSrivastavaITH/team-aether?tab=readme-ov-file#full-system-architecture" target="_blank" style="color:#a78bfa;text-decoration:underline;font-weight:600">GitHub repo</a> — it\'s not just a pretty app, it\'s a well-engineered system: <strong>155+ commits</strong>, <strong>30 pages</strong>, <strong>12 API routers</strong>, <strong>40+ endpoints</strong>, built in 48 hours.',
         side: "bottom",
         align: "center",
       },

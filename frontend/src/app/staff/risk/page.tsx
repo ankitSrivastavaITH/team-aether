@@ -22,7 +22,7 @@ export default function RiskAnalysisPage() {
       </div>
 
       {/* HHI Explanation */}
-      <Card className="p-5 bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800">
+      <Card className="p-5 bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800" data-tour="hhi-explainer">
         <div className="flex items-start gap-3">
           <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" aria-hidden="true" />
           <div className="text-sm text-blue-900 dark:text-blue-100 space-y-2">
@@ -38,7 +38,9 @@ export default function RiskAnalysisPage() {
       </Card>
 
       {/* Concentration Risk Component */}
-      <ConcentrationRisk />
+      <div data-tour="concentration-cards">
+        <ConcentrationRisk />
+      </div>
     </div>
   );
 }

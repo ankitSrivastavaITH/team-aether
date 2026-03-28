@@ -290,7 +290,7 @@ export default function MBEAnalysisPage() {
       {!isLoading && !isError && data && (
         <>
           {/* KPI Stats Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="mbe-stats">
             <StatCard
               icon={ShoppingCart}
               iconColor="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
@@ -456,7 +456,7 @@ export default function MBEAnalysisPage() {
           </div>
 
           {/* Insights */}
-          <Card>
+          <Card data-tour="mbe-insights">
             <CardHeader>
               <CardTitle>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">

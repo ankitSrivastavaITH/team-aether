@@ -301,7 +301,7 @@ export default function PortfolioStrategyPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" data-tour="portfolio-summary">
         <Card className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900">
           <CardContent className="pt-4">
             <p className="text-sm opacity-80">Total Projected Savings</p>

@@ -290,7 +290,7 @@ export default function PublicOverviewPage() {
       {data && derived && (
         <>
           {/* Key metrics — single row, no duplication */}
-          <section aria-label="Key metrics" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <section aria-label="Key metrics" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" data-tour="public-metrics">
             <Card className="bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 p-4">
               <div className="flex items-center gap-2 mb-1">
                 <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
