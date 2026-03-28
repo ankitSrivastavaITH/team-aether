@@ -122,3 +122,64 @@ def department_scorecards():
         GROUP BY department
         ORDER BY total_value DESC
     """)}
+
+
+@router.get("/vendor-price-trend/{supplier}")
+def vendor_price_trend(supplier: str):
+    """Show how a vendor's contract values have changed over time."""
+    contracts = query(
+        """SELECT CAST(start_date AS VARCHAR) AS start_date, value, contract_number, description
+        FROM city_contracts WHERE supplier = ? AND value > 0 AND start_date IS NOT NULL
+        ORDER BY start_date""",
+        [supplier],
+    )
+
+    # Calculate department average for comparison
+    if contracts:
+        dept = query("SELECT department FROM city_contracts WHERE supplier = ? LIMIT 1", [supplier])
+        dept_name = dept[0]["department"] if dept else None
+        dept_avg = None
+        if dept_name:
+            avg_row = query("SELECT AVG(value) AS avg_val FROM city_contracts WHERE department = ? AND value > 0", [dept_name])
+            dept_avg = avg_row[0]["avg_val"] if avg_row else None
+    else:
+        dept_name = None
+        dept_avg = None
+
+    # Price change calculation
+    if len(contracts) >= 2:
+        first_val = contracts[0]["value"]
+        last_val = contracts[-1]["value"]
+        pct_change = ((last_val - first_val) / first_val * 100) if first_val > 0 else 0
+    else:
+        pct_change = 0
+
+    return {
+        "supplier": supplier,
+        "contracts": contracts,
+        "total_contracts": len(contracts),
+        "department_average": dept_avg,
+        "department": dept_name,
+        "price_change_pct": round(pct_change, 1),
+        "first_value": contracts[0]["value"] if contracts else None,
+        "latest_value": contracts[-1]["value"] if contracts else None,
+    }
+
+
+@router.get("/cost-comparison/{department}")
+def cost_comparison(department: str):
+    """Compare vendors within a department by average contract value."""
+    vendors = query(
+        """SELECT supplier, COUNT(*) AS count, AVG(value) AS avg_value, SUM(value) AS total_value,
+           MIN(value) AS min_value, MAX(value) AS max_value
+        FROM city_contracts WHERE department = ? AND value > 0
+        GROUP BY supplier HAVING COUNT(*) >= 2
+        ORDER BY avg_value DESC LIMIT 15""",
+        [department],
+    )
+    dept_avg = query("SELECT AVG(value) AS avg_val FROM city_contracts WHERE department = ? AND value > 0", [department])
+    return {
+        "department": department,
+        "vendors": vendors,
+        "department_average": dept_avg[0]["avg_val"] if dept_avg else 0,
+    }

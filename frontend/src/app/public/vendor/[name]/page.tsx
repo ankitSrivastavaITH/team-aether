@@ -23,7 +23,18 @@ import {
   AlertTriangle,
   CheckCircle,
   TrendingUp,
+  TrendingDown,
 } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+  CartesianGrid,
+} from "recharts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -245,6 +256,182 @@ function DebarmentCheck({ supplier }: { supplier: string }) {
 }
 
 // ---------------------------------------------------------------------------
+// Price Trend
+// ---------------------------------------------------------------------------
+
+interface PriceTrendData {
+  supplier: string;
+  contracts: Array<{
+    start_date: string;
+    value: number;
+    contract_number: string;
+    description: string;
+  }>;
+  total_contracts: number;
+  department_average: number | null;
+  department: string | null;
+  price_change_pct: number;
+  first_value: number | null;
+  latest_value: number | null;
+}
+
+function PriceTrendTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ value: number; payload: { contract_number: string } }>;
+}) {
+  if (!active || !payload || payload.length === 0) return null;
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 shadow-md text-sm"
+    >
+      <p className="font-semibold text-slate-900 dark:text-slate-100">
+        {formatCurrency(payload[0].value)}
+      </p>
+      <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+        {payload[0].payload.contract_number}
+      </p>
+    </div>
+  );
+}
+
+function VendorPriceTrend({ supplier }: { supplier: string }) {
+  const { data, isLoading } = useQuery<PriceTrendData>({
+    queryKey: ["vendor-price-trend", supplier],
+    queryFn: () =>
+      fetchAPI<PriceTrendData>(
+        `/api/analytics/vendor-price-trend/${encodeURIComponent(supplier)}`
+      ),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  if (isLoading) {
+    return (
+      <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+        <CardContent className="pt-5 pb-5">
+          <div className="h-48 bg-slate-100 dark:bg-slate-700 animate-pulse rounded-lg" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data || !data.contracts || data.contracts.length === 0) {
+    return null;
+  }
+
+  const chartData = data.contracts.map((c) => ({
+    date: c.start_date?.substring(0, 10) || "",
+    value: c.value,
+    contract_number: c.contract_number,
+  }));
+
+  return (
+    <section aria-labelledby="price-trend-heading">
+      <h2
+        id="price-trend-heading"
+        className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-1"
+      >
+        Price Trend
+      </h2>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        Contract values over time for this vendor.
+      </p>
+
+      <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+        <CardContent className="pt-5 pb-5 space-y-3">
+          {/* Badges */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {data.price_change_pct !== 0 && (
+              <Badge
+                className={`gap-1 ${
+                  data.price_change_pct > 0
+                    ? "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 border-red-200 dark:border-red-700"
+                    : "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-green-200 dark:border-green-700"
+                }`}
+              >
+                {data.price_change_pct > 0 ? (
+                  <TrendingUp className="h-3 w-3" aria-hidden="true" />
+                ) : (
+                  <TrendingDown className="h-3 w-3" aria-hidden="true" />
+                )}
+                {data.price_change_pct > 0 ? "+" : ""}
+                {data.price_change_pct}% overall change
+              </Badge>
+            )}
+            {data.department_average && data.latest_value && (
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {data.latest_value > data.department_average
+                  ? `${Math.round(((data.latest_value - data.department_average) / data.department_average) * 100)}% above`
+                  : `${Math.round(((data.department_average - data.latest_value) / data.department_average) * 100)}% below`}{" "}
+                {data.department} dept avg
+              </span>
+            )}
+          </div>
+
+          {/* Chart */}
+          <div className="h-56" aria-label="Vendor price trend chart">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#e2e8f0"
+                  className="dark:opacity-20"
+                />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  tickFormatter={(v: number) =>
+                    v >= 1e6
+                      ? `$${(v / 1e6).toFixed(1)}M`
+                      : v >= 1e3
+                      ? `$${(v / 1e3).toFixed(0)}K`
+                      : `$${v}`
+                  }
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={60}
+                />
+                <Tooltip content={<PriceTrendTooltip />} />
+                {data.department_average && (
+                  <ReferenceLine
+                    y={data.department_average}
+                    stroke="#94a3b8"
+                    strokeDasharray="6 3"
+                    label={{
+                      value: "Dept avg",
+                      position: "right",
+                      fontSize: 10,
+                      fill: "#94a3b8",
+                    }}
+                  />
+                )}
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#3b82f6" }}
+                  activeDot={{ r: 6, fill: "#2563eb" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
 
@@ -400,6 +587,9 @@ export default function VendorDetailPage() {
           </div>
         </section>
       )}
+
+      {/* Price Trend */}
+      <VendorPriceTrend supplier={decodedName} />
 
       {/* SAM.gov Debarment Check */}
       <DebarmentCheck supplier={decodedName} />

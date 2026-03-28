@@ -23,6 +23,10 @@ import {
   LayoutGrid,
   GitCompare,
   Bell,
+  ClipboardCheck,
+  TrendingUp,
+  ShieldCheck,
+  RefreshCw,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -32,8 +36,12 @@ const COLLAPSE_KEY = "staff-sidebar-collapsed";
 
 const navItems = [
   { href: "/staff", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/staff/review", label: "Review", icon: ClipboardCheck },
   { href: "/staff/contracts", label: "Contracts", icon: Table },
   { href: "/staff/ask", label: "Ask Richmond", icon: MessageSquare },
+  { href: "/staff/cost-analysis", label: "Cost Analysis", icon: TrendingUp },
+  { href: "/staff/compliance", label: "Compliance", icon: ShieldCheck },
+  { href: "/staff/renew", label: "Renew", icon: RefreshCw },
   { href: "/staff/extract", label: "PDF Analyzer", icon: FileUp },
   { href: "/staff/risk", label: "Risk Analysis", icon: ShieldAlert },
   { href: "/staff/analytics", label: "Analytics", icon: BarChart3 },
