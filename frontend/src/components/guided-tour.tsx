@@ -224,7 +224,7 @@ const TOUR_STEPS: Record<string, DriveStep[]> = {
       popover: {
         title: "Tour Complete — Start Exploring!",
         description:
-          'You\'ve seen the full platform. For the engineering behind this, visit our <a href="https://github.com/ankitSrivastavaITH/team-aether?tab=readme-ov-file#full-system-architecture" target="_blank" style="color:#a78bfa;text-decoration:underline;font-weight:600">GitHub repo</a> — it\'s not just a pretty app, it\'s a well-engineered system: <strong>155+ commits</strong>, <strong>30 pages</strong>, <strong>12 API routers</strong>, <strong>40+ endpoints</strong>, built in 36 hours.',
+          'You\'ve seen the full platform. For the engineering behind this, visit our <a href="https://github.com/ankitSrivastavaITH/team-aether?tab=readme-ov-file#full-system-architecture" target="_blank" style="color:#a78bfa;text-decoration:underline;font-weight:600">GitHub repo</a> — it\'s not just a pretty app, it\'s a well-engineered system: <strong>172 commits</strong>, <strong>31 pages</strong>, <strong>12 API routers</strong>, <strong>46 endpoints</strong>, built in 36 hours.',
         side: "bottom",
         align: "center",
       },

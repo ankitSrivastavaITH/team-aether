@@ -178,9 +178,9 @@ Every page includes a persistent accessibility toolbar — font scaling, high co
 | Federal compliance checks | **3** automated (SAM.gov, FCC, CSL) |
 | Staff pages | **23** |
 | Public transparency pages | **7** |
-| API endpoints | **40+** |
+| API endpoints | **46** |
 | Backend routers | **12** |
-| Commits | **155+** |
+| Commits | **172+** |
 | Team size | **4 members**, 36 hours |
 | Manual review time saved | **60 min → 8 sec** per contract |
 | OCR extraction capacity | **176K+** chars from a single scanned PDF |

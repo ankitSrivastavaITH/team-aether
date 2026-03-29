@@ -142,7 +142,7 @@ OCR: The unstructured library handles scanned PDFs, extracting up to 176,000 cha
 
 Deployment: Docker Compose with Cloudflare Tunnel — zero infrastructure required for the demo.
 
-The codebase has over 155 commits, 30 pages, 12 backend routers, and 40+ API endpoints, built by a team of 4 in 36 hours.
+The codebase has over 172 commits, 31 pages, 12 backend routers, and 46 API endpoints, built by a team of 4 in 36 hours.
 
 ---
 
@@ -184,6 +184,6 @@ If piloted by the City, the platform could scale in three phases: Near-term pilo
 
 "Equity isn't a separate page. It's part of every procurement decision."
 
-"It's not just a pretty app — it's a well-engineered system: 155+ commits, 30 pages, 12 API routers, 40+ endpoints, built in 36 hours."
+"It's not just a pretty app — it's a well-engineered system: 172 commits, 31 pages, 12 API routers, 46 endpoints, built in 36 hours."
 
 "The City could pilot this next quarter. Swap in a new Socrata dataset, and it works for any city in America."
