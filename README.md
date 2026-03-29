@@ -181,7 +181,7 @@ Every page includes a persistent accessibility toolbar — font scaling, high co
 | API endpoints | **40+** |
 | Backend routers | **12** |
 | Commits | **155+** |
-| Team size | **4 members**, 48 hours |
+| Team size | **4 members**, 36 hours |
 | Manual review time saved | **60 min → 8 sec** per contract |
 | OCR extraction capacity | **176K+** chars from a single scanned PDF |
 

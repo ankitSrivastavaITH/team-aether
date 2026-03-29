@@ -162,7 +162,7 @@ Every page includes a persistent accessibility toolbar. Font size scaling from A
 **IMAGE:** `demo-screenshots/02-dashboard.png`
 
 **VOICEOVER:**
-Everything you've seen runs on real City of Richmond data — one thousand three hundred sixty-five contracts, six point seven six billion dollars, from the City's own open data portal. No synthetic data. No internal system access required. The entire platform was built by our team of four in forty-eight hours.
+Everything you've seen runs on real City of Richmond data — one thousand three hundred sixty-five contracts, six point seven six billion dollars, from the City's own open data portal. No synthetic data. No internal system access required. The entire platform was built by our team of four in thirty-six hours.
 
 **DURATION:** 15 seconds
 
@@ -261,7 +261,7 @@ We designed this to work for everyone, not just the easiest users. Equity is wov
 Every page includes a persistent accessibility toolbar. Font size scaling from A to A plus plus. High-contrast mode for low-vision users. One-click Spanish toggle for bilingual staff. Dark mode for reduced eye strain. Atkinson Hyperlegible font throughout — specifically designed for dyslexia accessibility. Skip links and forty-four pixel touch targets on every page. These controls are available to both staff and the public.
 
 **Scene 13:**
-Everything you've seen runs on real City of Richmond data — one thousand three hundred sixty-five contracts, six point seven six billion dollars, from the City's own open data portal. No synthetic data. No internal system access required. The entire platform was built by our team of four in forty-eight hours.
+Everything you've seen runs on real City of Richmond data — one thousand three hundred sixty-five contracts, six point seven six billion dollars, from the City's own open data portal. No synthetic data. No internal system access required. The entire platform was built by our team of four in thirty-six hours.
 
 **Scene 14:**
 The City could pilot this next quarter. Swap in a new Socrata dataset, and it works for any city in America. RVA Contract Lens. From three days to eight seconds. Real data. Real decisions. Real transparency.
@@ -302,7 +302,7 @@ When judges visit https://hackrva.ithena.app during discussion:
 > No — it's a federated intelligence engine. Eight independent data sources, three live compliance checks, and strategic scenario modeling. The What-If Estimator and Portfolio Strategy go beyond displaying data — they recommend specific actions with projected fiscal impact.
 
 **"Could this actually be piloted?"**
-> Yes, today. It runs on the City's existing open data. No internal system access required. The only setup is a free Groq API key. Our team of four built it in 48 hours — a pilot team could have it running in a week.
+> Yes, today. It runs on the City's existing open data. No internal system access required. The only setup is a free Groq API key. Our team of four built it in 36 hours — a pilot team could have it running in a week.
 
 **"What about legal compliance?"**
 > The AI recommends, humans decide. Every verdict shows full transparency — what the AI saw, how confident it is, and why. Staff can verify every data point before acting. All decisions are saved to an audit trail.
