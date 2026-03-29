@@ -35,11 +35,11 @@ const dataSources = [
 ];
 
 const techStack = [
-  { layer: "Frontend", tech: "Next.js 15 (App Router), React 19, Tailwind CSS, shadcn/ui" },
-  { layer: "Backend", tech: "FastAPI (Python), DuckDB for in-process analytics" },
-  { layer: "AI Features", tech: "Anthropic Claude — natural language queries, risk narrative, PDF extraction" },
+  { layer: "Frontend", tech: "Next.js 14 (App Router), React 18, Tailwind CSS, shadcn/ui" },
+  { layer: "Backend", tech: "FastAPI (Python), DuckDB for in-process analytics, ChromaDB for vector search" },
+  { layer: "AI Features", tech: "Groq (llama-3.3-70b) — decision engine, NL-to-SQL, risk narratives, PDF extraction" },
   { layer: "Data", tech: "City Socrata API, SAM.gov API, eVA, VITA — unified into a single DuckDB instance" },
-  { layer: "Hosting", tech: "Vercel (frontend), Railway (backend)" },
+  { layer: "Hosting", tech: "Docker Compose + Cloudflare Tunnel" },
 ];
 
 export default function AboutPage() {
