@@ -166,7 +166,13 @@ export function LandingContent() {
         </div>
 
         {/* Guided Tour for Judges */}
-        <div className="mt-6 flex justify-center">
+        <div className="mt-8 flex flex-col items-center gap-2">
+          <div className="animate-bounce text-purple-500">
+            <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M19 12l-7 7-7-7" />
+            </svg>
+          </div>
+          <p className="text-sm font-semibold text-purple-600 tracking-wide uppercase">Judges start here</p>
           <StartTourButton />
         </div>
       </section>
