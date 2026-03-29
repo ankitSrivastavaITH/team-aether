@@ -20,9 +20,6 @@ City of Richmond procurement staff manage **1,365 contracts worth $6.76 billion*
 - Comparing vendor pricing with **no centralized tool**
 - Tracking expiration dates across **spreadsheets and emails**
 
-> *"It took me three days to get through all the contract materials to make sure the exact same purchase I made from the year before was still valid. It wasn't."*
-> — Deputy Director of IT Strategy, City of Richmond
-
 **Result:** Missed renewals, expired contracts still in use, no visibility into vendor concentration risk, and millions in potential savings left on the table.
 
 ---
