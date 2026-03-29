@@ -29,7 +29,7 @@ const stats = [
   },
   {
     icon: Globe,
-    value: 4,
+    value: 8,
     label: "Data Sources",
     color: "text-orange-600 dark:text-orange-400",
     bg: "bg-orange-50 dark:bg-orange-950/50",
