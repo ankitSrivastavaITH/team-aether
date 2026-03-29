@@ -29,7 +29,9 @@ City of Richmond procurement staff manage **1,365 contracts worth $6.76 billion*
 
 ## The Solution
 
-RVA Contract Lens transforms that 60-minute manual review into an **8-second AI-powered decision brief**. One platform, two audiences.
+RVA Contract Lens is a **Federated Decision Intelligence** platform — 8 independent data sources aggregated into a single decision interface with full AI transparency. It transforms a 60-minute manual review into an **8-second decision brief** that shows exactly what data the AI analyzed, how each source influenced the verdict, and why.
+
+One platform, two audiences.
 
 ---
 
@@ -41,13 +43,21 @@ Staff see what needs action — not a data dump, but three urgency lanes: **Deci
 
 ![Staff Dashboard](demo-screenshots/02-dashboard.png)
 
-### AI Decision Engine
+### AI Decision Engine — Federated Intelligence Framework
 
-The core feature. Select a vendor and contract. The system aggregates **8 real data sources**, runs **3 federal compliance checks**, and delivers a **RENEW / REBID / ESCALATE** verdict with full transparency.
+Not a dashboard feature — an **architectural pattern**. The Decision Engine federates 8 independent intelligence sources into a single decision interface. Each source is queried in parallel, weighted by relevance, and synthesized through a structured LLM call that produces a verdict with full evidentiary transparency.
 
-![Decision Engine](demo-screenshots/03-decision-engine.png)
+The pattern is domain-agnostic: swap the data sources and the same architecture works for grants management, permitting, fleet maintenance, or any civic domain where staff make recurring decisions across fragmented systems.
 
-**What the AI analyzes:**
+**For procurement**, select a vendor and contract. The system runs all 8 intelligence sources **in parallel** — you can watch each one complete in real time:
+
+![Decision Engine — Parallel Analysis](demo-screenshots/03b-decision-engine-analyzing.png)
+
+Then delivers a **RENEW / REBID / ESCALATE** verdict — with every data point cited:
+
+![Decision Engine — Verdict](demo-screenshots/03-decision-engine.png)
+
+**8 federated intelligence sources:**
 
 | Source | Type |
 |---|---|
@@ -60,15 +70,12 @@ The core feature. Select a vendor and contract. The system aggregates **8 real d
 | PDF contract terms | OCR-extracted clauses via semantic search (ChromaDB) |
 | Vendor web intelligence | DuckDuckGo public reviews, news, reputation |
 
-**What staff get back:**
-1. Traffic light verdict (RENEW / REBID / ESCALATE) with confidence score
-2. Evidence grid — pros and cons with cited data sources
-3. Confidence breakdown — signed impact factors (+20 Compliance Clear, -15 Price Increasing)
-4. Equity & MBE context — department vendor diversity score
-5. Alternative vendors in the same department
-6. Exportable decision memo (copy/print)
+**Three-layer output (progressive disclosure):**
+1. **Traffic light** — RENEW / REBID / ESCALATE with confidence score (quick glance)
+2. **Evidence grid** — pros and cons with cited data sources, signed impact factors (+20 Compliance Clear, -15 Price Increasing), equity & MBE context (full analysis)
+3. **Decision memo** — exportable document with all evidence, alternative vendors, and recommended next steps (institutional record)
 
-**The AI recommends. Humans decide.** Every verdict is saved to an audit trail.
+**The AI recommends. Humans decide.** Every verdict is persisted to an audit trail — building institutional memory so the next procurement officer inherits data-driven context, not a blank slate.
 
 ### Contract Health Scanner
 
