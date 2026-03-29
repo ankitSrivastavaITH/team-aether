@@ -30,7 +30,7 @@
 **IMAGE:** `demo-screenshots/01-landing.png`
 
 **VOICEOVER:**
-Richmond manages six point one billion dollars in public contracts across 37 departments. Today, reviewing a single contract for renewal means manually searching three databases, reading hundreds of pages of PDFs, and checking federal compliance lists one by one.
+Richmond manages six point seven six billion dollars in public contracts across 37 departments. Today, reviewing a single contract for renewal means manually searching three databases, reading hundreds of pages of PDFs, and checking federal compliance lists one by one.
 
 **DURATION:** 12 seconds
 
@@ -118,7 +118,7 @@ Every decision is recorded in an audit timeline — building institutional memor
 **IMAGE:** `demo-screenshots/12-public-overview.png`
 
 **VOICEOVER:**
-RVA Contract Lens serves two audiences. For residents, there's a public transparency view. Where do your tax dollars go? Residents can explore six point one billion dollars in city spending by department, by vendor, or by service — without filing a FOIA request.
+RVA Contract Lens serves two audiences. For residents, there's a public transparency view. Where do your tax dollars go? Residents can explore six point seven six billion dollars in city spending by department, by vendor, or by service — without filing a FOIA request.
 
 **DURATION:** 10 seconds
 
@@ -162,7 +162,7 @@ Every page includes a persistent accessibility toolbar. Font size scaling from A
 **IMAGE:** `demo-screenshots/02-dashboard.png`
 
 **VOICEOVER:**
-Everything you've seen runs on real City of Richmond data — one thousand three hundred sixty-five contracts, six point one billion dollars, from the City's own open data portal. No synthetic data. No internal system access required. The entire platform was built by our team of four in forty-eight hours.
+Everything you've seen runs on real City of Richmond data — one thousand three hundred sixty-five contracts, six point seven six billion dollars, from the City's own open data portal. No synthetic data. No internal system access required. The entire platform was built by our team of four in forty-eight hours.
 
 **DURATION:** 15 seconds
 
@@ -225,7 +225,7 @@ The City could pilot this next quarter. Swap in a new Socrata dataset, and it wo
 ## Plain Text Voiceover (for copy-paste into Synthesia)
 
 **Scene 1:**
-Richmond manages six point one billion dollars in public contracts across 37 departments. Today, reviewing a single contract for renewal means manually searching three databases, reading hundreds of pages of PDFs, and checking federal compliance lists one by one.
+Richmond manages six point seven six billion dollars in public contracts across 37 departments. Today, reviewing a single contract for renewal means manually searching three databases, reading hundreds of pages of PDFs, and checking federal compliance lists one by one.
 
 **Scene 2:**
 The Deputy Director of IT Strategy told us it took him three days to verify that one contract was still valid. It wasn't. The terms had changed, and the City almost lost the ability to defend its technology infrastructure. RVA Contract Lens turns that three-day process into eight seconds.
@@ -249,7 +249,7 @@ Portfolio Strategy goes deeper. For every department, the system recommends how 
 Every decision is recorded in an audit timeline — building institutional memory over time.
 
 **Scene 9:**
-RVA Contract Lens serves two audiences. For residents, there's a public transparency view. Where do your tax dollars go? Residents can explore six point one billion dollars in city spending by department, by vendor, or by service — without filing a FOIA request.
+RVA Contract Lens serves two audiences. For residents, there's a public transparency view. Where do your tax dollars go? Residents can explore six point seven six billion dollars in city spending by department, by vendor, or by service — without filing a FOIA request.
 
 **Scene 10:**
 Interactive spending breakdowns by department. Click any vendor to see their full contract history. Click any department to see their portfolio. This directly supports the Mayor's Action Plan goal of making fiscal responsibility visible to the public.
@@ -261,7 +261,7 @@ We designed this to work for everyone, not just the easiest users. Equity is wov
 Every page includes a persistent accessibility toolbar. Font size scaling from A to A plus plus. High-contrast mode for low-vision users. One-click Spanish toggle for bilingual staff. Dark mode for reduced eye strain. Atkinson Hyperlegible font throughout — specifically designed for dyslexia accessibility. Skip links and forty-four pixel touch targets on every page. These controls are available to both staff and the public.
 
 **Scene 13:**
-Everything you've seen runs on real City of Richmond data — one thousand three hundred sixty-five contracts, six point one billion dollars, from the City's own open data portal. No synthetic data. No internal system access required. The entire platform was built by our team of four in forty-eight hours.
+Everything you've seen runs on real City of Richmond data — one thousand three hundred sixty-five contracts, six point seven six billion dollars, from the City's own open data portal. No synthetic data. No internal system access required. The entire platform was built by our team of four in forty-eight hours.
 
 **Scene 14:**
 The City could pilot this next quarter. Swap in a new Socrata dataset, and it works for any city in America. RVA Contract Lens. From three days to eight seconds. Real data. Real decisions. Real transparency.

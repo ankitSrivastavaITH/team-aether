@@ -37,7 +37,7 @@ The Deputy Director said this is exactly the scenario his team faces."
 
 [Demo: Staff dashboard — 22 contracts expiring in 30 days]
 
-22 contracts expiring in 30 days. $6.1 billion under management. AI has already analyzed every expiring contract and generated specific recommendations.
+22 contracts expiring in 30 days. $6.76 billion under management. AI has already analyzed every expiring contract and generated specific recommendations.
 
 [Click: Mastec North America Inc, $79.7M]
 

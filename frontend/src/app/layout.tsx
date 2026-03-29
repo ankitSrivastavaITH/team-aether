@@ -20,7 +20,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "RVA Contract Lens — Richmond Procurement Transparency",
-  description: "Explore Richmond's $6.1 billion in public contracts. Staff procurement dashboard and public spending transparency.",
+  description: "Explore Richmond's $6.76 billion in public contracts. Staff procurement dashboard and public spending transparency.",
 };
 
 // Static JSON-LD structured data — no user input, safe for injection
@@ -28,7 +28,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "GovernmentService",
   name: "RVA Contract Lens",
-  description: "Richmond procurement transparency tool showing $6.1 billion in public contracts",
+  description: "Richmond procurement transparency tool showing $6.76 billion in public contracts",
   serviceType: "Procurement Transparency",
   areaServed: {
     "@type": "City",

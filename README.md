@@ -12,7 +12,7 @@ Built for [Hack for RVA 2026](https://rvahacks.org) | Pillar 1: A Thriving City 
 
 ## The Problem
 
-City of Richmond procurement staff manage **1,365 contracts worth $6.1 billion** across 37 departments. Today, reviewing a single contract for renewal requires:
+City of Richmond procurement staff manage **1,365 contracts worth $6.76 billion** across 37 departments. Today, reviewing a single contract for renewal requires:
 
 - Manually searching **multiple databases** (City, State VITA, Federal SAM.gov)
 - Reading through **hundreds of pages** of PDF contract documents
@@ -136,7 +136,7 @@ Searchable, sortable, filterable table of all 1,365 contracts. Mobile-responsive
 
 ### Where Do Your Tax Dollars Go?
 
-Residents can explore **$6.1 billion** in city spending by department, vendor, or service — **without filing a FOIA request**.
+Residents can explore **$6.76 billion** in city spending by department, vendor, or service — **without filing a FOIA request**.
 
 ![Public Overview](demo-screenshots/12-public-overview.png)
 
@@ -173,7 +173,7 @@ Every page includes a persistent accessibility toolbar — font scaling, high co
 
 | Metric | Value |
 |---|---|
-| Real contracts analyzed | **1,365** ($6.1B) |
+| Real contracts analyzed | **1,365** ($6.76B) |
 | Data sources in Decision Engine | **8** |
 | Federal compliance checks | **3** automated (SAM.gov, FCC, CSL) |
 | Staff pages | **23** |
@@ -191,7 +191,7 @@ Every page includes a persistent accessibility toolbar — font scaling, high co
 
 | Source | Records | Method | Update Frequency |
 |---|---|---|---|
-| City of Richmond (Socrata) | 1,365 contracts ($6.1B) | CSV download | Real-time available |
+| City of Richmond (Socrata) | 1,365 contracts ($6.76B) | CSV download | Real-time available |
 | SAM.gov Federal | Live query | Opportunities API | Real-time |
 | eVA Virginia State | Seeded | State procurement data | Periodic |
 | VITA IT Contracts | Seeded | State IT procurement | Periodic |
@@ -236,7 +236,7 @@ npm run dev -- -p 3200
 │   Socrata    │   SAM.gov    │  eVA / VITA  │  PDF Upload  │  Web Scrape│
 │   CSV API    │Opportunities │  State CSV   │  (contract   │ DuckDuckGo │
 │  1,365 rows  │   Live API   │   Seeded     │  documents)  │   Lite     │
-│   ($6.1B)    │              │              │              │            │
+│   ($6.76B)    │              │              │              │            │
 └──────┬───────┴──────┬───────┴──────┬───────┴──────┬───────┴─────┬──────┘
        │              │              │              │             │
        v              v              v              v             v

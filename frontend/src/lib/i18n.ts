@@ -9,7 +9,7 @@ const translations = {
 
     // Landing
     "landing.title": "RVA Contract Lens",
-    "landing.subtitle": "Richmond spends $6.1 billion in public contracts. Now you can see where it goes.",
+    "landing.subtitle": "Richmond spends $6.76 billion in public contracts. Now you can see where it goes.",
     "landing.staff": "Staff Dashboard",
     "landing.staffDesc": "Track expiring contracts and manage risk",
     "landing.public": "Public Transparency",
@@ -154,7 +154,7 @@ const translations = {
 
     // Landing
     "landing.title": "RVA Contract Lens",
-    "landing.subtitle": "Richmond gasta $6.1 mil millones en contratos públicos. Ahora puede ver a dónde va.",
+    "landing.subtitle": "Richmond gasta $6.76 mil millones en contratos públicos. Ahora puede ver a dónde va.",
     "landing.staff": "Panel del Personal",
     "landing.staffDesc": "Rastree contratos que vencen y gestione riesgos",
     "landing.public": "Transparencia Pública",

@@ -8,7 +8,7 @@ const STEPS = [
   {
     icon: BarChart3,
     title: "See Where Your Money Goes",
-    description: "Explore $6.1 billion in Richmond contracts by department, vendor, and year.",
+    description: "Explore $6.76 billion in Richmond contracts by department, vendor, and year.",
   },
   {
     icon: Search,

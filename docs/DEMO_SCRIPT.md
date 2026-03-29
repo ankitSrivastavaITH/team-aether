@@ -42,7 +42,7 @@
 
 **Click:** Tab 3 → Staff Dashboard (code: rva2026)
 
-**Say:** "Here's what the procurement officer sees. 22 contracts expiring in 30 days, $6.1 billion total. AI has already analyzed every expiring contract and generated specific recommendations."
+**Say:** "Here's what the procurement officer sees. 22 contracts expiring in 30 days, $6.76 billion total. AI has already analyzed every expiring contract and generated specific recommendations."
 
 **Click:** First risk alert (Mastec North America Inc, $79.7M)
 **Say:** "Click any alert — AI recommendation says 'Rebid this contract, contact vendor about renewal terms.' That's what used to take 3 days of PDF scanning."

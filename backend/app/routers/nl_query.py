@@ -31,7 +31,7 @@ The database has one table: city_contracts with these columns:
 - days_to_expiry (INTEGER): Days until contract expires (negative means already expired)
 - risk_level (VARCHAR): One of: critical (<=30 days), warning (31-60), attention (61-90), ok (>90), expired, unknown
 
-Today's date is {today}. There are ~1,365 total contracts worth ~$6.1 billion.
+Today's date is {today}. There are ~1,365 total contracts worth ~$6.76 billion.
 
 COMMON QUERY PATTERNS (use these as templates):
 - "expiring this month": SELECT * FROM city_contracts WHERE end_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days' ORDER BY end_date ASC LIMIT 100

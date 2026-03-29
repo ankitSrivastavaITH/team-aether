@@ -114,7 +114,7 @@ Equity is not a separate feature — it's woven into the platform. The Decision 
 
 Every number in the platform comes from real public data:
 
-- 1,365 city contracts worth 6.1 billion dollars from the City of Richmond's Socrata open data portal
+- 1,365 city contracts worth 6.76 billion dollars from the City of Richmond's Socrata open data portal
 - Live federal compliance data from the SAM.gov Opportunities API
 - Virginia state contracts from eVA, the state's electronic procurement marketplace
 - VITA statewide IT contracts
